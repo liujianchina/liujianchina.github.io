@@ -319,7 +319,7 @@
 <li>按照主题说明，clone到hexo的theme文件夹内，然后修改一下hexo的<code>_config.yml</code>文件中的主题<code>theme: pure</code></li>
 <li>按照主题说明，安装主题渲染所需的nodejs插件。无非就是几个<code>cnpm install xxxx</code>即可</li>
 <li>按照主题说明，配置主题的配置文件，一般在主题文件夹<code>./hexo/theme/pure</code>下的<code>_config.yml</code>（无非是颜色、元素是否显示、布局之类的），很简单看一眼就知道。</li>
-<li>运行渲染<code>hexo clean &amp; hexo g &amp; hexo s</code>，分别是清理、生成、运行，然后再去<code>http://localhost:4000</code>看一眼，主题就生效了。</li>
+<li>运行渲染<code>hexo clean &amp;&amp; hexo g &amp;&amp; hexo s</code>，分别是清理、生成、运行，然后再去<code>http://localhost:4000</code>看一眼，主题就生效了。</li>
 </ul>
 <h2 id="gayhub托管"><a href="#gayhub托管" class="headerlink" title="gayhub托管"></a>gayhub托管</h2><ul>
 <li>我们<code>hexo g</code>渲染生成的静态文件在<code>public</code>文件夹内，需要把它丢到一个web容器内运行就可以了。gayhub提供githubpages服务可以托管静态文件，并可以http浏览。</li>
