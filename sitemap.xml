@@ -2,9 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://blog.sofunnyai.com/about/index.html</loc>
+    
+    <lastmod>2020-05-20T08:46:47.021Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/categories/index.html</loc>
+    
+    <lastmod>2020-05-20T08:46:34.397Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/tags/index.html</loc>
+    
+    <lastmod>2020-05-20T08:46:25.013Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://blog.sofunnyai.com/article/build-a-blog-base-on-hexo-github.html</loc>
     
-    <lastmod>2020-05-20T08:25:50.380Z</lastmod>
+    <lastmod>2020-05-20T08:42:12.650Z</lastmod>
     
   </url>
   
