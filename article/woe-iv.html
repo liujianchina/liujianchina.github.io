@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>深入理解woe和iv | 树先生的博客</title>
+  <meta name="description" content="WOE(Weight of Evidence) 证据权重  WOE的定义 Woe公式理解 WOE回顾：   IV值：可以认为是WOE的加权 计算woe和IV的步骤  计算注意点   WOE和IV的比较----为什么不用WOE，而是用IV值 通用WOE计算实现      WOE(Weight of Evidence) 证据权重#  https:&#x2F;&#x2F;blog.csdn.net&#x2F;kevin7658">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解woe和iv">
+<meta property="og:url" content="https://blog.sofunnyai.com/article/woe-iv.html">
+<meta property="og:site_name" content="树先生的金融风控工程师博客">
+<meta property="og:description" content="WOE(Weight of Evidence) 证据权重  WOE的定义 Woe公式理解 WOE回顾：   IV值：可以认为是WOE的加权 计算woe和IV的步骤  计算注意点   WOE和IV的比较----为什么不用WOE，而是用IV值 通用WOE计算实现      WOE(Weight of Evidence) 证据权重#  https:&#x2F;&#x2F;blog.csdn.net&#x2F;kevin7658">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200522143533847.png">
+<meta property="article:published_time" content="2018-01-14T03:10:14.000Z">
+<meta property="article:modified_time" content="2020-05-22T07:34:23.892Z">
+<meta property="article:author" content="树先生">
+<meta property="article:tag" content="评分卡">
+<meta property="article:tag" content="特征工程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200522143533847.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.sofunnyai.com/article/woe-iv.html">
+  
+    <link rel="alternate" href="/atom.xml" title="树先生的金融风控工程师博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="" target="_blank">
+          <img class="img-circle img-rotate" src="/images/cartoon_header.jpeg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">树先生</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Risk Control Engineer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎讨论金融风控业务和工程技巧</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Hexo/">Hexo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B7%A5%E5%85%B7/" rel="tag">工具</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E5%B7%A5%E5%85%B7/" style="font-size: 13px;">工具</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 13px;">评分卡</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13px;">闲杂</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/IO/">IO</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/io-basic-socket-tcp.html" class="title">IO基础：socket和TCP</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-09-12T12:12:26.000Z" itemprop="datePublished">2018-09-12</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/Hexo/">Hexo</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/build-a-blog-base-on-hexo-github.html" class="title">Hexo+Github+自定义域名+CDN搭建博客系统（附namesilo优惠码）</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-07-16T05:05:26.000Z" itemprop="datePublished">2018-07-16</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/woe-iv.html" class="title">深入理解woe和iv</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-01-14T03:10:14.000Z" itemprop="datePublished">2018-01-14</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-woe-iv" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      深入理解woe和iv
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/article/woe-iv.html" class="article-date">
+	  <time datetime="2018-01-14T03:10:14.000Z" itemprop="datePublished">2018-01-14</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/risk/">risk</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a>, <a class="article-tag-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/woe-iv.html#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <div class="toc">
+<!-- toc -->
+<ul>
+<li><a href="#woe-weight-of-evidence-zheng-ju-quan-chong">WOE(Weight of Evidence) 证据权重</a>
+<ul>
+<li><a href="#woe-de-ding-yi">WOE的定义</a></li>
+<li><a href="#woe-gong-shi-li-jie">Woe公式理解</a></li>
+<li><a href="#woe-hui-gu">WOE回顾：</a></li>
+</ul>
+</li>
+<li><a href="#iv-zhi-ke-yi-ren-wei-shi-woe-de-jia-quan">IV值：可以认为是WOE的加权</a></li>
+<li><a href="#ji-suan-woe-he-iv-de-bu-zou">计算woe和IV的步骤</a>
+<ul>
+<li><a href="#ji-suan-zhu-yi-dian">计算注意点</a></li>
+</ul>
+</li>
+<li><a href="#woe-he-iv-de-bi-jiao-wei-shi-me-bu-yong-woe-er-shi-yong-iv-zhi">WOE和IV的比较----为什么不用WOE，而是用IV值</a></li>
+<li><a href="#tong-yong-woe-ji-suan-shi-xian">通用WOE计算实现</a></li>
+</ul>
+<!-- tocstop -->
+</div>
+<link href="https://cdn.bootcss.com/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
+<h1><span id="woe-weight-of-evidence-zheng-ju-quan-chong"> WOE(Weight of Evidence) 证据权重</span><a href="#woe-weight-of-evidence-zheng-ju-quan-chong" class="header-anchor">#</a></h1>
+<blockquote>
+<p><a href="https://blog.csdn.net/kevin7658/article/details/50780391" target="_blank" rel="noopener">https://blog.csdn.net/kevin7658/article/details/50780391</a><br>
+<a href="https://zhuanlan.zhihu.com/p/80134853" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/80134853</a><br>
+<a href="https://www.cnblogs.com/hanxiaosheng/p/9831838.html" target="_blank" rel="noopener">https://www.cnblogs.com/hanxiaosheng/p/9831838.html</a><br>
+<a href="https://www.cnblogs.com/hanxiaosheng/p/9831964.html" target="_blank" rel="noopener">https://www.cnblogs.com/hanxiaosheng/p/9831964.html</a><br>
+<a href="https://blog.csdn.net/PbGc396Dwxjb77F2je/article/details/99687952" target="_blank" rel="noopener">https://blog.csdn.net/PbGc396Dwxjb77F2je/article/details/99687952</a></p>
+</blockquote>
+<h2><span id="woe-de-ding-yi"> WOE的定义</span><a href="#woe-de-ding-yi" class="header-anchor">#</a></h2>
+<ul>
+<li>WOE是一种对原始自变量进行编码的格式，可以屏蔽极值增强鲁棒性。（树模型一般只对离散变量进行编码，对极值不敏感）</li>
+<li>要对一个变量进行WOE编码，需要<strong>首先把这个变量进行分组处理/离散化处理</strong>（等宽切割，等频切割，卡方分箱，或者利用决策树来切割）。</li>
+<li><strong>分组后，对于第i组</strong>，WOE的计算公式如下：</li>
+</ul>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>w</mi><mi>o</mi><msub><mi>e</mi><mi>i</mi></msub><mo>=</mo><mi>l</mi><mi>n</mi><mfrac><mrow><msub><mi>p</mi><mrow><mi>y</mi><mi>i</mi></mrow></msub></mrow><mrow><msub><mi>p</mi><mrow><mi>n</mi><mi>i</mi></mrow></msub></mrow></mfrac><mo>=</mo><mi>l</mi><mi>n</mi><mfrac><mrow><msub><mi>p</mi><mrow><mi>y</mi><mn>1</mn></mrow></msub></mrow><mrow><msub><mi>p</mi><mrow><mi>y</mi><mn>0</mn></mrow></msub></mrow></mfrac><mo>=</mo><mi>l</mi><mi>n</mi><mo>(</mo><mfrac><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>B</mi><mi>a</mi><mi>d</mi></mrow></mfrac><mi mathvariant="normal">/</mi><mfrac><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>G</mi><mi>o</mi><mi>o</mi><mi>d</mi></mrow></mfrac><mo>)</mo><mo>=</mo><mi>l</mi><mi>n</mi><mo>(</mo><mfrac><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>B</mi><mi>a</mi><mi>d</mi></mrow></mfrac><mo>)</mo><mo>−</mo><mi>l</mi><mi>n</mi><mo>(</mo><mfrac><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>G</mi><mi>o</mi><mi>o</mi><mi>d</mi></mrow></mfrac><mo>)</mo></mrow><annotation encoding="application/x-tex">woe_i = ln\frac{p_{yi}}{p_{ni}} = ln\frac{p_{y1}}{p_{y0}} = ln(\frac{Bad_i}{Bad}/\frac{Good_i}{Good}) =  ln(\frac{Bad_i}{Bad})-ln(\frac{Good_i}{Good})
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.37144em;"></span><span class="strut bottom" style="height:2.343548em;vertical-align:-0.972108em;"></span><span class="base displaystyle textstyle uncramped"><span class="mord mathit" style="margin-right:0.02691em;">w</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">e</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.6860000000000002em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit">n</span><span class="mord mathit">i</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03588em;">y</span><span class="mord mathit">i</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.6859999999999999em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03588em;">y</span><span class="mord mathrm">0</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03588em;">y</span><span class="mord mathrm">1</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord mathit">d</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mord mathrm">/</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord mathit">d</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord mathit">d</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span><span class="mbin">−</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord mathit">d</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span></span></span></span></span></p>
+<ul>
+<li>其中：pyi为坏样本占所有坏样本的比例，py0好样本占所有好样本的比例；</li>
+<li>Bad为坏样本总数，Badi为变量i对应的坏样本个数，Good为好样本总数，Goodi为变量i对应的好样本个数 ；</li>
+<li>将模型目标变量y为1记为违约用户（坏样本），对于目标变量为0记为正常用户（好样本）</li>
+</ul>
+<h2><span id="woe-gong-shi-li-jie"> Woe公式理解</span><a href="#woe-gong-shi-li-jie" class="header-anchor">#</a></h2>
+<p>基础模式</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>w</mi><mi>o</mi><msub><mi>e</mi><mi>i</mi></msub><mo>=</mo><mi>l</mi><mi>n</mi><mo>(</mo><mfrac><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>B</mi><mi>a</mi><mi>d</mi></mrow></mfrac><mo>)</mo><mo>−</mo><mi>l</mi><mi>n</mi><mo>(</mo><mfrac><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>G</mi><mi>o</mi><mi>o</mi><mi>d</mi></mrow></mfrac><mo>)</mo></mrow><annotation encoding="application/x-tex"> woe_i = ln(\frac{Bad_i}{Bad})-ln(\frac{Good_i}{Good}) 
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.37144em;"></span><span class="strut bottom" style="height:2.05744em;vertical-align:-0.686em;"></span><span class="base displaystyle textstyle uncramped"><span class="mord mathit" style="margin-right:0.02691em;">w</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">e</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord mathit">d</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span><span class="mbin">−</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord mathit">d</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span></span></span></span></span></p>
+<ul>
+<li>即 WOE = ln (第i个分箱的坏人数 / 总坏人数) - ln (第i个分箱的好人数 / 总好人数)</li>
+<li>此时可以理解为：<strong>每个分箱里的坏人(响应)分布相对于好人(未响应)分布之间的差异性。</strong></li>
+</ul>
+<p>变换模式</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>w</mi><mi>o</mi><msub><mi>e</mi><mi>i</mi></msub><mo>=</mo><mi>l</mi><mi>n</mi><mo>(</mo><mfrac><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>i</mi></msub></mrow></mfrac><mo>)</mo><mo>−</mo><mi>l</mi><mi>n</mi><mo>(</mo><mfrac><mrow><mi>B</mi><mi>a</mi><mi>d</mi></mrow><mrow><mi>G</mi><mi>o</mi><mi>o</mi><mi>d</mi></mrow></mfrac><mo>)</mo></mrow><annotation encoding="application/x-tex">woe_i = ln(\frac{Bad_i}{Good_i})-ln(\frac{Bad}{Good})
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.37144em;"></span><span class="strut bottom" style="height:2.20744em;vertical-align:-0.8360000000000001em;"></span><span class="base displaystyle textstyle uncramped"><span class="mord mathit" style="margin-right:0.02691em;">w</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">e</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span><span class="mbin">−</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord mathit">d</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord mathit">d</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span></span></span></span></span></p>
+<ul>
+<li>WOE = ln (第i个分箱的坏人数 / 第i个分箱的好人数) - ln (总坏人数 / 总好人数)</li>
+<li>此时可以理解为：<strong>每个分箱里的坏好比(Odds)相对于总体的坏好比之间的差异性。</strong></li>
+</ul>
+<h2><span id="woe-hui-gu"> WOE回顾：</span><a href="#woe-hui-gu" class="header-anchor">#</a></h2>
+<ul>
+<li>当前分组中，<strong>差异越大，响应的比例越大，WOE值越大</strong>；</li>
+<li>反应的是<strong>特征的重要性，woe的绝对值越大，说明越重要。</strong></li>
+<li>当前分组WOE的正负，由当前分组响应和未响应的比例，与样本整体响应和未响应的比例的大小关系决定，<strong>当前分组的比例小于样本整体比例时，WOE为负</strong>，<strong>当前分组的比例大于整体比例时，WOE为正，当前分组的比例和整体比例相等时，WOE为0</strong>。</li>
+<li>WOE的取值范围是<strong>全体实数</strong>。(所以就不方便，需要IV缩放)</li>
+<li>WOE其实描述了变量当前这个分组，对判断个体是否会响应（或者说属于哪个类）所起到影响方向和大小，<strong>当WOE为正时，变量当前取值对判断个体是否会响应起到的正向的影响</strong>，当<strong>WOE为负时，起到了负向影响</strong>。而WOE<strong>值的大小，则是这个影响的大小的体现</strong>。</li>
+<li><strong>做完woe之后，LR系数不再代表特征的重要程度。</strong></li>
+<li><strong>woe后LR的时候要保证系数全都是正数！</strong>
+<ul>
+<li>woe的符号代表特征对模型贡献的方向，系数如果不是正数就会改变这个方向。</li>
+<li>但是做BiVar的时候已经分析了这个woe特征的贡献方向，如果LR再负数会扭曲推翻之前BiVar的分析。</li>
+</ul>
+</li>
+<li>优点：数值型转化为WOE可以<strong>增强鲁棒性</strong>，<strong>屏蔽极值的影响</strong>（极小值和极大值也被分组了）</li>
+<li><strong>但是树模型对极值不敏感，只用处理字符型即可</strong></li>
+</ul>
+<p>note：<strong>如果特征做了WOE，那么LR的系数不能代表特征重要性权重。（WOE绝对值大小已经是特征重要性了，LR的系数仅仅是拟合系数而已）</strong></p>
+<ul>
+<li>
+<p>核心——分箱逻辑：</p>
+</li>
+<li>
+<p>实现WOE最重要的是分箱逻辑，不同的分箱会带来不同的WOE。金融常使用“<strong>基于负样本占比差异最大化</strong>”原则来分箱</p>
+<ul>
+<li>一般是5箱内最好，通常最多不超过10箱</li>
+<li>每一箱的负样本占比差值尽可能大（箱合并原则）</li>
+<li>每一箱的样本量不少于总体5%（不要太小，不要小于三五百个样本）</li>
+<li>通过控制划分后的总箱数，来迭代进行分箱合并</li>
+</ul>
+</li>
+</ul>
+<h1><span id="iv-zhi-ke-yi-ren-wei-shi-woe-de-jia-quan"> IV值：可以认为是WOE的加权</span><a href="#iv-zhi-ke-yi-ren-wei-shi-woe-de-jia-quan" class="header-anchor">#</a></h1>
+<p>某个分箱的IV值：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>I</mi><msub><mi>V</mi><mi>i</mi></msub><mo>=</mo><mo>(</mo><msub><mi>p</mi><mrow><mi>y</mi><mi>i</mi></mrow></msub><mo>−</mo><msub><mi>p</mi><mrow><mi>n</mi><mi>i</mi></mrow></msub><mo>)</mo><mo>∗</mo><mi>W</mi><mi>O</mi><msub><mi>E</mi><mi>i</mi></msub><mo>=</mo><mo>(</mo><mfrac><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>t</mi></msub></mrow></mfrac><mo>−</mo><mfrac><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>t</mi></msub></mrow></mfrac><mo>)</mo><mo>∗</mo><mi>W</mi><mi>O</mi><msub><mi>E</mi><mi>i</mi></msub><mo>=</mo><mo>(</mo><mfrac><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>t</mi></msub></mrow></mfrac><mo>−</mo><mfrac><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>t</mi></msub></mrow></mfrac><mo>)</mo><mo>∗</mo><mi>l</mi><mi>n</mi><mo>(</mo><mfrac><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>t</mi></msub></mrow></mfrac><mi mathvariant="normal">/</mi><mfrac><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>t</mi></msub></mrow></mfrac><mo>)</mo></mrow><annotation encoding="application/x-tex">IV_i =(p_{yi}-p_{ni}) * WOE_i= (\frac{Bad_i}{Bad_t}-\frac{Good_i}{Good_t}) * WOE_i = (\frac{Bad_i}{Bad_t}-\frac{Good_i}{Good_t}) * ln(\frac{Bad_i}{Bad_t}/\frac{Good_i}{Good_t})
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.37144em;"></span><span class="strut bottom" style="height:2.20744em;vertical-align:-0.8360000000000001em;"></span><span class="base displaystyle textstyle uncramped"><span class="mord mathit" style="margin-right:0.07847em;">I</span><span class="mord"><span class="mord mathit" style="margin-right:0.22222em;">V</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.22222em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mopen">(</span><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03588em;">y</span><span class="mord mathit">i</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mbin">−</span><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit">n</span><span class="mord mathit">i</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mbin">∗</span><span class="mord mathit" style="margin-right:0.13889em;">W</span><span class="mord mathit" style="margin-right:0.02778em;">O</span><span class="mord"><span class="mord mathit" style="margin-right:0.05764em;">E</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.05764em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">t</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mbin">−</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">t</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span><span class="mbin">∗</span><span class="mord mathit" style="margin-right:0.13889em;">W</span><span class="mord mathit" style="margin-right:0.02778em;">O</span><span class="mord"><span class="mord mathit" style="margin-right:0.05764em;">E</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.05764em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">t</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mbin">−</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">t</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span><span class="mbin">∗</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">t</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mord mathrm">/</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">t</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span></span></span></span></span></p>
+<p>有了一个变量各分组的IV值，我们就可以计算<strong>整个变量</strong>的IV值：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>I</mi><mi>V</mi><mo>=</mo><msubsup><mo>∑</mo><mi>i</mi><mi>n</mi></msubsup><mrow><mi>I</mi><msub><mi>V</mi><mi>i</mi></msub></mrow></mrow><annotation encoding="application/x-tex">IV = \sum_i^n{IV_i}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.6513970000000002em;"></span><span class="strut bottom" style="height:2.929066em;vertical-align:-1.277669em;"></span><span class="base displaystyle textstyle uncramped"><span class="mord mathit" style="margin-right:0.07847em;">I</span><span class="mord mathit" style="margin-right:0.22222em;">V</span><span class="mrel">=</span><span class="mop op-limits"><span class="vlist"><span style="top:1.1776689999999999em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span style="top:-0.000005000000000143778em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span><span class="op-symbol large-op mop">∑</span></span></span><span style="top:-1.2500050000000003em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord mathit">n</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord displaystyle textstyle uncramped"><span class="mord mathit" style="margin-right:0.07847em;">I</span><span class="mord"><span class="mord mathit" style="margin-right:0.22222em;">V</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.22222em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></span></span></p>
+<p>n是分箱的数量</p>
+<ul>
+<li>对于变量的一个分组，这个分组的响应和未响应的比例与样本整体响应和未响应的比例相差越大，IV值越大，否则，IV值越小；</li>
+<li>极端情况下，当前分组的响应和未响应的比例和样本整体的响应和未响应的比例相等时，IV值为0；</li>
+<li>IV值的取值范围是[0,+∞) ，且，当当前分组中只包含响应客户或者未响应客户时，IV = +∞。</li>
+<li>故可以计算多个特征的IV值，按照从大到小排序来决定采用哪些特征更容易响应。（类似信息增益或者基尼指数的感觉）</li>
+<li>IV比如要大于0.05才比较好用</li>
+<li>谨慎的时候会要求IV大于0.02就可以先留着，也就是说IV在0.02-0.5之间</li>
+<li>超过0.5的特征会被直接拿去作为策略-------------&gt;IV太大的值可能会把模型其他特征的信息覆盖掉，也可能会造成过拟合。（如果这个特征以后抖动，造成线上效果波动）</li>
+</ul>
+<h1><span id="ji-suan-woe-he-iv-de-bu-zou"> 计算woe和IV的步骤</span><a href="#ji-suan-woe-he-iv-de-bu-zou" class="header-anchor">#</a></h1>
+<ul>
+<li>step 1. 对于连续型变量，进行分箱（binning），可以选择<strong>等频、等距，或者自定义间隔</strong>；对于离散型变量，如果分箱太多，则进行分箱合并。</li>
+<li>step 2. 统计每个分箱里的<strong>好人数(bin_goods)和坏人数(bin_bads)</strong>。</li>
+<li>step 3. 分别除以总的好人数(total_goods)和坏人数(total_bads)，得到每个分箱内的边际好人占比(margin_good_rate)和边际坏人占比(margin_bad_rate)。</li>
+<li>step 4. 计算每个分箱里的WOE [公式]</li>
+<li>step 5. 检查每个分箱（除null分箱外）里woe值是否满足单调性（bivar），若不满足，返回step1。注意⚠️：null分箱由于有明确的业务解释，因此不需要考虑满足单调性。</li>
+<li>step 6. 计算每个分箱里的IV，最终求和，即得到最终的IV。<br>
+备注：好人 = 正常用户，坏人 = 逾期用户</li>
+</ul>
+<h2><span id="ji-suan-zhu-yi-dian"> 计算注意点</span><a href="#ji-suan-zhu-yi-dian" class="header-anchor">#</a></h2>
+<ul>
+<li>
+<p>分箱时需要注意样本量充足，保证统计意义。</p>
+</li>
+<li>
+<p>若相邻分箱的WOE值相同(非常相近)，则将其合并为一个分箱。</p>
+</li>
+<li>
+<p>当一个分箱内只有好人或坏人时（会出现∞），可对WOE公式进行修正如下：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>W</mi><mi>o</mi><msub><mi>e</mi><mi>i</mi></msub><mo>=</mo><mi>l</mi><mi>n</mi><mo>(</mo><mfrac><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>i</mi></msub><mo>+</mo><mn>0</mn><mi mathvariant="normal">.</mi><mn>5</mn></mrow><mrow><mi>B</mi><mi>a</mi><msub><mi>d</mi><mi>t</mi></msub><mo>+</mo><mn>0</mn><mi mathvariant="normal">.</mi><mn>5</mn></mrow></mfrac><mi mathvariant="normal">/</mi><mfrac><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>G</mi><mi>o</mi><mi>o</mi><msub><mi>d</mi><mi>t</mi></msub></mrow></mfrac><mo>)</mo></mrow><annotation encoding="application/x-tex">Woe_i = ln(\frac{Bad_i+0.5}{Bad_t+0.5}/\frac{Good_i}{Good_t})
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.37144em;"></span><span class="strut bottom" style="height:2.20744em;vertical-align:-0.8360000000000001em;"></span><span class="base displaystyle textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">W</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">e</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit">n</span><span class="mopen">(</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">t</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mbin">+</span><span class="mord mathrm">0</span><span class="mord mathrm">.</span><span class="mord mathrm">5</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.05017em;">B</span><span class="mord mathit">a</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mbin">+</span><span class="mord mathrm">0</span><span class="mord mathrm">.</span><span class="mord mathrm">5</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mord mathrm">/</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">t</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit">G</span><span class="mord mathit">o</span><span class="mord mathit">o</span><span class="mord"><span class="mord mathit">d</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mclose">)</span></span></span></span></span></p>
+</li>
+<li>
+<p>在实践中，我们还需<strong>跨数据集检验WOE分箱的单调性</strong>。如果在<strong>训练集上保持单调，但在验证集和测试集上发生翻转而不单调</strong>，那么说明分箱并不合理，需要再次调整。（BIVAR）</p>
+</li>
+<li>
+<p>或者当分箱中只有好人或坏人的时候，也可以这么做：</p>
+<ul>
+<li>如果可能，直接把这个分组做成一个规则，作为模型的前置条件或补充条件；（即不允许这种分箱存在）</li>
+<li>重新对变量进行离散化或分组，使每个分组的响应比例都不为0且不为100%，尤其是当一个分组个体数很小时（比如小于100个），强烈建议这样做，因为本身把一个分组个体数弄得很小就不是太合理。</li>
+<li>如果上面两种方法都无法使用，建议人工把该分组的响应数和非响应的数量进行一定的调整。如果响应数原本为0，可以人工调整响应数为1，如果非响应数原本为0，可以人工调整非响应数为1.（或者按照上面进行修正，分子分母都加0.5）</li>
+</ul>
+</li>
+</ul>
+<h1><span id="woe-he-iv-de-bi-jiao-wei-shi-me-bu-yong-woe-er-shi-yong-iv-zhi"> WOE和IV的比较----为什么不用WOE，而是用IV值</span><a href="#woe-he-iv-de-bi-jiao-wei-shi-me-bu-yong-woe-er-shi-yong-iv-zhi" class="header-anchor">#</a></h1>
+<p>变量各分组的WOE和IV都隐含着这个分组对目标变量的预测能力这样的意义，但是有以下问题：<br>
+<strong>1. 各个组的WOE有正有负</strong></p>
+<p>解释：</p>
+<ul>
+<li>假设构造一个$ WOE=\sum_i^n{WOE_i} ，那么因为里面的WOE_i$有正有负，所以求和不好表征。</li>
+</ul>
+<p><strong>2.每个组的WOE没有考虑到这个各个组在总体的占比</strong><br>
+解释：</p>
+<ul>
+<li>即使构造一个<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>W</mi><mi>O</mi><mi>E</mi><mo>=</mo><msubsup><mo>∑</mo><mi>i</mi><mi>n</mi></msubsup><mrow><mi mathvariant="normal">∣</mi><mi>W</mi><mi>O</mi><msub><mi>E</mi><mi>i</mi></msub><mi mathvariant="normal">∣</mi></mrow></mrow><annotation encoding="application/x-tex">WOE=\sum_i^n{|WOE_i|}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1.0500099999999999em;vertical-align:-0.30001em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">W</span><span class="mord mathit" style="margin-right:0.02778em;">O</span><span class="mord mathit" style="margin-right:0.05764em;">E</span><span class="mrel">=</span><span class="mop"><span class="op-symbol small-op mop" style="top:-0.0000050000000000050004em;">∑</span><span class="vlist"><span style="top:0.30001em;margin-left:0em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span style="top:-0.364em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord mathit">n</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord textstyle uncramped"><span class="mord mathrm">∣</span><span class="mord mathit" style="margin-right:0.13889em;">W</span><span class="mord mathit" style="margin-right:0.02778em;">O</span><span class="mord"><span class="mord mathit" style="margin-right:0.05764em;">E</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.05764em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord mathrm">∣</span></span></span></span></span>规避上面的负数问题，但是每个组<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>W</mi><mi>O</mi><msub><mi>E</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">WOE_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">W</span><span class="mord mathit" style="margin-right:0.02778em;">O</span><span class="mord"><span class="mord mathit" style="margin-right:0.05764em;">E</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.05764em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span>的信息含量（泛化能力？）是不相同的，比如某个组<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>W</mi><mi>O</mi><msub><mi>E</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">WOE_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">W</span><span class="mord mathit" style="margin-right:0.02778em;">O</span><span class="mord"><span class="mord mathit" style="margin-right:0.05764em;">E</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.05764em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span>很高但是这个组只有很少的样本，把他直接和另外一个很多样本但很低的<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>W</mi><mi>O</mi><msub><mi>E</mi><mi>j</mi></msub></mrow><annotation encoding="application/x-tex">WOE_j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">W</span><span class="mord mathit" style="margin-right:0.02778em;">O</span><span class="mord"><span class="mord mathit" style="margin-right:0.05764em;">E</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.05764em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.05724em;">j</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span>相加是很不合适的。</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200522143533847.png" alt="image-20200522143533847"></p>
+<p>假设某特征A分两组，从这个表我们可以看到，变量取1时，响应比达到90%，对应的<strong>WOE很高，但对应的IV却很低</strong>，原因就在于IV在WOE的前面乘以了一个系数<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>(</mo><msub><mi>p</mi><mrow><mi>y</mi><mi>i</mi></mrow></msub><mo>−</mo><msub><mi>p</mi><mrow><mi>n</mi><mi>i</mi></mrow></msub><mo>)</mo></mrow><annotation encoding="application/x-tex">(p_{yi}-p_{ni})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1.036108em;vertical-align:-0.286108em;"></span><span class="base textstyle uncramped"><span class="mopen">(</span><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03588em;">y</span><span class="mord mathit">i</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mbin">−</span><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit">n</span><span class="mord mathit">i</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span></span></span></span></p>
+<ul>
+<li>而这个系数很好的考虑了这个分组中样本占整体样本的比例，比例越低，这个分组对变量整体预测能力的贡献越低。</li>
+<li>相反，如果直接用WOE的绝对值加和，会得到一个很高的指标，这是不合理的。</li>
+</ul>
+<h1><span id="tong-yong-woe-ji-suan-shi-xian"> 通用WOE计算实现</span><a href="#tong-yong-woe-ji-suan-shi-xian" class="header-anchor">#</a></h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> math</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> pandas <span class="keyword">import</span> DataFrame</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> pandas.core.dtypes <span class="keyword">import</span> dtypes</span><br><span class="line"><span class="keyword">from</span> pandas.core.dtypes.common <span class="keyword">import</span> is_numeric_dtype</span><br><span class="line"><span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LogisticRegression</span><br><span class="line"><span class="keyword">from</span> sklearn.tree <span class="keyword">import</span> DecisionTreeRegressor</span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义实现的离散型变量woe</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">charWoe</span><span class="params">(object)</span>:</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, datases: dict, dep, weight, vars: list)</span>:</span></span><br><span class="line">        <span class="comment"># 数据字典&#123;'dev':xxx,'val':xxx,'off':xxx&#125;  训练集，测试集，时间外样本集  3个dataframe</span></span><br><span class="line">        self.datases = datases</span><br><span class="line">        self.devf = datases.get(<span class="string">'dev'</span>, <span class="string">''</span>)</span><br><span class="line">        self.valf = datases.get(<span class="string">'val'</span>, <span class="string">''</span>)</span><br><span class="line">        self.offf = datases.get(<span class="string">'off'</span>, <span class="string">''</span>)</span><br><span class="line">        self.dep = dep  <span class="comment"># 标签</span></span><br><span class="line">        self.weight = weight  <span class="comment"># 样本权重</span></span><br><span class="line">        self.vars = vars  <span class="comment"># 特征名</span></span><br><span class="line">        self.nrows, self.ncols = self.devf.shape <span class="comment"># 样本数，特征数</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">char_woe</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="comment"># 得到每一类样本的个数，且加入平滑项是的bad和good都不为0</span></span><br><span class="line">        dic = dict(self.devf.groupby(self.dep).size())  <span class="comment"># 根据标签去group，变成&#123;1:xxx,0:yyy&#125;字典</span></span><br><span class="line">        good = dic.get(<span class="number">0</span>, <span class="number">0</span>) + <span class="number">1e-10</span> <span class="comment"># 平滑防止组内为0，计算失败</span></span><br><span class="line">        bad = dic.get(<span class="number">1</span>, <span class="number">0</span>) + <span class="number">1e-10</span></span><br><span class="line">        <span class="comment"># 对每一个特征进行处理</span></span><br><span class="line">        <span class="keyword">for</span> col <span class="keyword">in</span> self.vars:</span><br><span class="line">            <span class="comment"># df[[sex,bad]].groupby(['sex','bad']).size() 会得到一个series，</span></span><br><span class="line">            <span class="comment"># 直接转成字典：&#123;(男, 0): 10553, (男, 1): 518, (女, 0): 233, (女, 1): 3&#125;</span></span><br><span class="line">            <span class="comment"># key的第一个代表特征值，第二个代表标签值</span></span><br><span class="line">            data = dict(self.devf[[col, self.dep]].groupby([col, self.dep]).size())</span><br><span class="line">            <span class="string">'''</span></span><br><span class="line"><span class="string">            特征值+分类组合超过100的时候，跳过当前取值</span></span><br><span class="line"><span class="string">            假设二分类，dep是0,、1，则这个特征只能有50个特征值</span></span><br><span class="line"><span class="string">            &#123;(col特征值A,0):25,(col特征值A,1):10,(col特征值B,0):33,(col特征值B,1):21...&#125;</span></span><br><span class="line"><span class="string">            因为特征值过多时，WOE分箱效率低，建议进行特征截断</span></span><br><span class="line"><span class="string">            出现频率过低的特征就统一赋值，放到同一个箱里</span></span><br><span class="line"><span class="string">            '''</span></span><br><span class="line">            <span class="keyword">if</span> len(data) &gt; <span class="number">100</span>:</span><br><span class="line">                print(col, <span class="string">'有太多的特征值，建议手动进行特征截断，即将跳过此特征...'</span>)</span><br><span class="line">                <span class="keyword">continue</span></span><br><span class="line">            <span class="comment"># 打印特征取取值个数</span></span><br><span class="line">            print(<span class="string">'特征【%s】的取值个数是【%d】'</span> % (col, len(data)))</span><br><span class="line">            dic = dict()</span><br><span class="line">            <span class="comment"># &#123;(男, 0): 10553, (男, 1): 518, (女, 0): 233, (女, 1): 3&#125;</span></span><br><span class="line">            <span class="comment"># key的第一个代表特征值，第二个代表标签值</span></span><br><span class="line">            <span class="keyword">for</span> (k, v) <span class="keyword">in</span> data.items():</span><br><span class="line">                fea_value, dp = k  <span class="comment"># 拿出key中的特征值和标签(fea_value=男，dp=0，v=10553)</span></span><br><span class="line">                dic.setdefault(fea_value, &#123;&#125;)  <span class="comment"># 给对应key设置为一个空字典（如果没有找到的话，找到的话说明之前已经设置过了）</span></span><br><span class="line">                <span class="comment">#&#123;(男, 0): 10553, (男, 1): 518&#125; ==&gt; &#123;男:&#123;1 = 518，0 = 10553&#125; , 女:&#123;...&#125; &#125;</span></span><br><span class="line">                dic[fea_value][int(dp)] = v  <span class="comment"># 字典中嵌套字典</span></span><br><span class="line">            <span class="keyword">for</span>(k, v) <span class="keyword">in</span> dic.items():  <span class="comment"># 计算cnt和badrate</span></span><br><span class="line">                <span class="comment"># 循环上面的嵌套字典，k=男，v=&#123;1 = xxx，0 = yyy&#125;。</span></span><br><span class="line">                <span class="comment"># 拿出内部嵌套的字典k1 = 1 v1=xxx,生成---&gt;：&#123;‘男’：&#123; '0': 10553, '1': 518&#125;&#125;</span></span><br><span class="line">                dic[k] = &#123;str(int(k1)):v1 <span class="keyword">for</span> (k1, v1) <span class="keyword">in</span> v.items()&#125;</span><br><span class="line">                <span class="comment"># 所有正负样本的和v.values():  [10553,518]</span></span><br><span class="line">                dic[k][<span class="string">'cnt'</span>] = sum(v.values())</span><br><span class="line">                <span class="comment"># 4舍5入求bad_rate</span></span><br><span class="line">                bad_rate = round(v.get(<span class="number">1</span>,<span class="number">0</span>)/dic[k][<span class="string">'cnt'</span>], <span class="number">5</span>)</span><br><span class="line">                dic[k][<span class="string">"bad_rate"</span>] = bad_rate</span><br><span class="line">            <span class="comment"># 利用定义的函数进行合并分箱。  dic=&#123;'男': &#123;'cnt': xxx, '0': yy, '1': zz, 'bad_rate': 0.xx&#125;, 'B': &#123;'cnt': xxx, '0': yyy, '1': zz, 'bad_rate': 0.zz&#125;&#125;</span></span><br><span class="line">            dic = self.combine_box_char(dic)</span><br><span class="line">            <span class="comment"># 对每个特征计算WOE和IV值</span></span><br><span class="line">            <span class="keyword">for</span> (k,v) <span class="keyword">in</span> dic.items():</span><br><span class="line">                a = v.get(<span class="string">'0'</span>, <span class="number">1</span>) / good+<span class="number">1e-10</span></span><br><span class="line">                b = v.get(<span class="string">'1'</span>, <span class="number">1</span>) / bad+<span class="number">1e-10</span></span><br><span class="line">                dic[k][<span class="string">'Good'</span>] = v.get(<span class="string">'0'</span>,<span class="number">0</span>)</span><br><span class="line">                dic[k][<span class="string">'Bad'</span>] = v.get(<span class="string">'1'</span>,<span class="number">0</span>)</span><br><span class="line">                <span class="comment"># 下面两个是 a/b 还是 b/a？ 按照定义应该是ln(pi/pn) = ln(p_bad/p_good)?</span></span><br><span class="line">                dic[k][<span class="string">'woe'</span>] = round(math.log(b/a),<span class="number">5</span>)</span><br><span class="line">                dic[k][<span class="string">'iv'</span>] = round((b-a)*dic[k][<span class="string">'woe'</span>],<span class="number">5</span>)</span><br><span class="line">            <span class="string">''' </span></span><br><span class="line"><span class="string">            按照分箱后的点进行分割， </span></span><br><span class="line"><span class="string">            计算得到每一个特征值的WOE值， </span></span><br><span class="line"><span class="string">            将原始特征名加上'_woe'后缀，并赋予WOE值。 </span></span><br><span class="line"><span class="string">            '''</span></span><br><span class="line">            <span class="keyword">for</span> (klis, v) <span class="keyword">in</span> dic.items():</span><br><span class="line">                <span class="comment"># 把分箱合并后的key切开</span></span><br><span class="line">                <span class="keyword">for</span> k <span class="keyword">in</span> str(klis).split(<span class="string">','</span>):</span><br><span class="line">                    <span class="comment"># 数字类型处理一下</span></span><br><span class="line">                    <span class="keyword">if</span> is_numeric_dtype(self.devf[col]):</span><br><span class="line">                        k = float(k) <span class="keyword">if</span> <span class="string">'.'</span> <span class="keyword">in</span> k <span class="keyword">else</span> int(k)</span><br><span class="line">                    <span class="comment"># 训练集进行替换</span></span><br><span class="line">                    self.devf.loc[self.devf[col] == k, <span class="string">"%s_woe"</span> % col] = v[<span class="string">"woe"</span>]</span><br><span class="line">                    self.devf.loc[self.devf[col] == k, <span class="string">"%s_iv"</span> % col] = v[<span class="string">"iv"</span>]</span><br><span class="line">                    <span class="comment"># 测试集进行替换</span></span><br><span class="line">                    <span class="keyword">if</span> <span class="keyword">not</span> isinstance(self.valf, str):</span><br><span class="line">                        self.valf.loc[self.valf[col] == k,<span class="string">"%s_woe"</span> % col] = v[<span class="string">"woe"</span>]</span><br><span class="line">                        self.valf.loc[self.valf[col] == k, <span class="string">"%s_iv"</span> % col] = v[<span class="string">"iv"</span>]</span><br><span class="line">                    <span class="comment"># 跨时间验证集进行替换</span></span><br><span class="line">                    <span class="keyword">if</span> <span class="keyword">not</span> isinstance(self.offf, str):</span><br><span class="line">                        self.offf.loc[self.offf[col] == k,<span class="string">"%s_woe"</span> % col] = v[<span class="string">"woe"</span>]</span><br><span class="line">                        self.offf.loc[self.offf[col] == k, <span class="string">"%s_iv"</span> % col] = v[<span class="string">"iv"</span>]</span><br><span class="line">        <span class="comment"># 返回新的字典，其中包含三个数据集。</span></span><br><span class="line">        <span class="keyword">return</span> &#123;<span class="string">"dev"</span>: self.devf, <span class="string">"val"</span>: self.valf, <span class="string">"off"</span>: self.offf&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">combine_box_char</span><span class="params">(self, dic)</span>:</span></span><br><span class="line">        <span class="string">'''</span></span><br><span class="line"><span class="string">        实施两种分箱策略（规则）：</span></span><br><span class="line"><span class="string">        1.不同箱之间负样本占比(bad_rate)差异最大化。----各个特征值按照badrate从小到大排序，分别用后面一个减去前面每一个，计算badrate差值。找到差值最小的两箱合并之</span></span><br><span class="line"><span class="string">        2.每一箱的样本量不能过少。----当有某箱样本小于总样本的0.05，或总箱数&gt;5的时候，还是按照badrate差异最大化原则：按badrate排序后，把最小的一箱和前后比较，与差值较小的一箱合并</span></span><br><span class="line"><span class="string">        :param dic: 等待分箱的数据</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        '''</span></span><br><span class="line">        <span class="comment"># 首先合并至10箱以内。按照每一箱负样本占比差异最大化原则进行分箱。----各个特征值按照badrate从小到大排序，分别用后面一个减去前面每一个，计算badrate差值。找到差值最小的两箱合并之</span></span><br><span class="line">        <span class="keyword">while</span> len(dic) &gt;= <span class="number">10</span>:</span><br><span class="line">            <span class="comment"># 拿出所有的特征和badrate，k是特征值，v['bad_rate']是负样本占比</span></span><br><span class="line">            bad_rate_dic = &#123;k:v[<span class="string">'bad_rate'</span>] <span class="keyword">for</span> (k,v) <span class="keyword">in</span> dic.items()&#125;</span><br><span class="line">            <span class="comment"># 按照负样本占比排序。因为离散型变量是无序的（比如学历、渠道类型）</span></span><br><span class="line">            <span class="comment"># 可以直接写成负样本占比递增的形式。(所有的dict按照value升序排序)</span></span><br><span class="line">            <span class="comment"># 得到一堆tuple的list，是(特征值，bad_rate)的一个list</span></span><br><span class="line">            bad_rate_sorted = sorted(bad_rate_dic.items(), key=<span class="keyword">lambda</span> x: x[<span class="number">1</span>])</span><br><span class="line">            <span class="comment"># 计算每两箱之间的负样本占比差值。</span></span><br><span class="line">            bad_rate_diff = [bad_rate_sorted[i + <span class="number">1</span>][<span class="number">1</span>] - bad_rate_sorted[i][<span class="number">1</span>] <span class="keyword">for</span> i <span class="keyword">in</span> range(len(bad_rate_sorted) - <span class="number">1</span>)]</span><br><span class="line">            <span class="comment"># 找到差值最小的那个，准备将其进行合并。</span></span><br><span class="line">            min_diff_index = bad_rate_diff.index(min(bad_rate_diff))</span><br><span class="line">            <span class="comment"># 找到k1和k2，即差值最小的两箱的key.</span></span><br><span class="line">            k1, k2 = bad_rate_sorted[min_diff_index][<span class="number">0</span>], bad_rate_sorted[min_diff_index + <span class="number">1</span>][<span class="number">0</span>]</span><br><span class="line">            <span class="comment"># 得到重新划分后的字典，箱的个数比之前少一  直接改了dic，给他里面插入一个新的分箱。key是两个key的组合！</span></span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)] = dict()</span><br><span class="line">            <span class="comment"># 重新统计新箱的正负样本数（合并两个key的）</span></span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"0"</span>] = dic[k1].get(<span class="string">"0"</span>, <span class="number">0</span>) + dic[k2].get(<span class="string">"0"</span>, <span class="number">0</span>)</span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"1"</span>] = dic[k1].get(<span class="string">"1"</span>, <span class="number">0</span>) + dic[k2].get(<span class="string">"1"</span>, <span class="number">0</span>)</span><br><span class="line">            <span class="comment"># 重新统计新箱的cnt</span></span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"cnt"</span>] = dic[k1][<span class="string">"cnt"</span>] + dic[k2][<span class="string">"cnt"</span>]</span><br><span class="line">            <span class="comment"># 重新计算新分箱的bad_rate</span></span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"bad_rate"</span>] = round(dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"1"</span>] / dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"cnt"</span>],<span class="number">5</span>)</span><br><span class="line">            <span class="comment"># 删除之前两个老的分箱</span></span><br><span class="line">            <span class="keyword">del</span> dic[k1], dic[k2]</span><br><span class="line">        <span class="string">''' </span></span><br><span class="line"><span class="string">        结束循环后，箱的个数应该少于10。 </span></span><br><span class="line"><span class="string">        下面实施第二种分箱策略规则：每个分箱的样本不能太少！ </span></span><br><span class="line"><span class="string">        将样本数量少的箱合并至其他箱中，以保证每一箱的样本数量不要太少。 </span></span><br><span class="line"><span class="string">        '''</span></span><br><span class="line">        <span class="comment"># 找出最少样本数的分箱</span></span><br><span class="line">        min_cnt = min([v[<span class="string">'cnt'</span>] <span class="keyword">for</span> (k, v) <span class="keyword">in</span> dic.items()])</span><br><span class="line">        <span class="comment"># 当样本数量小于总样本的5%或者总箱的个数大于5的时候，对箱进行合并  【这里的5% 和 5是经验值】</span></span><br><span class="line">        <span class="keyword">while</span> min_cnt &lt; self.nrows*<span class="number">0.05</span> <span class="keyword">or</span> len(dic) &gt; <span class="number">5</span>:</span><br><span class="line">            <span class="comment"># 可能找到多个符合min_cnt的list，取第一个</span></span><br><span class="line">            min_key = [k <span class="keyword">for</span> (k,v) <span class="keyword">in</span> dic.items() <span class="keyword">if</span> v[<span class="string">'cnt'</span>] == min_cnt][<span class="number">0</span>]</span><br><span class="line">            bad_rate_dic = &#123;k:v[<span class="string">'bad_rate'</span>] <span class="keyword">for</span> (k,v) <span class="keyword">in</span> dic.items()&#125;</span><br><span class="line">            <span class="comment"># 根据bad_rate升序</span></span><br><span class="line">            bad_rate_sorted = sorted(bad_rate_dic.items(),key=<span class="keyword">lambda</span> x:x[<span class="number">1</span>])</span><br><span class="line">            keys = [item[<span class="number">0</span>] <span class="keyword">for</span> item <span class="keyword">in</span> bad_rate_sorted]</span><br><span class="line">            min_key_index = keys.index(min_key)</span><br><span class="line">            <span class="string">'''</span></span><br><span class="line"><span class="string">            不能直接把样本数最小的两个分箱合并，因为</span></span><br><span class="line"><span class="string">            同样想保持合并后箱之间的负样本占比差异最大化。 </span></span><br><span class="line"><span class="string">            由于箱的位置不同，按照三种不同情况进行分类讨论。 </span></span><br><span class="line"><span class="string">            '''</span></span><br><span class="line">            <span class="comment"># 如果是第一箱、第二箱</span></span><br><span class="line">            <span class="keyword">if</span> min_key_index == <span class="number">0</span>:</span><br><span class="line">                k1,k2 = keys[:<span class="number">2</span>]</span><br><span class="line">            <span class="keyword">elif</span> min_key_index == len(keys)<span class="number">-1</span>:</span><br><span class="line">                <span class="comment"># 如果是最后一箱，和倒数第二箱合并</span></span><br><span class="line">                k1,k2 = keys[<span class="number">-2</span>:]</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="comment"># 如果是中间箱，前后相比和bad_rate值相差最小的箱合并</span></span><br><span class="line">                <span class="comment"># 和前面的比</span></span><br><span class="line">                bef_bad_rate = dic[min_key][<span class="string">'bad_rate'</span>] - dic[keys[min_key_index<span class="number">-1</span>]][<span class="string">'bad_rate'</span>]</span><br><span class="line">                <span class="comment"># 后面的当前比（keys是按照bad_rate升序的，不减出负数）</span></span><br><span class="line">                aft_bad_rate = dic[keys[min_key_index+<span class="number">1</span>]][<span class="string">'bad_rate'</span>] - dic[min_key][<span class="string">'bad_rate'</span>]</span><br><span class="line">                <span class="keyword">if</span> bef_bad_rate &lt;= aft_bad_rate:</span><br><span class="line">                    k1,k2 = keys[min_key_index<span class="number">-1</span>], min_key</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    k1,k2 = min_key, keys[min_key_index+<span class="number">1</span>]</span><br><span class="line">            <span class="comment"># 找到k1，k2后合并之，同上</span></span><br><span class="line">            <span class="comment"># 新增一个合并后的分箱</span></span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)] = dict()</span><br><span class="line">            <span class="comment"># 重新计算cnt，bad_rate，正负样本数</span></span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"0"</span>] = dic[k1].get(<span class="string">"0"</span>, <span class="number">0</span>) + dic[k2].get(<span class="string">"0"</span>, <span class="number">0</span>)</span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"1"</span>] = dic[k1].get(<span class="string">"1"</span>, <span class="number">0</span>) + dic[k2].get(<span class="string">"1"</span>, <span class="number">0</span>)</span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"cnt"</span>] = dic[k1][<span class="string">"cnt"</span>] + dic[k2][<span class="string">"cnt"</span>]</span><br><span class="line">            dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"bad_rate"</span>] = round(dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"1"</span>] /dic[<span class="string">"%s,%s"</span> % (k1, k2)][<span class="string">"cnt"</span>], <span class="number">5</span>)</span><br><span class="line">            <span class="comment"># 删除旧的分箱</span></span><br><span class="line">            <span class="keyword">del</span> dic[k1], dic[k2]</span><br><span class="line">            <span class="comment"># 重新计算当前最小的箱的样本个数，进入下次循环继续合并分箱</span></span><br><span class="line">            min_cnt = min([v[<span class="string">"cnt"</span>] <span class="keyword">for</span> v <span class="keyword">in</span> dic.values()])</span><br><span class="line">        <span class="keyword">return</span> dic</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.sofunnyai.com/article/woe-iv.html" title="深入理解woe和iv" target="_blank" rel="external">https://blog.sofunnyai.com/article/woe-iv.html</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/cartoon_header.jpeg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="" target="_blank"><span class="text-dark">树先生</span><small class="ml-1x">Risk Control Engineer</small></a></h3>
+        <div>一个金融风控软件工程师。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/article/build-a-blog-base-on-hexo-github.html" title="Hexo+Github+自定义域名+CDN搭建博客系统（附namesilo优惠码）"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '37d6fe220531a0253492',
+    clientSecret: 'b20bb830af693e7d62e5efe08048c9d42234ba2f',
+    repo: 'liujianchina.github.io',
+    owner: 'liujianchina',
+    admin: ['liujianchina'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>
