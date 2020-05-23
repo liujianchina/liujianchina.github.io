@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>模型评价指标KS和PSI | 树先生的博客</title>
+  <meta name="description" content="KS指标  KS值定义  回顾TPR(True Positive Rate)和FPR(False Positive Rate)   模型的KS值 KS(Kolmogorov-Smirnov)计算步骤： KS和ROC的区别  模型评价时:     PSI群体稳定性指标  PSI(Population Stability Index)的定义         KS指标#  KS值定义#  回顾T">
+<meta property="og:type" content="article">
+<meta property="og:title" content="模型评价指标KS和PSI">
+<meta property="og:url" content="https://blog.sofunnyai.com/article/ks_psi.html">
+<meta property="og:site_name" content="树先生的金融风控工程师博客">
+<meta property="og:description" content="KS指标  KS值定义  回顾TPR(True Positive Rate)和FPR(False Positive Rate)   模型的KS值 KS(Kolmogorov-Smirnov)计算步骤： KS和ROC的区别  模型评价时:     PSI群体稳定性指标  PSI(Population Stability Index)的定义         KS指标#  KS值定义#  回顾T">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200522165407594.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200522172344375.png">
+<meta property="article:published_time" content="2018-01-12T05:21:10.000Z">
+<meta property="article:modified_time" content="2020-05-23T05:31:11.922Z">
+<meta property="article:author" content="树先生">
+<meta property="article:tag" content="特征工程">
+<meta property="article:tag" content="评分卡">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200522165407594.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.sofunnyai.com/article/ks_psi.html">
+  
+    <link rel="alternate" href="/atom.xml" title="树先生的金融风控工程师博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="" target="_blank">
+          <img class="img-circle img-rotate" src="/images/cartoon_header.jpeg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">树先生</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Risk Control Engineer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎讨论金融风控业务和工程技巧</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/hexo/" style="font-size: 14px;">hexo</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 14px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 14px;">评分卡</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 14px;">闲杂</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/IO/">IO</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/io-basic-socket-tcp.html" class="title">IO基础：socket和TCP</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-09-12T12:12:26.000Z" itemprop="datePublished">2018-09-12</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/woe-iv.html" class="title">深入理解woe和iv</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-01-14T03:10:14.000Z" itemprop="datePublished">2018-01-14</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/ks_psi.html" class="title">模型评价指标KS和PSI</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-01-12T05:21:10.000Z" itemprop="datePublished">2018-01-12</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/hexo/">hexo</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/hexo-blog-img-password.html" class="title">给hexo的博文添加图床、博文加密</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-01-07T07:59:42.000Z" itemprop="datePublished">2018-01-07</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/hexo/">hexo</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/build-a-blog-base-on-hexo-github.html" class="title">Hexo+Github+自定义域名+CDN搭建博客系统（附namesilo优惠码）</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-01-06T05:05:26.000Z" itemprop="datePublished">2018-01-06</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-ks-psi" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      模型评价指标KS和PSI
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/article/ks_psi.html" class="article-date">
+	  <time datetime="2018-01-12T05:21:10.000Z" itemprop="datePublished">2018-01-12</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/risk/">risk</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a>, <a class="article-tag-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/ks_psi.html#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <!--此处生成目录-->
+<div class="toc">
+<!-- toc -->
+<ul>
+<li><a href="#ks-zhi-biao">KS指标</a>
+<ul>
+<li><a href="#ks-zhi-ding-yi">KS值定义</a>
+<ul>
+<li><a href="#hui-gu-tpr-true-positive-rate-he-fpr-false-positive-rate">回顾TPR(True Positive Rate)和FPR(False Positive Rate)</a></li>
+</ul>
+</li>
+<li><a href="#mo-xing-de-ks-zhi">模型的KS值</a></li>
+<li><a href="#ks-kolmogorov-smirnov-ji-suan-bu-zou">KS(Kolmogorov-Smirnov)计算步骤：</a></li>
+<li><a href="#ks-he-roc-de-qu-bie">KS和ROC的区别</a>
+<ul>
+<li><a href="#mo-xing-ping-jie-shi">模型评价时:</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#psi-qun-ti-wen-ding-xing-zhi-biao">PSI群体稳定性指标</a>
+<ul>
+<li><a href="#psi-population-stability-index-de-ding-yi">PSI(Population Stability Index)的定义</a></li>
+</ul>
+</li>
+</ul>
+<!-- tocstop -->
+</div>
+<!--下面是latex渲染框架katex样式所需的css，不使用latex的话可以删掉-->
+<link href="https://cdn.bootcss.com/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
+<h1><span id="ks-zhi-biao"> KS指标</span><a href="#ks-zhi-biao" class="header-anchor">#</a></h1>
+<h2><span id="ks-zhi-ding-yi"> KS值定义</span><a href="#ks-zhi-ding-yi" class="header-anchor">#</a></h2>
+<h3><span id="hui-gu-tpr-true-positive-rate-he-fpr-false-positive-rate"> 回顾TPR(True Positive Rate)和FPR(False Positive Rate)</span><a href="#hui-gu-tpr-true-positive-rate-he-fpr-false-positive-rate" class="header-anchor">#</a></h3>
+<p>混淆矩阵，横着的P、N是预测结果阳性还是阴性。竖着的是说预测是否正确。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:center">Positive</th>
+<th style="text-align:center">Negtive</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">T</td>
+<td style="text-align:center">TP</td>
+<td style="text-align:center">TN</td>
+</tr>
+<tr>
+<td style="text-align:center">F</td>
+<td style="text-align:center">FP</td>
+<td style="text-align:center">FN</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>
+<p>TP：预测为正向（P），实际上预测正确（T），即判断为正向的正确率</p>
+</li>
+<li>
+<p>TN：预测为负向（N），实际上预测正确（T），即判断为负向的正确率</p>
+</li>
+<li>
+<p>FP：预测为正向（P），实际上预测错误（F），误报率，即把负向判断成了正向</p>
+</li>
+<li>
+<p>FN：预测为负向（N），实际上预测错误（F），漏报率，即把正向判断称了负向</p>
+</li>
+<li>
+<p>准确率Accuracy=（TP+TN） / （TP+FP+TN+FN）， 即<strong>预测正确</strong>的比上<strong>全部的数据</strong></p>
+</li>
+<li>
+<p>精确率、查准率 Precision=TP / （TP+FP），即在<strong>预测为正向的数据中</strong>，有<strong>多少预测正确</strong>了</p>
+</li>
+<li>
+<p>召回率、查全率 Recall=TP / （TP+FN），即在<strong>所有正向</strong>的数据中，有<strong>多少预测出来</strong>了</p>
+</li>
+</ul>
+<p>TPR：在所有实际为阳性的样本中，被正确地判断为阳性之比率。(就是召回率，正样本被召回的比例)<br>
+【金融里面，分母是所有的good_cnt】</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>R</mi><mi>e</mi><mi>c</mi><mi>a</mi><mi>l</mi><mi>l</mi><mo>=</mo><mi>T</mi><mi>P</mi><mi>R</mi><mo>=</mo><mfrac><mrow><mi>T</mi><mi>P</mi></mrow><mrow><mi>T</mi><mi>P</mi><mo>+</mo><mi>F</mi><mi>N</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">Recall = TPR = \frac{TP}{TP+FN}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.36033em;"></span><span class="strut bottom" style="height:2.1296600000000003em;vertical-align:-0.7693300000000001em;"></span><span class="base displaystyle textstyle uncramped"><span class="mord mathit" style="margin-right:0.00773em;">R</span><span class="mord mathit">e</span><span class="mord mathit">c</span><span class="mord mathit">a</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mord mathit" style="margin-right:0.01968em;">l</span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.13889em;">T</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mord mathit" style="margin-right:0.00773em;">R</span><span class="mrel">=</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.13889em;">T</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mbin">+</span><span class="mord mathit" style="margin-right:0.13889em;">F</span><span class="mord mathit" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">T</span><span class="mord mathit" style="margin-right:0.13889em;">P</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span></span></span></span></span></p>
+<p>FPR：在所有实际为阴性的样本中，被错误地判断为阳性之比率。（就是漏掉的阴性或判断错的阳性，占总阴性的比例)<br>
+【金融里面，分母是所有的bad_cnt】</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>F</mi><mi>P</mi><mi>R</mi><mo>=</mo><mfrac><mrow><mi>F</mi><mi>P</mi></mrow><mrow><mi>F</mi><mi>P</mi><mo>+</mo><mi>T</mi><mi>N</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">FPR = \frac{FP}{FP + TN}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.36033em;"></span><span class="strut bottom" style="height:2.1296600000000003em;vertical-align:-0.7693300000000001em;"></span><span class="base displaystyle textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">F</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mord mathit" style="margin-right:0.00773em;">R</span><span class="mrel">=</span><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.13889em;">F</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mbin">+</span><span class="mord mathit" style="margin-right:0.13889em;">T</span><span class="mord mathit" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">F</span><span class="mord mathit" style="margin-right:0.13889em;">P</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span></span></span></span></span></p>
+<blockquote>
+<p>更多关于TPR： /02_ml/01_THEORY/00_theory.ipynb#TPR(True-Positive-Rate)</p>
+</blockquote>
+<h2><span id="mo-xing-de-ks-zhi"> 模型的KS值</span><a href="#mo-xing-de-ks-zhi" class="header-anchor">#</a></h2>
+<ul>
+<li>最理想的模型，是TPR尽量高而FPR尽量低（<strong>召回尽可能多的坏人，漏掉尽可能少的好人</strong>），然而任何模型在提高正确预测概率的同时，也会难以避免地增加误判率。</li>
+<li>我们训练出来的模型，一般不是直接给出是正类还是负类的结果，给的是<strong>为正类的概率</strong>，我们还需要<strong>选择一个阈值</strong>，实例通过模型得到的概率<strong>大于阈值，判断为正类，小于阈值判断为负类。<strong>也就是说</strong>阈值的不同，以上的各个指标的值也是不同的。每一个阈值对应一对TPR和FPR</strong>。把<strong>阈值看成自变量，以上TPR、和FPR看成因变量</strong>，在二维坐标系里面做<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="normal">∣</mi><mi>F</mi><mi>P</mi><mi>T</mi><mo>−</mo><mi>F</mi><mi>P</mi><mi>R</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|FPT-FPR|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathrm">∣</span><span class="mord mathit" style="margin-right:0.13889em;">F</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mord mathit" style="margin-right:0.13889em;">T</span><span class="mbin">−</span><span class="mord mathit" style="margin-right:0.13889em;">F</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mord mathit" style="margin-right:0.00773em;">R</span><span class="mord mathrm">∣</span></span></span></span>关系曲线，这<strong>就是KS曲线。</strong></li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200522165407594.png" alt="image-20200522165407594"></p>
+<ul>
+<li>KS曲线实操的时候是可以把将概率的<strong>阈值</strong>从小到大进行排序，取10%的值为间隔，</li>
+<li>同理将10%*k(k=1,…9)处值作为阈值，计算不同的FPR和TPR，</li>
+<li>以10%*k（k=1,…9）为横坐标，同时分别以TPR和FPR为纵坐标画出两条曲线就是KS曲线。</li>
+<li>KS值是KS曲线的最大值，也就是TPR和FPR差异的最大点</li>
+</ul>
+KS值=max(|TPR-FPR|)
+
+<ul>
+<li>KS值是在模型中用于区分预测正负样本分隔程度的评价指标。</li>
+<li>需要<strong>计算每一箱的KS，然后max是在所有分箱的KS上取最大值</strong></li>
+<li>一般来说，KS大比较好。但是也不是越大越好，尤其征信行业</li>
+<li>业内认为AUC更能体现模型的【整体的】区分能力，但是KS关注的是区分能力的最大值。
+<ul>
+<li>我们做的是拒绝模型，关注的是<strong>最大值的点取在哪里的</strong>。<strong>会做一个截断，小于这个值的都拒绝了。关注在最大值之前误杀了多少人。</strong>（相比于AUC注重局部而不是全局）</li>
+</ul>
+</li>
+</ul>
+<h2><span id="ks-kolmogorov-smirnov-ji-suan-bu-zou"> KS(Kolmogorov-Smirnov)计算步骤：</span><a href="#ks-kolmogorov-smirnov-ji-suan-bu-zou" class="header-anchor">#</a></h2>
+<ul>
+<li>
+<p>KS用于模型风险区分能力进行评估，指标衡量的是好坏样本累计分部之间的差值。</p>
+</li>
+<li>
+<p>好坏样本累计差异越大，KS指标越大，那么模型的风险区分能力越强。</p>
+</li>
+<li>
+<p>KS的计算步骤如下：</p>
+<ul>
+<li>
+<ol>
+<li>计算每个评分区间的好坏账户数。</li>
+</ol>
+</li>
+<li>
+<ol start="2">
+<li>计算每个评分区间的累计好账户数占总好账户数比率(good%)和累计坏账户数占总坏账户数比率(bad%)。</li>
+</ol>
+</li>
+<li>
+<ol start="3">
+<li>计算每个评分区间累计坏账户占比与累计好账户占比差的绝对值（累计good%-累计bad%），然后对这些绝对值取最大值即得此评分卡的K-S值。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>
+<p>KS值：是和<strong>AUC强相关的，但是样本很小的时候KS大，AUC不一定大。</strong></p>
+<ul>
+<li>
+<p>A卡的KS：</p>
+<ul>
+<li>714那种最差的一般也至少要25%，</li>
+<li>正常的p2p公司，客户质量稍微好一点会到30%-40%左右。</li>
+<li>最好那些有场景的分期产品最多也就不到50%，所以一般是在25%-50%之间。</li>
+</ul>
+</li>
+<li>
+<p>B卡的KS：</p>
+<ul>
+<li>至少也有40%，最高80% 一般60%左右。</li>
+</ul>
+</li>
+<li>
+<p>各个数据集如<strong>dev和oft的KS差值不要太大，否则模型不稳定，跨时间稳定性差。</strong></p>
+</li>
+<li>
+<p>一般dev和oft的KS差值只能在5%以内，比较求稳的公司要求在3%以内。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>正负样本：</p>
+<ul>
+<li>逾期样本/正常样本=1%-5%（也有能做到1/1000的） 5%个点就是比较高的了，是很不均衡的。</li>
+<li>要是坏账5%，会亏很多钱。badrte  3%以下才可能赚钱。</li>
+<li>欺诈样本/正常样本=1/10w 欺诈用户是极少的</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p><a href="https://www.zhihu.com/question/37405102/answer/106668941" target="_blank" rel="noopener">https://www.zhihu.com/question/37405102/answer/106668941</a></p>
+</blockquote>
+<h2><span id="ks-he-roc-de-qu-bie"> KS和ROC的区别</span><a href="#ks-he-roc-de-qu-bie" class="header-anchor">#</a></h2>
+<p>KS值对模型的评价不受样本不均衡问题的干扰，但仅限于模型评价。</p>
+<h3><span id="mo-xing-ping-jie-shi"> 模型评价时:</span><a href="#mo-xing-ping-jie-shi" class="header-anchor">#</a></h3>
+<h4><span id="roc-qu-xian"> ROC曲线</span><a href="#roc-qu-xian" class="header-anchor">#</a></h4>
+<p>描绘的是不同的截断点（判断好人坏人的阈值）时，以FPR和TPR为横纵坐标轴，描述<strong>随着截断点的变化，TPR随着FPR的变化。</strong><br>
+纵轴：TPR=正例分对的概率 = TP/(TP+FN)，其实就是查全率<br>
+横轴：FPR=负例分错的概率 = FP/(FP+TN)</p>
+<p>作图步骤：</p>
+<p>根据学习器的预测结果（注意，是正例的概率值，非0/1变量）对样本进行排序（从大到小）-----这就是截断点依次选取的顺序<br>
+按顺序选取截断点，并计算TPR和FPR—也可以只选取n个截断点，分别在1/n，2/n，3/n等位置<br>
+连接所有的点（TPR，FPR）即为ROC图</p>
+<h4><span id="ks-zhi"> KS值</span><a href="#ks-zhi" class="header-anchor">#</a></h4>
+<p>作图步骤：</p>
+<p>根据学习器的预测结果（注意，是正例的概率值，非0/1变量）对样本进行排序（从大到小）-----这就是截断点依次选取的顺序<br>
+按顺序选取截断点，并计算TPR和FPR —也可以只选取n个截断点，分别在1/n，2/n，3/n等位置<br>
+横轴为样本的占比百分比（最大100%），纵轴分别为TPR和FPR，计算|TPR-FPR|的ks值，可以得到KS曲线<br>
+TPR和FPR曲线分隔最开的位置就是最好的“截断点”，最大间隔距离就是KS值，通常&gt;0.2即可认为模型有比较好的预测准确性</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 模型预测会返回概率，两列，第一列是0的概率，第二列是1的概率</span></span><br><span class="line">proba = lr_model.predict_proba(x)</span><br><span class="line">proba</span><br><span class="line"></span><br><span class="line"><span class="comment"># train_thresholds 是阈值，每一个阈值对应roc曲线上的一点</span></span><br><span class="line">train_fpr,train_tpr,train_thresholds = roc_curve(y,proba[:,<span class="number">1</span>])</span><br><span class="line">train_ks_arr = abs(train_fpr-train_tpr)</span><br><span class="line">train_ks = train_ks_arr.max()</span><br><span class="line">print(<span class="string">'train KS:'</span>,train_ks)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证集的ks</span></span><br><span class="line">oft_fpr, oft_tpr,oft_thresholds = roc_curve(oft_y, lr_model.predict_proba(oft_x)[:,<span class="number">1</span>])</span><br><span class="line">oft_ks_arr = abs(oft_fpr - oft_tpr)</span><br><span class="line">oft_ks = oft_ks_arr.max()</span><br><span class="line">print(<span class="string">'oft KS:'</span>,oft_ks)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 最大值ks对应的下标（画图用）</span></span><br><span class="line">i = train_ks_arr.tolist().index(train_ks)</span><br><span class="line">j = oft_ks_arr.tolist().index(oft_ks)</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">from</span> matplotlib <span class="keyword">import</span> pyplot <span class="keyword">as</span> plt</span><br><span class="line">plt.plot(train_fpr,train_tpr,label=<span class="string">'train roc'</span>)</span><br><span class="line">plt.plot(train_fpr,abs(train_fpr-train_tpr),label=<span class="string">'train ks'</span>)</span><br><span class="line">plt.scatter(train_fpr[i],abs(train_fpr-train_tpr)[i])</span><br><span class="line"></span><br><span class="line">plt.plot(oft_fpr, oft_tpr,label=<span class="string">'out of time roc'</span>)</span><br><span class="line">plt.plot(oft_fpr, abs(oft_fpr-oft_tpr),label=<span class="string">'out of time ks'</span>)</span><br><span class="line">plt.scatter(oft_fpr[j],abs(oft_fpr-oft_tpr)[j])</span><br><span class="line"></span><br><span class="line">plt.plot([<span class="number">0</span>,<span class="number">1</span>],[<span class="number">0</span>,<span class="number">1</span>],<span class="string">'p-.'</span>)</span><br><span class="line">plt.xlabel(<span class="string">'FPR'</span>)</span><br><span class="line">plt.ylabel(<span class="string">'TPR'</span>)</span><br><span class="line">plt.legend(loc=<span class="string">'best'</span>)</span><br><span class="line">plt.title(<span class="string">'ROC Curve'</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200522172344375.png" alt="image-20200522172344375"></p>
+<h1><span id="psi-qun-ti-wen-ding-xing-zhi-biao"> PSI群体稳定性指标</span><a href="#psi-qun-ti-wen-ding-xing-zhi-biao" class="header-anchor">#</a></h1>
+<h2><span id="psi-population-stability-index-de-ding-yi"> PSI(Population Stability Index)的定义</span><a href="#psi-population-stability-index-de-ding-yi" class="header-anchor">#</a></h2>
+<p>群体稳定性指标PSI(Population Stability Index)是衡量模型的预测值与实际值偏差大小的指标。</p>
+<ul>
+<li>PSI用于<strong>评估模型在训练集和时间外样本集上的稳定性</strong>指标。</li>
+<li>给予的假设是：<strong>如果模型是稳定和有效的，那么在几个数据集上人群的分布也应该是稳定的</strong></li>
+<li>风控行业常用<strong>PSI指标衡量模型或者特征的稳定性，同时也是一种模型效果监控的指标。</strong></li>
+</ul>
+PSI = sum[（实际占比-预期占比）* ln（实际占比/预期占比）]
+
+<p>举例：</p>
+<ul>
+<li>
+<p>比如训练一个logistic回归模型，预测时候会有个概率输出p。</p>
+</li>
+<li>
+<p>以dev为基准，dev上的输出设定为p1，将这个概率值<strong>从小到大排序后10等分</strong>（实际中等频分箱优于等距分箱）。</p>
+</li>
+<li>
+<p>现在用这个模型去对新的样本（val或oft）进行预测，预测结果叫p2，按p1的区间也划分为10等分。</p>
+</li>
+<li>
+<p>实际占比就是p2上在各区间的用户占比，预期占比就是p1上各区间的用户占比。【如果模型是有效的，那么根据p1的区间划分出来的人群占总比和p2划分出来的各个区间的人群占总比应该是大体一致的】</p>
+</li>
+<li>
+<p>意义就是如果模型跟稳定，那么p1和p2上各区间的用户应该是相近的，占比不会变动很大，也就是预测出来的概率不会差距很大。</p>
+</li>
+<li>
+<p><strong>仔细想想，PSI就像是两个分布直方图，求了差值后再求和！越小说明模型在不同数据集上预测结果趋于一致，越稳定！</strong></p>
+</li>
+</ul>
+<p><strong>一般认为PSI小于0.1时候模型稳定性很高，一般认为0.2以下还ok。0.1-0.25一般，大于0.25模型稳定性差，建议重做。</strong><br>
+<strong>分箱每一箱的样本要大致相同，否则若某一箱太少，造成PSI计算时里面的占比会波动，带来不准确</strong></p>
+<ul>
+<li>PS：除了按概率值大小等距十等分外，还可以对概率排序后按数量十等分，两种方法计算得到的psi可能有所区别但数值相差不大。</li>
+</ul>
+<p>应用：</p>
+<ul>
+<li><strong>样本外测试</strong>：
+<ul>
+<li>针对不同的样本测试一下模型稳定度，比如训练集与测试集，也能看出模型的训练情况，我理解是看出模型的方差情况。</li>
+</ul>
+</li>
+<li><strong>时间外测试</strong>：
+<ul>
+<li>测试基准日与建模基准日相隔越远，测试样本的风险特征和建模样本的差异可能就越大，因此PSI值通常较高。至此也可以看出模型建的时间太长了，是不是需要重新用新样本建模了。</li>
+</ul>
+</li>
+<li><strong>模型监控</strong>：
+<ul>
+<li>模型部署上线后，模型的拒绝率越高，线上的KS越低，也就无法体现模型的真实效果，所以常用PSI值监控线上模型与线下模型的差异，从侧面展示模型真实效果与预期效果的偏差。</li>
+</ul>
+</li>
+<li><strong>特征评估</strong>：
+<ul>
+<li>将PSI上面第一步的十等分逻辑换成特征取值的分布，对特征进行分箱</li>
+<li>在val、oft，或者跨时间段计算PSI</li>
+<li>可以评估这个特征随着时间的推移，他的分布是否稳定，考虑是否能将特征代入模型。</li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.sofunnyai.com/article/ks_psi.html" title="模型评价指标KS和PSI" target="_blank" rel="external">https://blog.sofunnyai.com/article/ks_psi.html</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/cartoon_header.jpeg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="" target="_blank"><span class="text-dark">树先生</span><small class="ml-1x">Risk Control Engineer</small></a></h3>
+        <div>一个金融风控软件工程师。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/article/woe-iv.html" title="深入理解woe和iv"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/article/hexo-blog-img-password.html" title="给hexo的博文添加图床、博文加密"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '37d6fe220531a0253492',
+    clientSecret: 'b20bb830af693e7d62e5efe08048c9d42234ba2f',
+    repo: 'liujianchina.github.io',
+    owner: 'liujianchina',
+    admin: ['liujianchina'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>
