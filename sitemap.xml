@@ -2,6 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://blog.sofunnyai.com/article/vintage_rollrate.html</loc>
+    
+    <lastmod>2020-05-24T17:29:23.789Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/vtwo_note.html</loc>
+    
+    <lastmod>2020-05-24T12:11:35.441Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/lets-encrypt.html</loc>
+    
+    <lastmod>2020-05-24T12:08:50.002Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/ks_psi.html</loc>
+    
+    <lastmod>2020-05-23T14:51:07.319Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://blog.sofunnyai.com/article/build-a-blog-base-on-hexo-github.html</loc>
     
     <lastmod>2020-05-23T08:26:59.245Z</lastmod>
@@ -12,13 +40,6 @@
     <loc>https://blog.sofunnyai.com/article/hexo-blog-img-password.html</loc>
     
     <lastmod>2020-05-23T08:22:38.607Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://blog.sofunnyai.com/article/ks_psi.html</loc>
-    
-    <lastmod>2020-05-23T05:31:11.922Z</lastmod>
     
   </url>
   
