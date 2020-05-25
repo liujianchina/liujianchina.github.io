@@ -17,14 +17,16 @@
   <meta http-equiv="window-target" content="_top" />
   
   
-  <title>vintage、rollrate和迁移率 | 树先生的博客</title>
-  <meta name="description" content="概述 基础概念  账龄(Month of Book，MOB) 逾期时间   vintage 成熟期  观察点与表现期： vintage举例   roll rate滚动率  滚动率定义—状态变化   如何确定bad和good标签的账龄  vintage和roll rate的区别：  roll rate已经确定了bad为什么还需要通过Vintage分析来确定表现期？ Vintage里所有的账户">
+  <title>互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等 | 树先生的博客</title>
+  <meta name="description" content="目录#     概述 基础概念  风险分析有常见的5要素： 其他的相关概念   延滞率  即期指标（coincidental）： 递延指标（lagged）：   账龄(Month of Book，MOB) FPD 首逾率（反欺诈相关） 入催率 逾期时间   vintage 成熟期  观察点与表现期： vintage举例   roll rate滚动率  滚动率定义—状态变化   如何确定bad和g">
 <meta property="og:type" content="article">
-<meta property="og:title" content="vintage、rollrate和迁移率">
-<meta property="og:url" content="https://blog.sofunnyai.com/article/vintage_rollrate.html">
+<meta property="og:title" content="互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等">
+<meta property="og:url" content="https://blog.sofunnyai.com/article/vintage_rollrate_fpd.html">
 <meta property="og:site_name" content="树先生的金融风控工程师博客">
-<meta property="og:description" content="概述 基础概念  账龄(Month of Book，MOB) 逾期时间   vintage 成熟期  观察点与表现期： vintage举例   roll rate滚动率  滚动率定义—状态变化   如何确定bad和good标签的账龄  vintage和roll rate的区别：  roll rate已经确定了bad为什么还需要通过Vintage分析来确定表现期？ Vintage里所有的账户">
+<meta property="og:description" content="目录#     概述 基础概念  风险分析有常见的5要素： 其他的相关概念   延滞率  即期指标（coincidental）： 递延指标（lagged）：   账龄(Month of Book，MOB) FPD 首逾率（反欺诈相关） 入催率 逾期时间   vintage 成熟期  观察点与表现期： vintage举例   roll rate滚动率  滚动率定义—状态变化   如何确定bad和g">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525095234158.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525134714438.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/v2-855513c1db679f5602e7a189fb9f6b0a_r.jpg">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200524234256482.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200524234716564.png">
@@ -34,15 +36,16 @@
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525011316858.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525012050344.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525012132819.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525100003972.png">
 <meta property="article:published_time" content="2020-03-21T17:25:33.000Z">
-<meta property="article:modified_time" content="2020-05-24T17:30:29.805Z">
+<meta property="article:modified_time" content="2020-05-25T05:48:49.312Z">
 <meta property="article:author" content="树先生">
 <meta property="article:tag" content="评分卡">
 <meta property="article:tag" content="risk">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/v2-855513c1db679f5602e7a189fb9f6b0a_r.jpg">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525095234158.png">
   <!-- Canonical links -->
-  <link rel="canonical" href="https://blog.sofunnyai.com/article/vintage_rollrate.html">
+  <link rel="canonical" href="https://blog.sofunnyai.com/article/vintage_rollrate_fpd.html">
   
     <link rel="alternate" href="/atom.xml" title="树先生的金融风控工程师博客" type="application/atom+xml">
   
@@ -242,7 +245,7 @@
                 <a class="category-link" href="/categories/risk/">risk</a>
               </p>
               <p class="item-title">
-                <a href="/article/vintage_rollrate.html" class="title">vintage、rollrate和迁移率</a>
+                <a href="/article/vintage_rollrate_fpd.html" class="title">互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等</a>
               </p>
               <p class="item-date">
                 <time datetime="2020-03-21T17:25:33.000Z" itemprop="datePublished">2020-03-22</time>
@@ -330,7 +333,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      vintage、rollrate和迁移率
+      互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等
     </h1>
   
 
@@ -338,7 +341,7 @@
       <div class="article-meta">
         <span class="article-date">
     <i class="icon icon-calendar-check"></i>
-	<a href="/article/vintage_rollrate.html" class="article-date">
+	<a href="/article/vintage_rollrate_fpd.html" class="article-date">
 	  <time datetime="2020-03-21T17:25:33.000Z" itemprop="datePublished">2020-03-22</time>
 	</a>
 </span>
@@ -357,20 +360,33 @@
 
         
 
-        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/vintage_rollrate.html#comments" class="article-comment-link">评论</a></span>
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/vintage_rollrate_fpd.html#comments" class="article-comment-link">评论</a></span>
         
       </div>
     </div>
     <div class="article-entry marked-body" itemprop="articleBody">
       
-        <!--此处生成目录-->
+        <h1><span id="mu-lu"> 目录</span><a href="#mu-lu" class="header-anchor">#</a></h1>
+<!--此处生成目录-->
 <div class="toc">
 <!-- toc -->
 <ul>
 <li><a href="#gai-shu"><strong>概述</strong></a></li>
 <li><a href="#ji-chu-gai-nian"><strong>基础概念</strong></a>
 <ul>
+<li><a href="#feng-xian-fen-xi-you-chang-jian-de-5-yao-su">风险分析有常见的5要素：</a></li>
+<li><a href="#qi-ta-de-xiang-guan-gai-nian">其他的相关概念</a></li>
+</ul>
+<ul>
+<li><a href="#yan-zhi-lu">延滞率</a>
+<ul>
+<li><a href="#ji-qi-zhi-biao-coincidental"><strong>即期指标（coincidental）：</strong></a></li>
+<li><a href="#di-yan-zhi-biao-lagged"><strong>递延指标（lagged）：</strong></a></li>
+</ul>
+</li>
 <li><a href="#zhang-ling-month-of-book-mob">账龄(Month of Book，MOB)</a></li>
+<li><a href="#fpd-shou-yu-lu-fan-qi-zha-xiang-guan">FPD 首逾率（反欺诈相关）</a></li>
+<li><a href="#ru-cui-lu">入催率</a></li>
 <li><a href="#yu-qi-shi-jian">逾期时间</a></li>
 </ul>
 </li>
@@ -402,12 +418,13 @@
 <li><a href="#zhun-bei-jin-bi-li">准备金比例</a></li>
 </ul>
 </li>
-<li><a href="#bei-zhu">备注：</a></li>
+<li><a href="#zi-chan-zu-he-guan-li-xiang-guan">资产组合管理相关</a></li>
+<li><a href="#can-kao-wen-zhang-lian-jie">参考文章链接：</a></li>
 </ul>
 <!-- tocstop -->
 </div>
 <h1><span id="gai-shu"> <strong>概述</strong></span><a href="#gai-shu" class="header-anchor">#</a></h1>
-<p>想写一个vintage和roll rate的文章，查到求是汪大佬写的非常详细，图文并茂。本着不用重复造轮子的实现，直接偷懒摘录了一个脱水版，想看原文的在<a href="https://zhuanlan.zhihu.com/p/81027037/" target="_blank" rel="noopener">这里</a>。下面开始干货。</p>
+<p>想写一个vintage和roll rate的文章，查到求是汪大佬写的非常详细，图文并茂。直接偷懒摘录了一个脱水版，想看原文的在<a href="https://zhuanlan.zhihu.com/p/81027037/" target="_blank" rel="noopener">这里</a>。下面开始干货。</p>
 <p>本文主要讲述账龄vantage、滚动率roll rate、迁移率flow rate三个指标的关系。</p>
 <ul>
 <li>账龄分析（Vintage Analysis）：用以分析账户成熟期、变化规律等。</li>
@@ -415,6 +432,71 @@
 <li>迁移率分析（Flow Rate Analysis）：用以分析不同逾期状态之间的转化率。</li>
 </ul>
 <h1><span id="ji-chu-gai-nian"> <strong>基础概念</strong></span><a href="#ji-chu-gai-nian" class="header-anchor">#</a></h1>
+<h3><span id="feng-xian-fen-xi-you-chang-jian-de-5-yao-su"> 风险分析有常见的5要素：</span><a href="#feng-xian-fen-xi-you-chang-jian-de-5-yao-su" class="header-anchor">#</a></h3>
+<ol>
+<li>下单月：</li>
+<li>观察月：</li>
+<li>放款额（GMV）：就是零售业说的“流水”，成交总额包括销售额、取消订单金额、拒收订单 金额和退货订单金额。</li>
+<li>在贷余额（Balance）/ ENR：至某时点借款人尚未偿还的本金</li>
+<li>逾期天数（DPD）</li>
+</ol>
+<h3><span id="qi-ta-de-xiang-guan-gai-nian"> 其他的相关概念</span><a href="#qi-ta-de-xiang-guan-gai-nian" class="header-anchor">#</a></h3>
+<ol>
+<li>C,M1,M2,M3…的贷款余额：根据逾期期数(C,M1,M2,M3…)，计算每条借款的当时的贷款余额。（<strong>贷款余额 = 放款时合同额 –已还本金</strong>）</li>
+<li>核销金额: 贷款逾期M7+（坏账）后经审核进行销帐，核销金额即在核销日期当天的贷款余额。</li>
+<li>回收金额 Recovery：来自历史所有已核销合同的全部实收金额。（核销后又回收的部分）</li>
+<li>净坏账 NCL：当月新增核销金额 – 当月回收金额（坏账减去回收）</li>
+</ol>
+<h2><span id="yan-zhi-lu"> 延滞率</span><a href="#yan-zhi-lu" class="header-anchor">#</a></h2>
+<p>延滞率（delinquent%）的计算可分为coincidental以及lagged两种方式，除了各bucket延滞率之外，也会观察特定bucket以上的延滞率，如M2+lagged%以及M4+lagged%等指标，以M2+lagged%为例，分母为两个月前应收账款，分子为本月M2（含）以上尚未转呆账的逾期金额。</p>
+<p>在消费金融风险管理上，M2以及M4为两个重要的观测点，原因是客户可能因为一时忙碌或疏忽造成账款逾期，但若经过M1催收仍旧落入M2以上，几乎可以确认为无力缴款或者蓄意拖欠。另外依据经验，客户一旦落入M4，事后转呆账几率非常高。</p>
+<p>下面部分来自知乎<a href="https://www.zhihu.com/question/51583052/answer/194923434" target="_blank" rel="noopener">京东白条</a>的回复：</p>
+<p>逾期率有两种方法：<strong>即期逾期率指标</strong>Coin(X)%和<strong>递延逾期率指标</strong>Lagged(X)%</p>
+<p>这个指标分子 = 时点逾期余额，分母 = 时点透支余额。逾期率最直观，但也最容易被“操控”：</p>
+<p>分子会受到统计粒度的影响（以客户/账户/贷款单/贷款分期单哪个粒度来计算差异很大，尤其是偏重分期的产品），也会受到核销等资产处置的影响（是否有核销处理、统计时是否包含）。</p>
+<p>分母会受到当期时点规模的影响，季末/年末冲量或特殊的营销时点上，都会导致规模的激增，人为拉低时点的逾期率。</p>
+<p>在产品高速发展时期，规模增长迅速，而风险滞后释放，导致对风险的低估和滞后判断；而在产品成熟和衰退期，导致对风险的高估，容易误导风险策略的制定。</p>
+<p>由于上述原因的存在，一般逾期率只能说明累积的整体风险水平如何。如果根据时点的不良率判断近期风险水平，存在高估/低估的可能。-------------逾期率只能是整体一个粗略的观察，具体来说逾期的结构更重要。</p>
+<p>如果一定要用时点余额来判断近期的风险，建议使用延滞率或逾期的净生成率：</p>
+<p>Mi延滞率=当期Mi/i月前的M0</p>
+<p>Mi净生成率=(当期Mi-i月前的Mi)/i月前的透支余额</p>
+<p>这两个指标至少能在一定程度上排除当期时点规模、历史存量的影响，能更真实反映近期的风险水平。</p>
+<h4><span id="xin-zeng-ke-hu-zi-chan-de-feng-xian-shui-ping-ru-he"> 新增客户/资产的风险水平如何？</span><a href="#xin-zeng-ke-hu-zi-chan-de-feng-xian-shui-ping-ru-he" class="header-anchor">#</a></h4>
+<p>整体的逾期率并不一定能回答或甄别近期客户/资产的风险水平。需要通过VINTAGE拆解客户和资产，观察相同的表现期后不同客群/资产的逾期占比，例如激活或放款后1~24个月各月月末时点的0+/30+/90+贷款户数和金额或余额的占比。</p>
+<p>通过对比不同激活月或放款月在相同的表现窗口后的逾期水平，能观察不同激活月/放款月（对应了不同的策略或人群）的风险走势，更合理评价不同时点人群/资产的情况和策略的效果。</p>
+<p>如果运营是针对的客户的，按照激活时间划分客群统计VINTAGE更通用一些；如果是针对资产进行运营，按照贷款的放款月划分资产统计VINTAGE更通用一些。</p>
+<h4><span id="cun-liang-zi-chan-de-qian-yi-qing-kuang"> 存量资产的迁移情况？</span><a href="#cun-liang-zi-chan-de-qian-yi-qing-kuang" class="header-anchor">#</a></h4>
+<p>除了需要时刻关注新增的风险外，也需要掌握已经逾期资产的迁移/退出情况，也就是滚动率(或者迁徙率、迁移率)。</p>
+<p>滚动率一方面体现了客群和资产的质量，也能反映催收运营的状况。</p>
+<p>常见的滚动率一般是当期账龄余额与上一期上一账龄余额的比值，用百分比表示。账龄越高，滚动率越高，表示资产回收的可能性越低，进入下一期高账龄的概率越高。</p>
+<p>滚动率也可以进一步细分为向上/向下滚动，一般默认的滚动率都是向上滚动，即从低账龄滚到高账龄。向上/向下滚动需要锁定月末时点某一账龄的客户/资产，在下月底观察锁定的这部分客户或资产，统计向上/向下滚动的占比，能排除统计粒度和分期带来的降期影响。</p>
+<p>另外，滚动率与产品、前中后的运营等诸多因素有关，短期容易波动，可以计算复合滚动率，例如M0-&gt;M4的滚动率，能从长周期来观察资产质量和运营的稳定水平。</p>
+<h3><span id="ji-qi-zhi-biao-coincidental"> <strong>即期指标（coincidental）：</strong></span><a href="#ji-qi-zhi-biao-coincidental" class="header-anchor">#</a></h3>
+<p>计算延滞率时常用的两种方法之一，以当期各bucket延滞金额÷应收账款（AR）。</p>
+<p>如逾期率Coin©%、Coin(M1)%、Coin(M2)%、Coin(M3)%等等：</p>
+<p><strong>当月不同逾期期数的贷款余额/当月底总贷款余额</strong></p>
+<p>例：</p>
+<p>Coin©%=当月C贷款余额/当月底贷款余额(C-M6)-------------------正常用户余额占所有贷款余额</p>
+<p><strong>Coin(M1)%=当月M1贷款余额/当月底贷款余额(C-M6)</strong></p>
+<p>Coin(M1+)%=当月M1−M6贷款余额/当月底贷款余额(C-M6)------------------逾期M1以上的用户余额占所有贷款余额</p>
+<h3><span id="di-yan-zhi-biao-lagged"> <strong>递延指标（lagged）：</strong></span><a href="#di-yan-zhi-biao-lagged" class="header-anchor">#</a></h3>
+<p>计算延滞率时常用的两种方法之一，<strong>延滞金额÷上月应收账款</strong>。若单纯想了解各月资产质量结构，可使用coindental，但若想<strong>精准溯及逾放源头的话，建议采用lagged。</strong></p>
+<p>与coincident相同也是计算延滞率的一个指标，区别是<strong>lagged的分母为产生逾期金额的那一期的应收账款。Lagged观察的是放贷当期所产生的逾期比率，所以不受本期应收账款的起伏所影响。</strong></p>
+<p>逾期率Lagged(M1)%、Lagged(M2)%、Lagged(M3)%、Lagged(M4)%、Lagged(M5)%、Lagged(M6)%</p>
+<p><strong>Lagged DPD30+   =    当前逾期&gt;=30天的客户的本金余额  /  30天前的累计放款本金</strong></p>
+<p><strong>当月不同逾期期数的贷款余额/往前推N个月的总贷款余额</strong>可以提出当前时点的影响。</p>
+<p>例:</p>
+<p><strong>Lagged(M1)%=当月M1的贷款余额/上个月底时点的贷款余额</strong>  -----------------其实就是平台当月M1/1月前的M0</p>
+<p>Lagged(M4)%=当月M4的贷款余额/往前推四期的总贷款余额</p>
+<p>Lagged(M4+)%=当月M4的贷款余额/往前推四期的总贷款余额 + 当月M5的贷款余额/往前推五期的总贷款余额 + 当月M6的贷款余额/往前推六期的总贷款余额</p>
+<h4><span id="yu-qi-jie-suan"> 逾期结算</span><a href="#yu-qi-jie-suan" class="header-anchor">#</a></h4>
+<p>实际风险有两种结算方式：</p>
+<p><strong>Month end</strong>：月底结算 （常用方式，主要以自然月月底的逾期指标为主）</p>
+<p><strong>Cycle end</strong>：期末结算（单个借款人还款日时间不同，在月底结算的数据不准确，所以一般设置20日还款，留出10天给催收部门）</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525095234158.png" alt="image-20200525095234158"></p>
+<p>早期逾期多数为借款人忘记还款，或短时间资金周转不周，这是<strong>与策略密切相关的。通过借款人债偿能力评估识别出借款人有足够资金，可以不做提醒，以获取滞纳金，对于借款人资产表现不好的，可以设置提前10天提醒还款。</strong></p>
+<p>逾期天数90-119天，为资产M4阶段。<strong>M4-M6的阶段都称之为不良</strong>。M4是一个重要的节点，因为消金公司，上报给银监会，或上市公司披露财务数据、风险数据时，都会选择披露不良率。如果有些公司要在审计认可这个方法论时，会对M4做一些调整。</p>
+<p>通常<strong>180天以上都作为坏账处理</strong>，坏账也是被披露的数据之一，还包含一些特别的计提。</p>
 <h2><span id="zhang-ling-month-of-book-mob"> 账龄(Month of Book，MOB)</span><a href="#zhang-ling-month-of-book-mob" class="header-anchor">#</a></h2>
 <p>指<strong>资产放款月份</strong>。放款日截止观察点的月数。如：</p>
 <ul>
@@ -422,6 +504,15 @@
 <li>MOB1：放款后第二个完整的月份</li>
 <li>MOB2：放款后第三个完整的月份</li>
 </ul>
+<h2><span id="fpd-shou-yu-lu-fan-qi-zha-xiang-guan"> FPD 首逾率（反欺诈相关）</span><a href="#fpd-shou-yu-lu-fan-qi-zha-xiang-guan" class="header-anchor">#</a></h2>
+<p>FPD是指首期逾期率，是说在某一个还款日，仅第一期到期的客户中有多少没有按时还款。与入催率的差别在于，入催率包含了第一期、第二期、第三期等等所有到期的M0。FPD一般用来做反欺诈，因为欺诈用户他第一期是根本不会还款的。</p>
+<p>用户授信通过后，首笔需要还款的账单，在最后还款日后7天内未还款且未办理延期的客户比例即为FPD 7，分子为观察周期里下单且已发生7日以上逾期的用户数，分母为当期所有首笔下单且满足还款日后7天，在观察周期里的用户数。常用的FPD指标还有FPD 30。<br>
+举例：</p>
+<p>假设用户在10.1日授信通过，在10.5日通过分期借款产生了首笔分3期的借款，且设置每月8日为还款日。则11.08是第一笔账单的还款日，出账日后，还款日结束前还款则不算逾期。如11.16仍未还款，则算入10.1-10.30周期的FPD7的分子内。通常逾期几天的用户可能是忘了还款或一时手头紧张，但FPD 7 指标可以用户来评价授信人群的信用风险，对未来资产的健康度进行预估。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525134714438.png" alt="image-20200525134714438"></p>
+<p>与FPD 7 类似，FPD 30也是对用户首笔待还账单逾期情况进行观察的指标。对于逾期30天内的用户，可以通过加大催收力度挽回一些损失，对于逾期30天以上的用户，催收回款的几率就大幅下降了，可能进行委外催收。如果一段时间内的用户FPD 7较高，且较少催收回款大多落入了FPD 30 内，则证明这批用户群的non-starter比例高，借款时压根就没想还，反之则说明用户群的信用风险更严重。</p>
+<h2><span id="ru-cui-lu"> 入催率</span><a href="#ru-cui-lu" class="header-anchor">#</a></h2>
+<p>有了前面的铺垫，入催率就比较简单了。它指的是在某一个还款日，客户从M0变成M1的比例。比如说，今天，有N个M0客户到了还款日，里面有M个客户按时还款了，那么今天的入催率就是（N-M）/N。它与上面的FPD是有区别的。</p>
 <h2><span id="yu-qi-shi-jian"> 逾期时间</span><a href="#yu-qi-shi-jian" class="header-anchor">#</a></h2>
 <p>DPD、M0（未逾期）、M1（逾期一个月类）、M2（逾期两个月内）。。。</p>
 <p>一般M3+就要委外了，M6+(180天以上)就要记为坏账了。</p>
@@ -599,10 +690,87 @@
 <p>在本案例中，当月应计拨备额为65421元，如图13所示。拨备率为：</p>
 <p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mfrac><mrow><mn>6</mn><mn>5</mn><mn>4</mn><mn>2</mn><mn>1</mn></mrow><mrow><mn>2</mn><mn>6</mn><mn>2</mn><mn>5</mn><mn>0</mn><mn>9</mn><mn>1</mn></mrow></mfrac><mo>=</mo><mn>2</mn><mi mathvariant="normal">.</mi><mn>4</mn><mn>9</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">\frac{65421}{2625091}=2.49\%
 </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.32144em;"></span><span class="strut bottom" style="height:2.00744em;vertical-align:-0.686em;"></span><span class="base displaystyle textstyle uncramped"><span class="mord reset-textstyle displaystyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.686em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle cramped"><span class="mord textstyle cramped"><span class="mord mathrm">2</span><span class="mord mathrm">6</span><span class="mord mathrm">2</span><span class="mord mathrm">5</span><span class="mord mathrm">0</span><span class="mord mathrm">9</span><span class="mord mathrm">1</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.677em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped"><span class="mord textstyle uncramped"><span class="mord mathrm">6</span><span class="mord mathrm">5</span><span class="mord mathrm">4</span><span class="mord mathrm">2</span><span class="mord mathrm">1</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mrel">=</span><span class="mord mathrm">2</span><span class="mord mathrm">.</span><span class="mord mathrm">4</span><span class="mord mathrm">9</span><span class="mord mathrm">%</span></span></span></span></span></p>
-<h1><span id="bei-zhu"> 备注：</span><a href="#bei-zhu" class="header-anchor">#</a></h1>
-<p>本文基本上是总结自求是汪大佬的知乎等网络资料。</p>
+<h1><span id="zi-chan-zu-he-guan-li-xiang-guan"> 资产组合管理相关</span><a href="#zi-chan-zu-he-guan-li-xiang-guan" class="header-anchor">#</a></h1>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525100003972.png" alt="image-20200525100003972"></p>
+<p>根据风控成因分类：信用风险、欺诈风险。信用风险主要是用户因为各种原因导致逾期而存在的风险，欺诈风险就是黑产欺诈团队的攻击对公司造成的风险，通过设置规则来拦截高风险用户。</p>
+<p>生命周期分为三类：</p>
+<ol>
+<li>拓展客户期（学校刚成立时，既要招生，又要有教材支撑）</li>
+<li>审批客户期（学习成绩、平时表现）</li>
+<li>管理客户期（对学生进行管理）</li>
+</ol>
+<p><strong>拓展客户期</strong>需要三个方面的支持</p>
+<ol>
+<li>
+<p>目标用户：</p>
+<p>适用于拨备segment的风险分级或用户画像支持（拨备与财务挂钩）</p>
+</li>
+<li>
+<p>目标产品：</p>
+<p>风险分级对应期数、利率支持</p>
+</li>
+<li>
+<p>资产配置有效性分析</p>
+</li>
+</ol>
+<p>资金成本、获客成本、运营成本，在放贷还没开始的时候，就已经由资产管理部门估算确定下来了。后续需要技术来创造价值的，主要是风控的坏账成本，所以资产管理部会用拨备工具来给予支持。</p>
+<p>在一个产品刚产生的时候，资产管理部门需要给出关于目标客户的年龄身份，期数，利率的建议；放款后，又需要从其他金融机构拉资金，债权转让等。每一个公司的要求都不一样，我们需要给出推荐，哪一些标的推荐给哪一些公司，如何进行资源组合配置。</p>
+<p><strong>审批客户期</strong></p>
+<p>主要由贷前策略实施，资产组合管理部门可提供<strong>盈利性测算支持，并做好监控、预测、预警系统，当准入用户风险状况超阈值，需提出干预。</strong></p>
+<p><strong>资金成本、获客成本、运营成本</strong>，在<strong>放贷还没开始</strong>的时候，就已经由<strong>资产管理部门估算</strong>确定下来了。后续需要技术来创造价值的，主要是<strong>风控的坏账成本</strong>，所以资产管理部会用<strong>拨备工具</strong>来给予支持。</p>
+<p>在一个产品刚产生的时候，**资产管理部门需要给出关于目标客户的年龄身份，期数，利率的建议；**放款后，又需要从其他金融机构拉资金，债权转让等。每一个公司的要求都不一样，我们需要给出推荐，<strong>哪一些标的推荐给哪一些公司，如何进行资源组合配置。</strong></p>
+<p><strong>审批客户期</strong></p>
+<p>主要由贷前策略实施，资产组合管理部门可提供盈利性测算支持，并做好监控、预测、预警系统，当准入用户风险状况超阈值，需提出干预。</p>
+<p><strong>管理客户期</strong></p>
+<p>1.指标方面：新增/存量、风险/规模指标</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>风险</th>
+<th>规模</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>新增</td>
+<td>vintage、FPD</td>
+<td>GMV</td>
+</tr>
+<tr>
+<td>存量</td>
+<td>roll rate、coincident dpd、lagging dpd、badrate</td>
+<td>在贷余额</td>
+</tr>
+</tbody>
+</table>
+<p>2.策略方面：主要由贷中贷后策略实施，可提供盈利性测算支持，并做好监控、预测、预警系统，风险状况超阈值，需提出干预。</p>
+<p><strong>资产组合管理作为支撑部门，支撑什么</strong>？</p>
+<ol>
+<li>风险计量</li>
+<li>策略规则上线</li>
+<li>模型效力验证</li>
+<li>向CRO提供各种专题类或临时性分析</li>
+<li>…</li>
+</ol>
+<p>风险计量主要是数据分析，报表，专题性报告，为了规避、减少风险，策略实施者和策略制定者需要分为2个部门。资产管理部门接到业务部门提交的需求，然后根据内容做一些空跑，监控。同时大的模型开发与模型验证也是两个部门，需要资产管理部对模型做持续的监控与评估。统筹贷前、贷中、贷后的数据给到CRO。</p>
+<p><strong>05.资产组合管理有哪些厉害的招数？</strong></p>
+<p>资产组合管理有三个法宝，之后的分享中我会再详细描述，可以先带着问题去思考。</p>
+<p>1.拨备准备金</p>
+<p>思考：实际风险与名义风险的区别？</p>
+<p>2.风险分级(用户画像)</p>
+<p>思考：有了评分卡模型为什么还要做风险分级?</p>
+<p>3.监控、预测、预警系统</p>
+<p>思考：资产组合管理报表和业务部门（贷前、中、后）的不同点？</p>
+<p><strong>本次分享总结</strong></p>
+<p>1.资产组合管理部门不同于传统的风控业务部门，而是直属于CRO的信息整合部门；</p>
+<p>2.资产组合管理贯穿于客户及产品的全生命周期，需要从业者极强的沟通能力；</p>
+<p>3.作为支撑部门，资产组合管理部需要运用数据分析把控公司全局资产质量，除此之外还需要以降低作业风险的目的为模型或策略设置二次防线。</p>
+<p>4.资产组合管理部门是小白进入金融风控核心岗位的捷径，可以快速的积累风控经验，之后如果转岗策略或模型，都比较容易。</p>
+<h1><span id="can-kao-wen-zhang-lian-jie"> 参考文章链接：</span><a href="#can-kao-wen-zhang-lian-jie" class="header-anchor">#</a></h1>
 <blockquote>
 <p><a href="https://zhuanlan.zhihu.com/p/81027037/" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/81027037/</a></p>
+<p><a href="https://blog.csdn.net/liulj_0803/article/details/52964473" target="_blank" rel="noopener">https://blog.csdn.net/liulj_0803/article/details/52964473</a></p>
 <p><a href="https://www.zhihu.com/question/51583052" target="_blank" rel="noopener">https://www.zhihu.com/question/51583052</a>  这里也有很多干货</p>
 </blockquote>
 
@@ -614,7 +782,7 @@
     
     <li class="post-copyright-link hidden-xs">
       <strong>本文链接：</strong>
-      <a href="https://blog.sofunnyai.com/article/vintage_rollrate.html" title="vintage、rollrate和迁移率" target="_blank" rel="external">https://blog.sofunnyai.com/article/vintage_rollrate.html</a>
+      <a href="https://blog.sofunnyai.com/article/vintage_rollrate_fpd.html" title="互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等" target="_blank" rel="external">https://blog.sofunnyai.com/article/vintage_rollrate_fpd.html</a>
     </li>
     
     <li class="post-copyright-license">
