@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>风控策略相关的一切 | 树先生的博客</title>
+  <meta name="description" content="风控策略概要  什么是风控审批策略  其中多维度数据的策略规则包括：   风控审批策略的目的  风控审批策略的作用 风控审批策略的类别 风控的基本量化指标 确定目标变量 制定风控审批策略 策略预估 策略监控 策略回顾     风控策略分析师  日常工作内容 必备技能 核心作用 策略分析常见工作场景与对应分析方法 三方数据测评  举例—黑名单数据评测   准入策略的制定  年龄准入策略 地区">
+<meta property="og:type" content="article">
+<meta property="og:title" content="风控策略相关的一切">
+<meta property="og:url" content="https://blog.sofunnyai.com/article/strategy.html">
+<meta property="og:site_name" content="树先生的金融风控工程师博客">
+<meta property="og:description" content="风控策略概要  什么是风控审批策略  其中多维度数据的策略规则包括：   风控审批策略的目的  风控审批策略的作用 风控审批策略的类别 风控的基本量化指标 确定目标变量 制定风控审批策略 策略预估 策略监控 策略回顾     风控策略分析师  日常工作内容 必备技能 核心作用 策略分析常见工作场景与对应分析方法 三方数据测评  举例—黑名单数据评测   准入策略的制定  年龄准入策略 地区">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525145244445.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525150653791.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525150737830.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/640">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525160850020.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525160913346.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525161216545.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525161544954.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525162143545.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525162807285.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525163158091.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525163345465.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525162923974.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525163500790.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525163605116.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525163737375.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525163801595.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525164330196.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525165245788.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525170055587.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525170130273.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525170208464.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525170257437.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525170317997.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525170640285.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525171048451.png">
+<meta property="article:published_time" content="2020-04-15T06:37:22.000Z">
+<meta property="article:modified_time" content="2020-05-25T09:22:58.773Z">
+<meta property="article:author" content="树先生">
+<meta property="article:tag" content="risk">
+<meta property="article:tag" content="strategy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525145244445.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.sofunnyai.com/article/strategy.html">
+  
+    <link rel="alternate" href="/atom.xml" title="树先生的金融风控工程师博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="" target="_blank">
+          <img class="img-circle img-rotate" src="/images/cartoon_header.jpeg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">树先生</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Risk Control Engineer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎讨论金融风控业务和工程技巧</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/v2/">v2</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/private/" rel="tag">private</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/risk/" rel="tag">risk</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/strategy/" rel="tag">strategy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/v2/" rel="tag">v2</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/hexo/" style="font-size: 14px;">hexo</a> <a href="/tags/private/" style="font-size: 13px;">private</a> <a href="/tags/risk/" style="font-size: 13.5px;">risk</a> <a href="/tags/strategy/" style="font-size: 13px;">strategy</a> <a href="/tags/v2/" style="font-size: 13px;">v2</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13.5px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13.5px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 14px;">评分卡</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13px;">运维</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13.5px;">闲杂</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2009/09/">九月 2009</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/strategy.html" class="title">风控策略相关的一切</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-04-15T06:37:22.000Z" itemprop="datePublished">2020-04-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/vintage_rollrate_fpd.html" class="title">互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-21T17:25:33.000Z" itemprop="datePublished">2020-03-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/lets-encrypt.html" class="title">let&#39;s-encrypt配置网站免费SSL证书</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2019-07-13T18:44:23.000Z" itemprop="datePublished">2019-07-14</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/IO/">IO</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/io-basic-socket-tcp.html" class="title">IO基础：socket和TCP</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-09-12T12:12:26.000Z" itemprop="datePublished">2018-09-12</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/woe-iv.html" class="title">深入理解woe和iv</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2018-01-14T03:10:14.000Z" itemprop="datePublished">2018-01-14</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-strategy" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      风控策略相关的一切
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/article/strategy.html" class="article-date">
+	  <time datetime="2020-04-15T06:37:22.000Z" itemprop="datePublished">2020-04-15</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/risk/">risk</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/risk/" rel="tag">risk</a>, <a class="article-tag-link" href="/tags/strategy/" rel="tag">strategy</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/strategy.html#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <!--此处生成目录-->
+<div class="toc">
+<!-- toc -->
+<ul>
+<li><a href="#feng-kong-ce-lue-gai-yao">风控策略概要</a>
+<ul>
+<li><a href="#shi-me-shi-feng-kong-shen-pi-ce-lue">什么是风控审批策略</a>
+<ul>
+<li><a href="#qi-zhong-duo-wei-du-shu-ju-de-ce-lue-gui-ze-bao-gua">其中多维度数据的<strong>策略规则</strong>包括：</a></li>
+</ul>
+</li>
+<li><a href="#feng-kong-shen-pi-ce-lue-de-mu-de">风控审批策略的目的</a>
+<ul>
+<li><a href="#feng-kong-shen-pi-ce-lue-de-zuo-yong">风控审批策略的作用</a></li>
+<li><a href="#feng-kong-shen-pi-ce-lue-de-lei-bie">风控审批策略的类别</a></li>
+<li><a href="#feng-kong-de-ji-ben-liang-hua-zhi-biao">风控的基本量化指标</a></li>
+<li><a href="#que-ding-mu-biao-bian-liang">确定目标变量</a></li>
+<li><a href="#zhi-ding-feng-kong-shen-pi-ce-lue">制定风控审批策略</a></li>
+<li><a href="#ce-lue-yu-gu">策略预估</a></li>
+<li><a href="#ce-lue-jian-kong">策略监控</a></li>
+<li><a href="#ce-lue-hui-gu">策略回顾</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#feng-kong-ce-lue-fen-xi-shi">风控策略分析师</a>
+<ul>
+<li><a href="#ri-chang-gong-zuo-nei-rong">日常工作内容</a></li>
+<li><a href="#bi-bei-ji-neng">必备技能</a></li>
+<li><a href="#he-xin-zuo-yong">核心作用</a></li>
+<li><a href="#ce-lue-fen-xi-chang-jian-gong-zuo-chang-jing-yu-dui-ying-fen-xi-fang-fa">策略分析常见工作场景与对应分析方法</a></li>
+<li><a href="#san-fang-shu-ju-ce-ping">三方数据测评</a>
+<ul>
+<li><a href="#ju-li-hei-ming-dan-shu-ju-ping-ce">举例—黑名单数据评测</a></li>
+</ul>
+</li>
+<li><a href="#zhun-ru-ce-lue-de-zhi-ding">准入策略的制定</a>
+<ul>
+<li><a href="#nian-ling-zhun-ru-ce-lue"><strong>年龄准入策略</strong></a></li>
+<li><a href="#di-qu-zhun-ru-ce-lue"><strong>地区准入策略</strong></a></li>
+<li><a href="#bai-ming-dan-ce-lue">白名单策略</a></li>
+<li><a href="#hei-ming-dan-ce-lue">黑名单策略</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#gui-ze-yu-zhi-cutoff-ru-he-she-ding"><strong>规则阈值cutoff如何设定</strong></a>
+<ul>
+<li><a href="#bei-jing">背景</a></li>
+<li><a href="#di-yi-bu-tong-guo-ping-fen-zhao-dao-feng-xian-bei-di-gu-de-qu-jian"><em>第一步：通过评分找到风险被低估的区间</em></a></li>
+<li><a href="#di-er-bu-ping-gu-ni-ju-jue-ren-qun-de-shou-yi-feng-xian-bi"><em>第二步，评估拟拒绝人群的收益/风险比</em></a></li>
+</ul>
+</li>
+<li><a href="#tong-guo-lu-xia-jiang-de-ce-lue-diao-zheng">通过率下降的策略调整</a>
+<ul>
+<li><a href="#1-xun-zhao-tong-guo-lu-xia-jiang-de-shi-jian-dian-huo-shi-jian-duan">1.寻找通过率下降的时间点或时间段</a></li>
+<li><a href="#2-pan-duan-ce-lue-jie-dian-zhu-ci-yao-ju-jue-ying-xiang">2.判断策略节点主次要拒绝影响</a></li>
+<li><a href="#3-cong-jie-dian-ju-jiao-dao-jie-dian-gui-ze-ceng-shen-du-fen-xi"><em>3.从节点聚焦到节点规则层深度分析</em></a></li>
+<li><a href="#4-ju-ti-gui-ze-fen-bu-fen-xi"><em>4.具体规则分布分析</em></a></li>
+<li><a href="#5-fen-xi-zhi-dao-jue-ce"><em>5.分析指导决策</em></a></li>
+</ul>
+</li>
+<li><a href="#yu-qi-lu-shang-sheng-de-ce-lue-diao-zheng">逾期率上升的策略调整</a>
+<ul>
+<li><a href="#di-yi-bu-que-ding-cun-liang-huan-shi-xin-zeng-ke-hu-dao-zhi-yu-qi-shang-sheng"><strong>第一步：确定存量还是新增客户导致逾期上升</strong></a></li>
+<li><a href="#di-er-bu-duo-wei-du-fen-xi-zhao-chu-zui-zhu-yao-ying-xiang-gui-ze"><strong>第二步：多维度分析，找出最主要影响规则</strong></a></li>
+<li><a href="#di-san-bu-zhi-ding-ce-lue-diao-zheng-fang-an"><strong>第三步：制定策略调整方案</strong></a></li>
+</ul>
+</li>
+<li><a href="#xin-yong-duo-tou-ce-lue">信用多头策略</a>
+<ul>
+<li><a href="#1-shi-me-shi-duo-tou-jie-dai"><strong>1.什么是多头借贷</strong></a></li>
+<li><a href="#2-duo-tou-jie-dai-shu-ju-de-fen-xi-fang-fa"><strong>2.多头借贷数据的分析方法</strong></a></li>
+<li><a href="#3-duo-tou-jie-dai-shu-ju-wei-he-shao-yong-yu-mo-xing"><strong>3.多头借贷数据为何少用于模型</strong></a></li>
+<li><a href="#4-duo-tou-jie-dai-shu-ju-zai-ce-lue-gui-ze-shang-de-ying-yong"><strong>4.多头借贷数据在策略规则上的应用</strong></a></li>
+</ul>
+</li>
+<li><a href="#ping-fen-de-ce-lue-ying-yong">评分的策略应用</a>
+<ul>
+<li><a href="#ping-fen-qia-mo-xing-de-yun-yong-zhu-yao-shi-wei-liao-jie-jue-liang-da-wen-ti">评分卡模型的运用，主要是为了解决两大问题：</a></li>
+</ul>
+<ul>
+<li><a href="#ping-fen-mo-xing-de-cutoff">评分模型的cutoff</a></li>
+</ul>
+</li>
+<li><a href="#mo-xing-yu-ce-lue-de-guan-xi">模型与策略的关系</a>
+<ul>
+<li><a href="#mo-xing-shi-fou-ke-yi-ti-dai-suo-you-de-ce-lue-gui-ze">模型是否可以替代所有的策略规则?</a>
+<ul>
+<li><a href="#ce-lue-gui-ze-ping-fen-mo-xing">策略规则+评分模型</a></li>
+<li><a href="#ce-lue-gui-ze-mo-xing-gui-ze">策略规则+模型规则</a></li>
+<li><a href="#ce-lue-gui-ze-de-cu-fang-shi-guan-li"><strong>策略规则的粗放式管理</strong></a></li>
+</ul>
+</li>
+<li><a href="#ping-fen-mo-xing-de-chang-jian-san-chong-mang-qu"><strong>评分模型的常见三种盲区</strong></a>
+<ul>
+<li><a href="#jian-mo-shu-ju-ji-yu-shi-ji-dai-kuan-ren-zhi-jian-cun-zai-pian-chai"><strong>建模数据集与实际贷款人之间存在偏差</strong></a></li>
+<li><a href="#mo-xing-shu-ju-ji-lai-zi-li-shi-yu-wei-lai-shi-ji-qing-kuang-cun-zai-pian-chai"><strong>模型数据集来自历史，与未来实际情况存在偏差</strong></a></li>
+<li><a href="#mo-xing-dui-yu-mu-biao-bian-liang-de-jie-ding-yu-shi-ji-shang-ye-mu-biao-cun-zai-pian-chai"><strong>模型对于目标变量的界定与实际商业目标存在偏差</strong></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<!-- tocstop -->
+</div>
+<blockquote>
+<p>精简摘录自微信公众号：金科应用研院，有精简</p>
+</blockquote>
+<h1><span id="feng-kong-ce-lue-gai-yao"> 风控策略概要</span><a href="#feng-kong-ce-lue-gai-yao" class="header-anchor">#</a></h1>
+<h2><span id="shi-me-shi-feng-kong-shen-pi-ce-lue"> 什么是风控审批策略</span><a href="#shi-me-shi-feng-kong-shen-pi-ce-lue" class="header-anchor">#</a></h2>
+<p>基于数据分析在申请阶段制定各式各样多维度的<strong>策略和规则</strong>;</p>
+<h3><span id="qi-zhong-duo-wei-du-shu-ju-de-ce-lue-gui-ze-bao-gua"> 其中多维度数据的<strong>策略规则</strong>包括：</span><a href="#qi-zhong-duo-wei-du-shu-ju-de-ce-lue-gui-ze-bao-gua" class="header-anchor">#</a></h3>
+<ol>
+<li>社交及短信维度规则</li>
+<li>移动设备维度规则</li>
+<li>外部数据源（如：征信报告、各种黑名单来源）规则</li>
+<li>多维度评分卡规则</li>
+<li>行为数据(设备信息、注册时间、登陆时间)规则</li>
+</ol>
+<h2><span id="feng-kong-shen-pi-ce-lue-de-mu-de"> 风控审批策略的目的</span><a href="#feng-kong-shen-pi-ce-lue-de-mu-de" class="header-anchor">#</a></h2>
+<p>在贷前审批减少风险事件的发生的各种可能性，挽回风险事件时造成的损失。较大的程度上筛选过滤高风险客户，保留低风险客户予以营销。针对客群分级实行个性化的审批流程，提高审批效率。</p>
+<h3><span id="feng-kong-shen-pi-ce-lue-de-zuo-yong"> 风控审批策略的作用</span><a href="#feng-kong-shen-pi-ce-lue-de-zuo-yong" class="header-anchor">#</a></h3>
+<p>在保证业务量的同时降低业务坏账率、控制逾期风险，最终实现公司盈利。</p>
+<h3><span id="feng-kong-shen-pi-ce-lue-de-lei-bie"> 风控审批策略的类别</span><a href="#feng-kong-shen-pi-ce-lue-de-lei-bie" class="header-anchor">#</a></h3>
+<p>多维度数据分析呈现了借款人的用户画像，制定多维度完善的审批策略规则，具体策略规则包含：</p>
+<ul>
+<li>1）经济能力维度(月收入、工资流水等信息)</li>
+<li>2）app信息维度(贷款APP安装个数、短信命中高风险关键词)</li>
+<li>3）基本信息维度(年龄、性别、工龄等信息)</li>
+<li>4）信用历史(征信贷款信息、还款记录)</li>
+<li>5）行为表现(活动轨迹、登陆时间、注册时间等信息)</li>
+</ul>
+<h3><span id="feng-kong-de-ji-ben-liang-hua-zhi-biao"> 风控的基本量化指标</span><a href="#feng-kong-de-ji-ben-liang-hua-zhi-biao" class="header-anchor">#</a></h3>
+<ul>
+<li>
+<p>FPDx：首期逾期，x对应天数</p>
+</li>
+<li>
+<p>CPDx：当前逾期，x对应天数</p>
+</li>
+</ul>
+<p>逾期时间的长短来定义逾期的等级，C代表正常资产。M3-M6属于不良，M6+属于坏账。</p>
+<p>迁移率、vintage账龄分析、滚动率见<a href="./vintage_rollrate_fpd.html">上一篇博客</a>，这里：<a href="https://blog.sofunnyai.com/article/vintage_rollrate_fpd.html">https://blog.sofunnyai.com/article/vintage_rollrate_fpd.html</a></p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525145244445.png" alt="image-20200525145244445"></p>
+<h3><span id="que-ding-mu-biao-bian-liang"> 确定目标变量</span><a href="#que-ding-mu-biao-bian-liang" class="header-anchor">#</a></h3>
+<p>根据催回率及迁徙率确定好坏客户（不过一般还是用滚动率比较多）</p>
+<p>由上表可以看出，M2以上的迁徙率将近90%，所以确定当前逾期31天以上为区分好坏客户的标准，及后续分析的目标变量。</p>
+<h3><span id="zhi-ding-feng-kong-shen-pi-ce-lue"> 制定风控审批策略</span><a href="#zhi-ding-feng-kong-shen-pi-ce-lue" class="header-anchor">#</a></h3>
+<p>如以城市等级为例，城市等级与逾期的关系：城市等级越低，其对应的逾期率越高。</p>
+<h3><span id="ce-lue-yu-gu"> 策略预估</span><a href="#ce-lue-yu-gu" class="header-anchor">#</a></h3>
+<p>预估策略上线对生产运营阶段的影响，基于进件量、放款量、通过率的影响。</p>
+<h3><span id="ce-lue-jian-kong"> 策略监控</span><a href="#ce-lue-jian-kong" class="header-anchor">#</a></h3>
+<p>策略上线后，监控此策略的占比与预计的占比是否发生严重偏差，且在正常运行阶段是否全部执行。</p>
+<h3><span id="ce-lue-hui-gu"> 策略回顾</span><a href="#ce-lue-hui-gu" class="header-anchor">#</a></h3>
+<p>对上线后的策略，在一定时间后。对于有表现的数据进行策略回顾，看策略调整后的进件量、通过率及贷后表现。若是想及时的查看策略上线后的贷后表现可以针对FPD指标分不同的天数去观测，FPD4，FPD10，FPD30等。</p>
+<ul>
+<li>
+<p>若策略是调宽或者是放松时，可以针对性回顾下豁免出来的客户的进件情况、通过率及贷后表现。</p>
+</li>
+<li>
+<p>若策略是调严或者收紧时，可以针对性回顾拒绝阈值边缘维度的贷后表现及拟定拒绝的客户数。</p>
+</li>
+</ul>
+<h1><span id="feng-kong-ce-lue-fen-xi-shi"> 风控策略分析师</span><a href="#feng-kong-ce-lue-fen-xi-shi" class="header-anchor">#</a></h1>
+<p>风控策略分析师是完成上述P1部分所有分析，构架风控策略的人员。</p>
+<h2><span id="ri-chang-gong-zuo-nei-rong"> 日常工作内容</span><a href="#ri-chang-gong-zuo-nei-rong" class="header-anchor">#</a></h2>
+<ul>
+<li>贷前、贷中及贷后各环节的风险策略与流程，制订各项策略规则，具体包括<strong>准入、授信、定价、用信、还款、调额等信贷流程</strong>各阶段的<strong>策略规则</strong></li>
+<li>通过对各类风险指标与报表的分析，关注各类资产和客群的风险变动，对公司全渠道风险政策与策略进行跟踪评价，并及时优化调整相应的风险政策与策略</li>
+</ul>
+<h2><span id="bi-bei-ji-neng"> 必备技能</span><a href="#bi-bei-ji-neng" class="header-anchor">#</a></h2>
+<ul>
+<li>结合内外数据，通过统计分析方法，对不同风险点制定出不同类型的风险规则</li>
+<li>完成整个贷前、贷中和贷后的<strong>风险规则架构</strong>，实现<strong>自动化风控</strong></li>
+<li>可以实现策略规则优化，不限于A、D类调优方法</li>
+<li>规则的部署与监控预警</li>
+<li>临时指标调整的项目经验</li>
+</ul>
+<h2><span id="he-xin-zuo-yong"> 核心作用</span><a href="#he-xin-zuo-yong" class="header-anchor">#</a></h2>
+<p>实现具体规则和流程的设计、开发、部署、监控与优化</p>
+<h2><span id="ce-lue-fen-xi-chang-jian-gong-zuo-chang-jing-yu-dui-ying-fen-xi-fang-fa"> 策略分析常见工作场景与对应分析方法</span><a href="#ce-lue-fen-xi-chang-jian-gong-zuo-chang-jing-yu-dui-ying-fen-xi-fang-fa" class="header-anchor">#</a></h2>
+<h2><span id="san-fang-shu-ju-ce-ping"> 三方数据测评</span><a href="#san-fang-shu-ju-ce-ping" class="header-anchor">#</a></h2>
+<ul>
+<li>案例：现有1000个样本数据，分别测试2家黑名单，2家欺诈名单与2家多头，如何选择合适的第三方数据源？</li>
+</ul>
+<p>首先要专业科普选择第三方数据源重要考察的5大指标计算公式（以黑名单为例）：</p>
+<ol>
+<li>查得率(Search rate)=查得数/样本量</li>
+<li>覆盖率(Cover rate)=查得命中黑名单数/样本中命中黑名单量</li>
+<li>误拒率(Error reject rate)=查得命中黑名单数/样本中通过且为Good量</li>
+<li>有效差异率(Effective difference rate)=查得命中黑名单数/样本中通过且Bad量</li>
+<li>无效差异率(Invalid difference rate)=查得命中黑名单数/样本中其他拒绝量</li>
+</ol>
+<p>其中SR、CR、EDR指标越高越好，ERR越低越好，IDR与EDR结合起来观察，如果IDR和EDR都较高，反应的一种情况是数据源定义黑名单是广撒网式，黑名单质量相对不够精准。</p>
+<p>其中前三个指标是重点考察，如果想更全面的测试第三方数据源，后面两个差异率指标也可以加入考核标准。</p>
+<h3><span id="ju-li-hei-ming-dan-shu-ju-ping-ce"> 举例—黑名单数据评测</span><a href="#ju-li-hei-ming-dan-shu-ju-ping-ce" class="header-anchor">#</a></h3>
+<p>1000个测试样本数据中，审批结果字段表示样本通过和拒绝，其中通过样本中有未逾期和发生逾期的客户样本，拒绝样本中有通过黑名单库拒绝客户，也有其他原因产生拒绝。比如，数据源1（黑名单）代表一家提供黑名单数据的数据供应商A，数据源2（黑名单）代表另一家提供黑名单数据的数据供应商B，以此类推。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525150653791.png" alt="image-20200525150653791"></p>
+<p>对1000条测试数据返回结果进行整理可以总结出如上数据概要，对比看到数据源1的返回结果如下：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525150737830.png" alt="image-20200525150737830"></p>
+<p>按照文章开始介绍的指标分析方法，对比数据源1和数据源2的测试结果可以得出如下结论：</p>
+<ol>
+<li>数据供应商1的查得率、覆盖率高于数据供应商2大约5%、4%；</li>
+<li>数据供应商1的误拒率低于数据供应商2大约0.3%；</li>
+<li>数据供应商1的有效差异率低于数据供应商2大约8%，无效差异率低于数据供应商2大约7%；</li>
+</ol>
+<p>依据五大指标分析标准，SR、CR、EDR指标越高越好，ERR越低越好，IDR与EDR结合起来观察，如果IDR和EDR都较高，反应的一种情况是数据源定义黑名单是广撒网式，黑名单质量相对不够精准！</p>
+<p>最终分析结论：</p>
+<p>数据供应商2虽然覆盖的黑名单比数据供应商1的更广，但其不如数据供应商1精准，更偏向选择数据供应商1的黑名单数据。</p>
+<h2><span id="zhun-ru-ce-lue-de-zhi-ding"> 准入策略的制定</span><a href="#zhun-ru-ce-lue-de-zhi-ding" class="header-anchor">#</a></h2>
+<p>风控准入策略作为金融借贷机构评估一个借款人是否有机会获得授信的第一道门槛，是保卫金融机构的第一道护卫。</p>
+<p>风控准入策略属于贷前风控策略体系的一部分，贷前风控策略包括<strong>基础认证、准入策略，贷前反欺诈策略，黑名单策略，特殊名单策略及信用风险策略</strong>。风控准入策略中的规则更多是由产品政策性规则构成。</p>
+<p>针对不同信贷场景采取更适应业务的准入规则，设定科学的准入策略，对于风险的防范与降维有十分重要意义。合理的风险准入策略，也能对信贷业务的走向与风险倾向产生直接影响，进一步影响金融机构的最终盈亏。</p>
+<p><strong>为什么要设计风控准入策略</strong></p>
+<p>风控准入策略的规则属性全部为强拒绝规则（硬规则），借款人<strong>一旦不满足一条准入规则金融贷款机构都不会给予贷款的授信与发放</strong>；同时，风控准入规则不需要经过复杂的规则衍生，通常可以简单有效的判决借款人是否有资格进入之后的风控流程；最后，风控准入规则的策略理念是验证借款人依法合规未被政策限制。</p>
+<p><strong>风控准入策略模块</strong></p>
+<p>风控基础认证模块:</p>
+<p>基础认证模块主要作用是验证借款此人是本人，也是以风控规则形式出现，规则大多为公允共认的规则。比如身份证信息验证，人脸信息验证、银行卡四要素验证、运营商三要素验证等。</p>
+<p>在验证完借款人基础信息后，风控贷前流程才会进入准入策略模块。</p>
+<p>准入策略模块主要分为<strong>年龄准入、地区准入、行业准入及其他</strong>。这些准入规则的根本设定原则是基于监管和金融机构产品政策性导向。</p>
+<h3><span id="nian-ling-zhun-ru-ce-lue"> <strong>年龄准入策略</strong></span><a href="#nian-ling-zhun-ru-ce-lue" class="header-anchor">#</a></h3>
+<p>对于年龄准入而言，中国银行业监督管理委员会令《个人贷款管理暂行办法》中指出个人贷款申请应具备以下条件：</p>
+<p>（一）借款人为具有完全民事行为能力的中华人民共和国公民或符合国家有关规定的境外自然人；</p>
+<p>（二）贷款用途明确合法；</p>
+<p>（三）贷款申请数额、期限和币种合理；</p>
+<p>（四）借款人具备还款意愿和还款能力；</p>
+<p>（五）借款人信用状况良好，无重大不良信用记录；</p>
+<p>（六）贷款人要求的其他条件。</p>
+<p>其中借款人具有完全民事行为能力的中华人民共和国公民年龄范围在<strong>18-60岁</strong>。所以合规的金融机构信贷产品的借款人年龄准入策略中，年龄规则的设定是：年龄&gt;X &amp;  年龄&lt;X ，X属于18-60。有些贷款产品，则是根据贷款人的性别不同来限制年龄的。比如对于女性申请人的年龄限制是22周岁以上，而男性申请人的年龄限制为20周岁。</p>
+<h3><span id="di-qu-zhun-ru-ce-lue"> <strong>地区准入策略</strong></span><a href="#di-qu-zhun-ru-ce-lue" class="header-anchor">#</a></h3>
+<p>一般金融机构会按照风险热力地图将一些重灾风险区进行隔离或者进行“象征性”政策贷款发放。</p>
+<p>地区准入规则的初始设定一般是风险集中度比较高、社会稳定性比较弱、地区经济GDP比较低，亦或是难催收的地区，比如<strong>新疆、东北</strong>等个别地域。</p>
+<p>在之后随着信贷业务的开展，也会根据贷款回收率对地区准入规则进行一些策略调整，比如一些地区的贷款回收率长期观测较低，金融机构企业内部信贷战略调整后，可以将这些地区加入限制性地区里。</p>
+<p>上图事例1中展示的是M1阶段的回收率热力分布地图，可以发现灰色区域的M1贷款回收率低于60%。如果需要进行地区准入策略的调整，还可以将M1回收率0-60%的区间划分的更细，比如0-15%的M1回收率，也可以将省维度拆成市级维度进行限制。</p>
+<p>此处需要提醒，<strong>一旦加入到地区准入规则后的地域在之后将无法进行信贷业务，同时也会失去观测业务数据</strong>，所以此类的策略调整<strong>要谨慎设计</strong>。</p>
+<p>地区准入策略的常用规则如<strong>户籍地址</strong> in（x,x,x），<strong>单位地址</strong> in （x,x,x）,<strong>家庭地址</strong> in （x,x,x）等。</p>
+<p><strong>行业准入策略</strong></p>
+<p>行业准入策略的基础原则是对一些行业工作不稳定或无业的借款人禁止提供信贷业务。如禁止：</p>
+<p>金融属性行业如投资、担保、理财、典当；政策性敏感娱乐行业如KTV、按摩院、会所等；无业和自由职业、学生、媒体工作者，检察院。</p>
+<h3><span id="bai-ming-dan-ce-lue"> 白名单策略</span><a href="#bai-ming-dan-ce-lue" class="header-anchor">#</a></h3>
+<p>白名以下两种业务场景：</p>
+<p>A.在存在自有存量数据的前提下，金融机构想开展信贷业务，前期需要通过白名单控制入口，此类场景多存在于<strong>业务初期，或者是内部员工贷</strong>的业务场景。(风控模型不完善的条件下，先把业务开展起来。同时，在这个展业的过程中，可以逐渐组建适合金融机构业务的风控策略和模型。)</p>
+<p>B.在业务开展中期，需要<strong>部分进件客户走特殊贷前审批流程</strong>，满足特殊审批的要求，此类场景多存在于较大的金融公司。(有着较好的信用、较好的资产亦或是较好的“背景”，通过一些特殊审批流程进行贷款的审核，最终满足“VIP”的借贷需求。)</p>
+<p>综合来讲，白名单可以定义为，通过金融机构内部现有数据判断的“好客户”，或者经过一系列规则挖掘分析得出的“好客户”，由他们组成的借贷优质名单。</p>
+<p><strong>如何筛选出白名单</strong></p>
+<ul>
+<li>
+<p>联合建模：<br>
+金融机构在有<strong>存量数据的前提下，自有数据是不缺乏X特征变量，主要缺乏相应业务场景有表现特征的目标Y变量。<strong>在这个时候可以通过引进一些外部机构进行</strong>联合建模，用以补充一些Y变量。</strong></p>
+<p>通过与外部机构<strong>联合建模得出评分，不论是将其用于内部客户分层，还是将评分分数直接做规则</strong>，都对筛选白名单有很好的帮助。</p>
+</li>
+<li>
+<p>内部数据探索：</p>
+<p>我们在筛选白名单的时候，除了通过联合建模弥补相应业务场景下目标变量的缺失，还可以通过内部数据探索，寻找分析一些对逾期违约表现相关性较强的一些特征规则，逐渐设定出白名单规则。这里面分为两种规则设定方式。</p>
+<p>第一种是寻找与新开展业务相似模式和场景的已有产品，参照已有产品的风控策略规则对新业务场景数据进行比对分析，参照已有产品的策略规则制定出新业务场景的风控白名单规则。</p>
+<p>另外一种方式是在更“艰苦”的环境下，没有任何可对比参照的已有产品，这个时候设定的白名单规则相对更严谨，同时对风控策略工作者的业务经验要求更高，可以认为是一种专家经验规则。</p>
+</li>
+<li>
+<p>引入外部数据匹配：</p>
+</li>
+</ul>
+<p>工作单位、学历、社保缴费单位、公积金缴费单位、缴费基数等信息去筛选优质客户。</p>
+<p><strong>白名单的作用：</strong></p>
+<ul>
+<li>控制放量节奏：初期的时候用于控制节奏，整体调控。</li>
+<li>降低风险</li>
+<li>提高过审率</li>
+<li>协助调整贷前策略：白名单筛选的过程就是贷前策略的一部分。</li>
+</ul>
+<h3><span id="hei-ming-dan-ce-lue"> 黑名单策略</span><a href="#hei-ming-dan-ce-lue" class="header-anchor">#</a></h3>
+<p>黑名单：性质极其恶劣的坏客户。无论是其还款能力，还款意愿，借款目的等都不能满足正常客户的标准。</p>
+<p>有自建和外部引用两种。对于业务初期的金融机构通常调用三方数据接口查询行内黑名单客户，同时在自家展业过程中，通过贷后管理逐渐补充、完善自家黑名单库。</p>
+<h4><span id="hei-ming-dan-de-shi-yong"> 黑名单的使用：</span><a href="#hei-ming-dan-de-shi-yong" class="header-anchor">#</a></h4>
+<ul>
+<li>一般来说金融机构一旦触碰到黑名单规则，金融机构通常会全部拒绝。（全部拒绝黑名单前，会随机放过5%或者10%的触碰黑名单的客户，去测试黑名单数据有“多黑”，测试该黑名单客群是否适用于该机构。）</li>
+<li>导流助贷机构可能会选择性放入一部分客群，结合客户评分，多头等数据综合判断，或者随机放过。（反正不是他兜底）</li>
+</ul>
+<h4><span id="chang-kou-ce-suan"> 敞口测算</span><a href="#chang-kou-ce-suan" class="header-anchor">#</a></h4>
+<p>假设一个场景：如果有一万块钱，借款一年，不考虑其他，综合年化36%的信贷产品，因为一个黑名单客户导致本金全部损失，那么实际上需要大约3个好客户才能弥补1个坏客户的损失。</p>
+<p>如果我们加上资金的运营成本，人力成本，引流成本，实际成本等。 假设需要的综合年化是15%，那么实际上 ，也就是5个好客户才能覆盖一个坏客户的本金损失，同时还需要覆盖上述的各种成本 ，也就是说金融机构大约要用6个完全的好人才能替代一个完整的坏人。</p>
+<p>如果是3期、6期产品，同时也包含资金占有率问题，实际上需要的用更多的好人去覆盖坏客户带来的损失。</p>
+<ul>
+<li>假设5000  6期  36%，每个好人收益是5000×0.36/2 = 900，不算其他成本也需要5.5个人才能cover一个欺诈。（此时坏账率：1/6.5=15.4%）</li>
+<li>实际同上假设人力、引流、IT，使得实际年华15%，每个好人收益是5000×0.15/2 = 375，需要13.3人才能cover。（坏账率1/14.3=6.99%）</li>
+<li>PS：助贷导流客户平均成本一般不会超过5毛钱，金融机构开展信贷业务所需风控数据成本也不会超过10元。</li>
+</ul>
+<p>所以黑名单很重要，坏账很难搞。。。</p>
+<h4><span id="zi-jian-hei-ming-dan"> 自建黑名单</span><a href="#zi-jian-hei-ming-dan" class="header-anchor">#</a></h4>
+<p>黑名单一般的自建维度有<strong>参照回款表现、渠道、利率、各种公布失信类客户</strong>以及通过爬虫获得的一系列坏客户，黑名单的设定不一定仅限客户本身，也可以拓展为<strong>身份证、手机号、邮箱、银行卡、ip地址</strong>等，都可作为自建黑名单的参考维度。</p>
+<p>和通讯记录、电话簿、二度通讯记录等联系起来。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/640" alt="img"></p>
+<p>自建黑名单命中率通常不会太高（相同客户再次注册的概率较低），且自建黑名单库需要长期的业务积累过程，因此金融信贷机构常常需要借助三方金融科技公司的黑名单库服务（特指三方数据供应商商以及其他金融信贷机构）。</p>
+<p>大量p2p以及小贷机构接入百行征信，但我想要说明的是：滞后性和成本的增加使得黑名单需要更多的共享，只有共享才能更全面了解我们金融机构所接触的客群。</p>
+<h1><span id="gui-ze-yu-zhi-cutoff-ru-he-she-ding"> <strong>规则阈值cutoff如何设定</strong></span><a href="#gui-ze-yu-zhi-cutoff-ru-he-she-ding" class="header-anchor">#</a></h1>
+<p>风险策略拒绝线的设定，背后有严谨的分析逻辑，本文就以评分分数区间和年龄规则为例，为大家讲解审批策略拒绝线的内在分析方法。</p>
+<h2><span id="bei-jing"> 背景</span><a href="#bei-jing" class="header-anchor">#</a></h2>
+<p>评分模型，尤其是主流基于线性Logistic算法的评分模型，<strong>对于一些边际评分区间的风险，其实常常无法精准的预估到，势必会造成一些区间风险被低估的现象。如果不通过一些规则维度的拒绝补充，容易因为模型风险发生不必要的利益损失。</strong></p>
+<p>假设我们已经对评分模型分数分为T1-T5组，T1风险最低T5风险最大。年龄规则也使用单变量树模型初步分为5组区间。我们希望结合评分分数找到年龄规则这个核心策略维度的合理拒绝线。</p>
+<h2><span id="di-yi-bu-tong-guo-ping-fen-zhao-dao-feng-xian-bei-di-gu-de-qu-jian"> <em>第一步：通过评分找到风险被低估的区间</em></span><a href="#di-yi-bu-tong-guo-ping-fen-zhao-dao-feng-xian-bei-di-gu-de-qu-jian" class="header-anchor">#</a></h2>
+<p>本例中，首先将年龄与评分卡进行交叉矩阵分析，观测不同交叉区间里的用户违约概率。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525160850020.png" alt="image-20200525160850020"></p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525160913346.png" alt="image-20200525160913346"></p>
+<p>一般策略规则多数组之间的趋势线是紧密相近的。从图示数据走线可以发现，年龄组[35,47)和[47,53)这两个年龄组的违约概率走线脱离了其他分组，尤其是年龄组[35,47)，其走线脱离其他“群体”过多。通过分析初步定位年龄组[35,47)和[47,53)可以是待确定的规则拒绝线。</p>
+<h2><span id="di-er-bu-ping-gu-ni-ju-jue-ren-qun-de-shou-yi-feng-xian-bi"> <em>第二步，评估拟拒绝人群的收益/风险比</em></span><a href="#di-er-bu-ping-gu-ni-ju-jue-ren-qun-de-shou-yi-feng-xian-bi" class="header-anchor">#</a></h2>
+<p>虽然经过评分与年龄的交叉对比，发现年龄规则的两个待确定高风险拒绝区间。但是实际拒绝线的划分要结合年龄分组区间人群的实际收益与风险进一步考虑。<strong>如果高风险的人群可以带来高收益，对于策略来讲也是可以接受的。</strong></p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525161216545.png" alt="image-20200525161216545"></p>
+<p>将年龄分组区间按照上图示例2横轴所示指标进行统计，假设年龄分组[35,47)的收益/风险大于[47,53)且为正，即表明虽然[35,47)年龄分组的人群违约率最高，但其收益同样也是最大。反而[47,53)年龄区间的人群为公司带来负收益。</p>
+<p>本着收益覆盖风险的商业理念，此时对于年龄这一维度的策略最佳拒绝线，应该划分在[47,53)这一分组区间。</p>
+<h1><span id="tong-guo-lu-xia-jiang-de-ce-lue-diao-zheng"> 通过率下降的策略调整</span><a href="#tong-guo-lu-xia-jiang-de-ce-lue-diao-zheng" class="header-anchor">#</a></h1>
+<p><strong>审批通过率</strong>和<strong>不良率</strong>是一对<strong>权衡指标</strong>，在新业务<strong>上线初期，维持一个较低的通过率可以保证最好的客群进去。<strong>随着业务规模</strong>做大和风控样本积累，此时需要在风险容忍度可接受范围内提升通过率，以保持收益的最大化。</strong></p>
+<p>如果某一天风控通过率忽然降低，这种情况下策略分析人员应该如何应对？</p>
+<h2><span id="1-xun-zhao-tong-guo-lu-xia-jiang-de-shi-jian-dian-huo-shi-jian-duan"> 1.寻找通过率下降的时间点或时间段</span><a href="#1-xun-zhao-tong-guo-lu-xia-jiang-de-shi-jian-dian-huo-shi-jian-duan" class="header-anchor">#</a></h2>
+<p>在风控策略稳定之后，审批通过率一般稳定在某一小范围内波动，当监控每日通过率指标时发现，T-1、T-2时点的通过率明显下降，我们应该先通过监控报表迅速定位到具体时间点或时间段。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525161544954.png" alt="image-20200525161544954"></p>
+<p>2019.6.23和6.24授信通过率下降。</p>
+<p>Tip：上图示例通过率下降到6.9%、7.0%可以直接用肉眼分辨数据，但实际业务一般建议以通过率趋势图和PSI指标监控通过率下降。</p>
+<h2><span id="2-pan-duan-ce-lue-jie-dian-zhu-ci-yao-ju-jue-ying-xiang"> 2.判断策略节点主次要拒绝影响</span><a href="#2-pan-duan-ce-lue-jie-dian-zhu-ci-yao-ju-jue-ying-xiang" class="header-anchor">#</a></h2>
+<p>发现通过率下降的时间点或时间段之后，下一步先聚焦到策略节点。本文为FALers举例两个策略节点A（准入）和B（规则）。以6月23日为时间节点划分，对比数据分析，寻找拒绝率的波动差。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525162143545.png" alt="image-20200525162143545"></p>
+<p>上图示例2中波动差按照B段A节点拒绝率-A段A节点拒绝率计算出来，以此类推。此时计算波动差仍然可以考虑加入PSI=(B-A)*LN(B/A)测算波动差,A节点的PSI为0.77%，B节点的PSI为0.01%。</p>
+<p>按照波动差确定通过率的下降主要因为A节点的拒绝率上升引起，从而将通过率下降的影响因素从策略A和B两个节点问题进一步聚焦到A节点上。</p>
+<h2><span id="3-cong-jie-dian-ju-jiao-dao-jie-dian-gui-ze-ceng-shen-du-fen-xi"> <em>3.从节点聚焦到节点规则层深度分析</em></span><a href="#3-cong-jie-dian-ju-jiao-dao-jie-dian-gui-ze-ceng-shen-du-fen-xi" class="header-anchor">#</a></h2>
+<p>完成节点的聚焦分析，定位到引起通过率下降的主要原因节点A，接下来需要进一步分析节点A内包含的所有规则拒绝情况。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525162807285.png" alt="image-20200525162807285"></p>
+<p>与节点聚焦分析一致，寻找引起拒绝率上升的主次要拒绝规则。在规则层确定主次要影响因子时，分析方法不仅结合数据同时也参考业务场景。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525163158091.png" alt="image-20200525163158091"></p>
+<p>从上图示例4可以发现，按照波动差分析得出年龄准入拒绝和X3_准入拒绝是主要引起通过率下降的规则。</p>
+<h2><span id="4-ju-ti-gui-ze-fen-bu-fen-xi"> <em>4.具体规则分布分析</em></span><a href="#4-ju-ti-gui-ze-fen-bu-fen-xi" class="header-anchor">#</a></h2>
+<p>从步骤3确定出年龄准入拒绝是第一位引起通过率下降的规则后，第四步就从规则层聚焦到具体策略规则的分布上。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525163345465.png" alt="image-20200525163345465"></p>
+<p>通过分析具体策略规则分布的波动差定位具体策略规则的某一分布，找出引起通过率下降的主要策略分布。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525162923974.png" alt="image-20200525162923974"></p>
+<p>从上图示例6可以发现，年龄准入拒绝这一策略规则中，18-25岁的分布拒绝率在时间A段和时间B段的波动差最大，这个年龄分布的拒绝率上升可能是引起整个审批通过率下降的主要规则分布。</p>
+<p>造成以上18-25岁年龄分布拒绝增加的原因，很常见的一种是进件客群发生了变化，针对客群发生突然变化的情况，如何将分析结果指导决策执行，是策略分析最后且最重要的一步。</p>
+<h2><span id="5-fen-xi-zhi-dao-jue-ce"> <em>5.分析指导决策</em></span><a href="#5-fen-xi-zhi-dao-jue-ce" class="header-anchor">#</a></h2>
+<p>仍以上述案例为例，通过一系列聚焦分析发现，18-25岁的进件客群变化是引起整体通过率下降的核心因素。实际业务场景中，并不会因为此时通过率突降就进行策略规则的调整，更多的是通过聚焦分析后，结果进一步细分两个参照要素：进件渠道的进件量分布和最大进件渠道的年龄准入拒绝分布。</p>
+<p><em>5.1.进件渠道分布分析</em></p>
+<p>既然是客群的变化引起了整体审批通过率的下降，从进件的所有渠道数据中进行分布排序，定位到渠道进件量A段和B段都最大的一个进件渠道C。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525163500790.png" alt="image-20200525163500790"></p>
+<p><em>5.2.最大进件渠道的年龄准入拒绝分布</em></p>
+<p>通过进件渠道进件量分析，从众多进件渠道中定位到最大进件渠道C。此时分析主要拒绝规则-年龄准入拒绝的渠道C的分布情况，是否满足条件：B段与A段年龄18-25岁的波动变高。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525163605116.png" alt="image-20200525163605116"></p>
+<p>从上图示例8中分析发现，渠道C年龄在18-25岁的客群进件量在B段比A段上升明显，即从渠道进件前段业务确定出引起通过率降低的主要进件渠道C。至此，可以进行策略分析决策建议。</p>
+<p><em>5.3.决策建议</em></p>
+<p>将策略分析结果应用于前段业务指导和决策，提醒前端业务人员在渠道C可以适当缩紧18-25岁客群的进件需求，以此共同维护金融公司整体风控通过率，这才是风控策略分析工作者最终的使命和义务。</p>
+<h1><span id="yu-qi-lu-shang-sheng-de-ce-lue-diao-zheng"> 逾期率上升的策略调整</span><a href="#yu-qi-lu-shang-sheng-de-ce-lue-diao-zheng" class="header-anchor">#</a></h1>
+<p>当逾期升高时，如何进行策略调优。</p>
+<p>真实案例背景（数据已脱敏）：</p>
+<p>通过PQR监控报表发现，某XX贷产品的MOB报表自2019年5月开始，后续放款月资产逾期呈上升趋势，既DPD30+逐月上升，且上升速度逐步增快（MOB期数逐渐缩短）。在2019年11月放款的客户里，MOB=4的DPD30+等于2.49%。如下图1所示。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525163737375.png" alt="image-20200525163737375"></p>
+<p>通过将MOB制作成Vintage报表，可以观测到某XX贷产品的风险自2019年5月到11月的DPD30+平均值位于6%的水平，如下图2所示。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525163801595.png" alt="image-20200525163801595"></p>
+<p>往期DPD30+表现出的风险水平逐月快速上升现象，意味着如果不做相应的策略调整，之后的放款月风险将会更快的暴露。</p>
+<p><strong>针对此时逾期快速上升的背景下，如何分析策略，进行策略调整呢？</strong><br>
+<strong>策略分析方法</strong></p>
+<h2><span id="di-yi-bu-que-ding-cun-liang-huan-shi-xin-zeng-ke-hu-dao-zhi-yu-qi-shang-sheng"> <strong>第一步：确定存量还是新增客户导致逾期上升</strong></span><a href="#di-yi-bu-que-ding-cun-liang-huan-shi-xin-zeng-ke-hu-dao-zhi-yu-qi-shang-sheng" class="header-anchor">#</a></h2>
+<p>信贷业务每个月发生授信和放款的客户可以分成新增客户和存量客户。从上图示例2中Vintage报表展现的数据，反映出资产逾期呈上升趋势。那我们首先需要将2019年5月到2019年11月（可观测到DPD30+）的Vintage分成新增客户的Vintage1和存量客户的Vintage2，如下图3。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525164330196.png" alt="image-20200525164330196"></p>
+<p>从上图3的Vintage1（新客户）和Vintage2（存量客户）标注的红色椭圆框可以观测到，新客户的DPD30+平均处于6%，存量客户的DPD30+平均处于5%。与图示1对比可以分析出，导致资产逾期上升的主要原因是新增客户资产变差的影响。</p>
+<p>至此阶段的分析结论：我们可以确定出需要调整的策略规则是贷前规则。</p>
+<p>解释如下：往期放款月中，新客户是由贷前规则通过后，给予授信并放款的，存量客户的复借是由贷中规则决定。通过Vintage1和2的分析比对，引起资产逾期上升的主要原因是新客户的逾期上升。</p>
+<h2><span id="di-er-bu-duo-wei-du-fen-xi-zhao-chu-zui-zhu-yao-ying-xiang-gui-ze"> <strong>第二步：多维度分析，找出最主要影响规则</strong></span><a href="#di-er-bu-duo-wei-du-fen-xi-zhao-chu-zui-zhu-yao-ying-xiang-gui-ze" class="header-anchor">#</a></h2>
+<p>通过第一步的分析确定出核心要调整的是贷前策略后，我们接下来要通过分析不同的规则变量，找出对目标变量（DPD30+）影响最大的维度变量。</p>
+<p>这里提供分析主要影响变量的两个思路，具体实践过程就不在这里多讲，文末推荐阅读有链接。</p>
+<p>思路一：自上而下地按照A类策略调优方法，从贷前策略节点到节点里的规则集，再细分到具体规则，逐步分析出影响较大的规则变量（文末推荐阅读给出具体分析的往期文链接）</p>
+<p>思路二：自下而上地将所有规则变量与目标变量拟合分析，通过IV的降序排序，找出影响较大的规则变量。</p>
+<p>分析得出，城市等级是影响逾期目标上升的主要变量。通过分析2019年5月至11月的城市等级Vintage曲线，可以发现“其他城市”较“一线城市”、“二线城市”、“三线城市“对逾期的影响较大，如下图。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525165245788.png" alt="image-20200525165245788"></p>
+<h2><span id="di-san-bu-zhi-ding-ce-lue-diao-zheng-fang-an"> <strong>第三步：制定策略调整方案</strong></span><a href="#di-san-bu-zhi-ding-ce-lue-diao-zheng-fang-an" class="header-anchor">#</a></h2>
+<p>通过上述数据分析，发现贷前风控规则里的“城市等级”规则”其他城市“是导致逾期升高的主要原因。此时容易出现的一个错误决策是拒绝“其他城市”的进件。</p>
+<p>原因很简单：这种决策会导致大量的申请被拒绝，对通过率的影响比较大。</p>
+<p>最优的策略调整方案思路是：从“坏客户”中挑选出“最坏”的一批客户，且这批客户的占比较少，然后加以拒绝。</p>
+<p>按照上述思路，我们可以制定出如下的策略优化方案：</p>
+<p>1、进一步分析“其他城市”里，哪一些的城市逾期较高；</p>
+<p>2、挑选部分逾期较高的城市做贷前准入规则。</p>
+<p>以上，就是逾期升高情况下，策略调优的分析方法。</p>
+<h1><span id="xin-yong-duo-tou-ce-lue"> 信用多头策略</span><a href="#xin-yong-duo-tou-ce-lue" class="header-anchor">#</a></h1>
+<p>金融风险管理中，对于一个借款人还款能力的评估十分重视。如果一个人的资产负债比过大，一旦发生资不抵债的现象，金融机构继续对其发放贷款发生违约的风险是极大的。</p>
+<p>在体现借款人甚至借款企业还款能力的众多指标中，多头借贷是一项核心指标。</p>
+<h2><span id="1-shi-me-shi-duo-tou-jie-dai"> <strong>1.什么是多头借贷</strong></span><a href="#1-shi-me-shi-duo-tou-jie-dai" class="header-anchor">#</a></h2>
+<p>多头借贷是指单个借款人向2家或2家以上的金融机构提出借贷需求的行为。多头借贷数据一般至少会粗分成银行类多头借贷、非银类多头借贷。按时间跨度可以分为近7天、近15天、近1个月、近3个月、近6个月、近12个月。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525170055587.png" alt="image-20200525170055587"></p>
+<p>多头借贷除了会统计申请次数，还会统计申请机构数、申请最大间隔天数、申请最小间隔天数、申请记录月份、平均每月申请次数(有申请月份平均)、最大月申请次数、最小月申请次数等。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525170130273.png" alt="image-20200525170130273"></p>
+<p>由于单个用户的偿还能力是有限的，向多方借贷必然蕴含着较高的风险。一般来说，当借贷人出现了多头借贷的情况，说明该借贷人资金出现了较大困难，有理由怀疑其还款能力。</p>
+<h2><span id="2-duo-tou-jie-dai-shu-ju-de-fen-xi-fang-fa"> <strong>2.多头借贷数据的分析方法</strong></span><a href="#2-duo-tou-jie-dai-shu-ju-de-fen-xi-fang-fa" class="header-anchor">#</a></h2>
+<p>由于多头借贷可以比较有效的反应借款人的还款能力，所以在对借款人信用风险、欺诈风险评估上，基本都有使用多头借贷数据。</p>
+<p>多头借贷作为一个衡量借款人的维度特征，可以结合一些逾期指标进行分析。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525170208464.png" alt="image-20200525170208464"></p>
+<p>上图示例1中，对近7天非银机构申请机构平台数进行分析，对申请不同平台数的客户，分别统计客群的分布占比、FPD30%、FPD30-DPD90+%、通过单量、FPD30单量、DPD90+单量以及DPD90+%。通过统计后的数据，分析近7天申请N平台数的客户，其不同逾期指标的变化趋势，如上图示例1中FPD30%的增幅，进一步用于寻找策略切点或者豁免客群的回顾分析。</p>
+<h2><span id="3-duo-tou-jie-dai-shu-ju-wei-he-shao-yong-yu-mo-xing"> <strong>3.多头借贷数据为何少用于模型</strong></span><a href="#3-duo-tou-jie-dai-shu-ju-wei-he-shao-yong-yu-mo-xing" class="header-anchor">#</a></h2>
+<p>多头借贷少出现在模型变量中，主要有两个方面原因。</p>
+<p>第一，多头借贷数据往往被策略同事应用于规则中。</p>
+<p>数据建模的目的是从金融弱变量中通过特征工程方法，提炼出有效区分变量，构建评分模型。所以对于多头借贷数据，既然已经运用在策略规则中，实在没必要加入到模型变量。如果读者朋友们看到提交的评分模型报告中有多头借贷变量，那么建模的同事要么没有事先了解已上线运行的策略规则集，要么就是为了模型表现指标（如KS、AR、AUC）好看强行使用。</p>
+<p>第二，多头借贷数据往往覆盖度不全。</p>
+<p>多头借贷虽然是一个与风险强关联的维度，但其查得率一直被人所诟病。</p>
+<p>举一个例子，借款人一个月内在多家机构贷款，作为一个特征，很有可能出现某个人虽然频繁贷款，但并没有被多头供应商捕捉到。一旦这个特征作为模型变量，那么这个变量的噪声就很大了。反而如果做成反欺诈策略，就不需要担心噪声问题，直接选取拒绝线进行截断，最大的影响，也就是没有拒绝掉足够多的用户，而这个影响我们还可以用噪声较小的模型进行弥补。</p>
+<h2><span id="4-duo-tou-jie-dai-shu-ju-zai-ce-lue-gui-ze-shang-de-ying-yong"> <strong>4.多头借贷数据在策略规则上的应用</strong></span><a href="#4-duo-tou-jie-dai-shu-ju-zai-ce-lue-gui-ze-shang-de-ying-yong" class="header-anchor">#</a></h2>
+<p>多头借贷在策略上一般作为一条策略规则，一个拒绝维度参与到整个风控流程中。不同机构，不同信贷产品，不同场景，对于多头借贷的拒绝线划分都是不一样的。如何找到当下最适合的多头借贷拒绝线，对于风控策略分析人员，是风控工作的核心任务。</p>
+<p>仍以上图示例1为例，假设当前对于7天多平台数规则的拒绝线划分在6，即如果7天多平台数&gt;=7则拒绝。如果我们现在希望通过7天多平台数规则豁免一部分客群提升整体通过率，此时的拒绝线cutoff应该划分在哪里呢？</p>
+<p>如果不是应对紧急调整通过率的情况，我们可以事先豁免7天多平台数7-10的客户，作为测试样本，用以产生7-10客群通过单量的分布，之后将拒绝线调回6。既可以生成如下统计分析表：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525170257437.png" alt="image-20200525170257437"></p>
+<p>上图示例2中的桔色部分都是通过分析预测出来，比如通过上图示例1中不同多平台数FPD30%的平均增幅0.7%，预测出7-10的FPD30%。</p>
+<p>预估计算公式8FPD30%=7FPD30%+0.7%。进一步计算出FPD30量、DPD90量等其他指标。</p>
+<p>提醒读者朋友们，因为我们对于资产风险管控最关心的逾期指标还是不良率，所以我们通过FPD30-DPD90+%的迁徙率预测出不同7天多平台数的DPD90+%。对于7-10的FPD30-DPD90+%预估，可以采用MAX(0-6的FPD30-DPD90+%)的预估方法。</p>
+<p>在这之后，我们对于不同7天多平台数测算出拒绝线Cutoff的FPD%和DPD%，如下图所示：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525170317997.png" alt="image-20200525170317997"></p>
+<p>对比示例图1和图3的Cutoff_DPD%可以发现，规则拒绝线设定在&gt;=7时DPD%=3.0%，设定在&gt;=8时DPD%=3.0%，设定在&gt;=9时DPD%=3.3%。规则拒绝线设定在&gt;=8的DPD%并没有增加。此时可以尝试建议将7天多平台数的拒绝线调整到7。</p>
+<p>当然，这种策略分析方法仍有一些纰漏，比如此方法需要有测试样本进行观测，无法满足快速调整通过率的需求；7天多平台数的FPD30%的增幅实际情况并非线性增长，有经验的策略分析师知道，FPD30%一定会在某一个节点指数级增长。</p>
+<p>但正是因为策略分析师通过不断地按照上述方法进行样本测试对照，根据实际情况回顾分析结果，才能不断的积累策略调整经验，才会对规则分布具有一定敏感性。</p>
+<h1><span id="ping-fen-de-ce-lue-ying-yong"> 评分的策略应用</span><a href="#ping-fen-de-ce-lue-ying-yong" class="header-anchor">#</a></h1>
+<h3><span id="ping-fen-qia-mo-xing-de-yun-yong-zhu-yao-shi-wei-liao-jie-jue-liang-da-wen-ti"> 评分卡模型的运用，主要是为了解决两大问题：</span><a href="#ping-fen-qia-mo-xing-de-yun-yong-zhu-yao-shi-wei-liao-jie-jue-liang-da-wen-ti" class="header-anchor">#</a></h3>
+<p>1、线上借贷业务量逐渐增加的情景下，<strong>策略规则已经无法满足更细的切分需求</strong>；</p>
+<p>2、对于策略无法有效识别的<strong>大量灰色客群，需要使用评分卡进行风险判断</strong>；</p>
+<p>现如今业界使用评分卡模型，更多的是为了解决第二个问题。</p>
+<p>从金融机构自身业务发展历程来看，评分卡模型介入风险管理流程常常取决于两个重要的时机：</p>
+<p>1、业务快速发展阶段</p>
+<p>在金融机构业务发展的早期阶段，因为业务量小、样本少、风险控制严格等一些主客观原因，使用风控策略规则足以开展业务，所以在业务发展早期评分模型基本没有任何用武之地。</p>
+<p>但随着信贷产品的测试期结束，金融机构要加快业务发展，此时不论是大量的客群样本、逾期表现的积累，还是风险控制的政策放松，都因为风险策略无法精准细分的局限性，而需要评分模型的介入，评分卡的应用场景更适用于人工分流。</p>
+<p>此阶段的评分模型，常常表现不稳定，比如<strong>KS波动较大，Lift下降较快，PSI时常过0.1</strong>。此阶段评分模型的优化更多在于分析波动原因，快速重新开发迭代。</p>
+<p>2、业务发展稳定阶段</p>
+<p>一旦金融机构度过了新产品的早期和发展期，此时产品市场表现已经趋向稳定，反应在客群分析上，表现出稳定层级的客户画像，此阶段是评分模型介入2.0阶段。</p>
+<p>在这个阶段评分模型会在风控流程节点上进行一些调整，比如<strong>申请卡模型会进一步的前置，担当部分客群豁免的功能。同时，此时评分模型介入2.0阶段也会降低一些外部征信数据调用成本，控制因三方数据有误而引起的误杀。</strong></p>
+<p>此阶段的评分模型，表现较为<strong>稳定，KS、Lift、PSI等指标波动较小，对于评分卡的迭代开发需求降低</strong>，评分卡的应用更加与业务需求、金融政策以及企业发展战略相关，在保证评分模型稳定性及相对精准度的前提下，使用模型调整系数进行全局模型的调整是此阶段的主要优化办法。</p>
+<h2><span id="ping-fen-mo-xing-de-cutoff"> 评分模型的cutoff</span><a href="#ping-fen-mo-xing-de-cutoff" class="header-anchor">#</a></h2>
+<p>评分卡分数转换出来，在不同业务发展阶段如何合理的制定评分的cutoff，是评分应用重要的一步。</p>
+<p>一般将评分等分后，会有两种方式对评分进行cutoff：一种是参照KS和Cum % bad rate,另一种根据等分后的累计净收益。</p>
+<p>第一种参照Max KS和累积bad rate理论上是可以尽可能的将坏客户剔除，对好客群进行授信，但无法根据业务发展需要保证收益最大化。参照不同业务发展阶段的需求，根据评分对收益损失预估，最终确定评分cutoff，我认为这才是精细化的评分应用策略。</p>
+<p>第二种制定评分的cutoff，需要联动分析以下图示的一些指标</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525170640285.png" alt="image-20200525170640285"></p>
+<p>通过逆向累计净收入指标的分析，结合当下风控政策，综合评定评分的cutoff，将之应用在风控策略上，这样才是更接近业务的评分cutoff。</p>
+<h1><span id="mo-xing-yu-ce-lue-de-guan-xi"> 模型与策略的关系</span><a href="#mo-xing-yu-ce-lue-de-guan-xi" class="header-anchor">#</a></h1>
+<p>评分模型在金融信贷风控领域的应用非常广泛，模型的开发、监控也趋于标准化。</p>
+<p><strong>评分模型可以为每一位观测对象打出一个评分分数</strong>，理论上实现风险与定价的绝对对等，实现<strong>个体差异化的风险管理，在这点上，风险策略规则是远不可及的。</strong></p>
+<h2><span id="mo-xing-shi-fou-ke-yi-ti-dai-suo-you-de-ce-lue-gui-ze"> 模型是否可以替代所有的策略规则?</span><a href="#mo-xing-shi-fou-ke-yi-ti-dai-suo-you-de-ce-lue-gui-ze" class="header-anchor">#</a></h2>
+<p>此时就有了风险策略与模型之间的争议：<strong>模型是否可以替代所有的策略规则？（排除政策准入规则）</strong></p>
+<p>想要回答上述的争议，首先需要了解目前策略规则与模型在风控决策体系里的应用架构。目前我所见到有两种主流的风控决策应用架构：<strong>策略规则+评分模型 &amp; 策略规则+模型规则。</strong></p>
+<h3><span id="ce-lue-gui-ze-ping-fen-mo-xing"> 策略规则+评分模型</span><a href="#ce-lue-gui-ze-ping-fen-mo-xing" class="header-anchor">#</a></h3>
+<p>前者策略规则和评分模型是分开的，一般风控流程是先进行策略规则的风险判断，再进入评分模型的风险识别；</p>
+<h3><span id="ce-lue-gui-ze-mo-xing-gui-ze"> 策略规则+模型规则</span><a href="#ce-lue-gui-ze-mo-xing-gui-ze" class="header-anchor">#</a></h3>
+<p>后者是将评分模型的预测概率（或分数）转变为一个策略规则，与其他策略规则融合在一起进行风险决策。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525171048451.png" alt="image-20200525171048451"></p>
+<h3><span id="ce-lue-gui-ze-de-cu-fang-shi-guan-li"> <strong>策略规则的粗放式管理</strong></span><a href="#ce-lue-gui-ze-de-cu-fang-shi-guan-li" class="header-anchor">#</a></h3>
+<p>策略规则作为一种风险识别的方法，其自身具有直观、易用等特性。对于新产品上线前的风险决策，因为没有数据样本的原因，策略规则在<strong>风险决策初期起到不可替代作用</strong>。但也因为策略规则的设定原理，其自身<strong>很难做到风险决策的精细化管理。</strong></p>
+<p>以上图风险决策B为例，可以看出策略规则都是XXXX&gt;xxx，这种单维度的风险判断是存在一定的取舍。比如某金融机构的一条多头借贷策略规则设定为：<strong>多头借贷平台数&gt;5则执行拒绝，那多头借贷=6的申请客户，就一定会违约吗？</strong></p>
+<p>说到这里可能会有读者朋友质疑：我可以设定一些策略规则组合起来判断。没错，这也是风险决策体系下策略规则应用的一种方式，但不论多少维度的组合判断，都必然会对单一维度策略规则进行True or False判断。比如上例中的策略规则变为：多头借贷&gt;5 或 多头借贷&gt;6且性别为男性，则执行拒绝。此时对于多头借贷=6的女性不会拒绝，但对于多头借贷=7且有一定储蓄的男性，就一定会违约吗？</p>
+<p>可以看出，如果希望通过策略规则的组合实现精细化的风险管理，就会不断地增加策略规则，最终导致策略规则的复杂和冗余，对于策略优化、回顾并没有正向的影响，这与策略规则的易用、直观等特性产生了矛盾。</p>
+<h2><span id="ping-fen-mo-xing-de-chang-jian-san-chong-mang-qu"> <strong>评分模型的常见三种盲区</strong></span><a href="#ping-fen-mo-xing-de-chang-jian-san-chong-mang-qu" class="header-anchor">#</a></h2>
+<p>由于策略规则的先天性缺陷，评分模型的出现可以恰当的弥补策略规则的不足，但并不意味着评分模型可以完全替代所有的策略规则。其原因有风控流程的考虑、业务发展的考虑等，在本文我为大家从模型自身的盲区为大家作解释。</p>
+<h3><span id="jian-mo-shu-ju-ji-yu-shi-ji-dai-kuan-ren-zhi-jian-cun-zai-pian-chai"> <strong>建模数据集与实际贷款人之间存在偏差</strong></span><a href="#jian-mo-shu-ju-ji-yu-shi-ji-dai-kuan-ren-zhi-jian-cun-zai-pian-chai" class="header-anchor">#</a></h3>
+<p>在中国因为征信体系的不完善，金融机构的模型一般以实际贷款人作为模型数据集，而申请人母集到贷款人子集往往发生较大变化（就算是大家熟知的拒绝推断也只能尽量弥补但不能完全拒绝这方面的误差），模型的判断就会出现一些偏差，此时需要根据策略维度的一些拒绝线，对模型进行一些矫正和保护。</p>
+<h3><span id="mo-xing-shu-ju-ji-lai-zi-li-shi-yu-wei-lai-shi-ji-qing-kuang-cun-zai-pian-chai"> <strong>模型数据集来自历史，与未来实际情况存在偏差</strong></span><a href="#mo-xing-shu-ju-ji-lai-zi-li-shi-yu-wei-lai-shi-ji-qing-kuang-cun-zai-pian-chai" class="header-anchor">#</a></h3>
+<p>模型是基于历史数据找到数据之间的逻辑规律后，对未来事件进行预测。对于具有周期性的金融行业，如果用处于上升期的数据模型预测金融衰退期的事件，必然会与实际情况发生偏差。</p>
+<p>举个例子，比如在经济上升或者繁荣期，消费者不仅有工作的单一收入，消费者可以从一些兼职等渠道获取额外的收入来源，此时即使有较高负债收入比的客群仍然可以维持较好的信用表现；但当经济开始进入下滑时期，未来消费者很难继续从其他渠道获取资金，即使历史数据告诉模型、模型告诉决策人，此时的借贷申请人有还款能力和意愿，但商业风险决策者应考虑收紧对于较高负债收入比人群的贷款。</p>
+<h3><span id="mo-xing-dui-yu-mu-biao-bian-liang-de-jie-ding-yu-shi-ji-shang-ye-mu-biao-cun-zai-pian-chai"> <strong>模型对于目标变量的界定与实际商业目标存在偏差</strong></span><a href="#mo-xing-dui-yu-mu-biao-bian-liang-de-jie-ding-yu-shi-ji-shang-ye-mu-biao-cun-zai-pian-chai" class="header-anchor">#</a></h3>
+<p>模型为了权衡观察期的代表性和表现期的时效性，在建模时为了囊括最近的贷款数据，在界定“坏账”定义时，仅考虑前12个月的还款表现（有时仅考虑前6个月），此时对于一些中额长期的信贷产品（比如24个月、36个月），模型目标变量的界定与实际商业目标就发生了偏差。</p>
+<p>综上，从反面辩证性的角度分析模型与策略，二者缺一不可，谁也不可能完全替代对方。通过科学地搭配，共同构架起严谨的风险决策体系。</p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.sofunnyai.com/article/strategy.html" title="风控策略相关的一切" target="_blank" rel="external">https://blog.sofunnyai.com/article/strategy.html</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/cartoon_header.jpeg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="" target="_blank"><span class="text-dark">树先生</span><small class="ml-1x">Risk Control Engineer</small></a></h3>
+        <div>一个金融风控软件工程师。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/article/vintage_rollrate_fpd.html" title="互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '37d6fe220531a0253492',
+    clientSecret: 'b20bb830af693e7d62e5efe08048c9d42234ba2f',
+    repo: 'liujianchina.github.io',
+    owner: 'liujianchina',
+    admin: ['liujianchina'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>
