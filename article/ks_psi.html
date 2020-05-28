@@ -18,22 +18,29 @@
   
   
   <title>模型评价指标KS和PSI | 树先生的博客</title>
-  <meta name="description" content="KS指标  KS值定义  回顾TPR(True Positive Rate)和FPR(False Positive Rate)   模型的KS值 KS(Kolmogorov-Smirnov)计算步骤： KS和ROC的区别  模型评价时:     PSI群体稳定性指标  PSI(Population Stability Index)的定义         KS指标#  KS值定义#  回顾T">
+  <meta name="description" content="概述 ROC曲线  回顾混淆矩阵的TPR(True Positive Rate)和FPR(False Positive Rate) ROC曲线 ROC曲线理解   KS指标  KS值定义 模型的KS值 KS(Kolmogorov-Smirnov)计算步骤： KS和ROC的区别  模型评价时:     PSI群体稳定性指标  PSI(Population Stability Index)的定">
 <meta property="og:type" content="article">
 <meta property="og:title" content="模型评价指标KS和PSI">
 <meta property="og:url" content="https://blog.sofunnyai.com/article/ks_psi.html">
 <meta property="og:site_name" content="树先生的金融风控工程师博客">
-<meta property="og:description" content="KS指标  KS值定义  回顾TPR(True Positive Rate)和FPR(False Positive Rate)   模型的KS值 KS(Kolmogorov-Smirnov)计算步骤： KS和ROC的区别  模型评价时:     PSI群体稳定性指标  PSI(Population Stability Index)的定义         KS指标#  KS值定义#  回顾T">
+<meta property="og:description" content="概述 ROC曲线  回顾混淆矩阵的TPR(True Positive Rate)和FPR(False Positive Rate) ROC曲线 ROC曲线理解   KS指标  KS值定义 模型的KS值 KS(Kolmogorov-Smirnov)计算步骤： KS和ROC的区别  模型评价时:     PSI群体稳定性指标  PSI(Population Stability Index)的定">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525172747965.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525172805312.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525174307499.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525195550264.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525195618707.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200522165407594.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200522172344375.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525193701620.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525195244038.png">
 <meta property="article:published_time" content="2018-01-12T05:21:10.000Z">
-<meta property="article:modified_time" content="2020-05-23T14:51:07.319Z">
+<meta property="article:modified_time" content="2020-05-25T11:57:12.481Z">
 <meta property="article:author" content="树先生">
-<meta property="article:tag" content="特征工程">
 <meta property="article:tag" content="评分卡">
+<meta property="article:tag" content="特征工程">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200522165407594.png">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200525172747965.png">
   <!-- Canonical links -->
   <link rel="canonical" href="https://blog.sofunnyai.com/article/ks_psi.html">
   
@@ -187,7 +194,7 @@
   <div class="widget">
     <h3 class="widget-title">分类</h3>
     <div class="widget-body">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/v2/">v2</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ml/">ml</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/v2/">v2</a><span class="category-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -197,7 +204,7 @@
   <div class="widget">
     <h3 class="widget-title">标签</h3>
     <div class="widget-body">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/private/" rel="tag">private</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/risk/" rel="tag">risk</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/strategy/" rel="tag">strategy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/v2/" rel="tag">v2</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/note/" rel="tag">note</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/private/" rel="tag">private</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/risk/" rel="tag">risk</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/strategy/" rel="tag">strategy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/v2/" rel="tag">v2</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -207,7 +214,7 @@
   <div class="widget">
     <h3 class="widget-title">标签云</h3>
     <div class="widget-body tagcloud">
-      <a href="/tags/hexo/" style="font-size: 14px;">hexo</a> <a href="/tags/private/" style="font-size: 13px;">private</a> <a href="/tags/risk/" style="font-size: 13.5px;">risk</a> <a href="/tags/strategy/" style="font-size: 13px;">strategy</a> <a href="/tags/v2/" style="font-size: 13px;">v2</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13.5px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13.5px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 14px;">评分卡</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13px;">运维</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13.5px;">闲杂</a>
+      <a href="/tags/hexo/" style="font-size: 13.67px;">hexo</a> <a href="/tags/interview/" style="font-size: 13px;">interview</a> <a href="/tags/note/" style="font-size: 13px;">note</a> <a href="/tags/private/" style="font-size: 13.33px;">private</a> <a href="/tags/risk/" style="font-size: 14px;">risk</a> <a href="/tags/strategy/" style="font-size: 13px;">strategy</a> <a href="/tags/v2/" style="font-size: 13px;">v2</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">机器学习</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13.33px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13.33px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 13.67px;">评分卡</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13px;">运维</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13.33px;">闲杂</a>
     </div>
   </div>
 
@@ -216,7 +223,7 @@
   <div class="widget">
     <h3 class="widget-title">归档</h3>
     <div class="widget-body">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2009/09/">九月 2009</a><span class="archive-list-count">1</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2009/09/">九月 2009</a><span class="archive-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -262,6 +269,21 @@
             
             <div class="item-inner">
               <p class="item-category">
+                <a class="category-link" href="/categories/ml/">ml</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/bayes_optimization.html" class="title">基于贝叶斯优化的机器学习超参数优化（未完待续）</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2019-07-16T03:26:32.000Z" itemprop="datePublished">2019-07-16</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
                 <a class="category-link" href="/categories/network/">network</a>
               </p>
               <p class="item-title">
@@ -288,21 +310,6 @@
             </div>
           </li>
           
-          <li>
-            
-            <div class="item-inner">
-              <p class="item-category">
-                <a class="category-link" href="/categories/risk/">risk</a>
-              </p>
-              <p class="item-title">
-                <a href="/article/woe-iv.html" class="title">深入理解woe和iv</a>
-              </p>
-              <p class="item-date">
-                <time datetime="2018-01-14T03:10:14.000Z" itemprop="datePublished">2018-01-14</time>
-              </p>
-            </div>
-          </li>
-          
       </ul>
     </div>
   </div>
@@ -316,7 +323,7 @@
   
 <main class="main" role="main">
   <div class="content">
-  <article id="post-ks-psi" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+  <article id="post-风控模型指标ks和psi" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
     
     <div class="article-header">
       
@@ -349,6 +356,13 @@
 
 
         
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
 
         <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/ks_psi.html#comments" class="article-comment-link">评论</a></span>
         
@@ -360,13 +374,17 @@
 <div class="toc">
 <!-- toc -->
 <ul>
-<li><a href="#ks-zhi-biao">KS指标</a>
+<li><a href="#gai-shu">概述</a></li>
+<li><a href="#roc-qu-xian">ROC曲线</a>
 <ul>
-<li><a href="#ks-zhi-ding-yi">KS值定义</a>
-<ul>
-<li><a href="#hui-gu-tpr-true-positive-rate-he-fpr-false-positive-rate">回顾TPR(True Positive Rate)和FPR(False Positive Rate)</a></li>
+<li><a href="#hui-gu-hun-yao-ju-zhen-de-tpr-true-positive-rate-he-fpr-false-positive-rate">回顾混淆矩阵的TPR(True Positive Rate)和FPR(False Positive Rate)</a></li>
+<li><a href="#roc-qu-xian-1">ROC曲线</a></li>
+<li><a href="#roc-qu-xian-li-jie">ROC曲线理解</a></li>
 </ul>
 </li>
+<li><a href="#ks-zhi-biao">KS指标</a>
+<ul>
+<li><a href="#ks-zhi-ding-yi">KS值定义</a></li>
 <li><a href="#mo-xing-de-ks-zhi">模型的KS值</a></li>
 <li><a href="#ks-kolmogorov-smirnov-ji-suan-bu-zou">KS(Kolmogorov-Smirnov)计算步骤：</a></li>
 <li><a href="#ks-he-roc-de-qu-bie">KS和ROC的区别</a>
@@ -379,6 +397,14 @@
 <li><a href="#psi-qun-ti-wen-ding-xing-zhi-biao">PSI群体稳定性指标</a>
 <ul>
 <li><a href="#psi-population-stability-index-de-ding-yi">PSI(Population Stability Index)的定义</a></li>
+<li><a href="#ji-suan-ju-li">计算举例：</a></li>
+<li><a href="#toad-di-ceng-de-psi-shi-xian">toad底层的PSI实现</a></li>
+</ul>
+</li>
+<li><a href="#gini-zhi-shu">Gini指数</a></li>
+<li><a href="#bu-huo-lu-capture-rate">捕获率capture rate</a>
+<ul>
+<li><a href="#jian-shao-guo-ni-he-fang-fa">减少过拟合方法：</a></li>
 </ul>
 </li>
 </ul>
@@ -386,9 +412,15 @@
 </div>
 <!--下面是latex渲染框架katex样式所需的css，不使用latex的话可以删掉-->
 <link href="https://cdn.bootcss.com/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
-<h1><span id="ks-zhi-biao"> KS指标</span><a href="#ks-zhi-biao" class="header-anchor">#</a></h1>
-<h2><span id="ks-zhi-ding-yi"> KS值定义</span><a href="#ks-zhi-ding-yi" class="header-anchor">#</a></h2>
-<h3><span id="hui-gu-tpr-true-positive-rate-he-fpr-false-positive-rate"> 回顾TPR(True Positive Rate)和FPR(False Positive Rate)</span><a href="#hui-gu-tpr-true-positive-rate-he-fpr-false-positive-rate" class="header-anchor">#</a></h3>
+<h1><span id="gai-shu"> 概述</span><a href="#gai-shu" class="header-anchor">#</a></h1>
+<p>风控指标千千万，三句话概括版本：</p>
+<p>Confusion Matrix -&gt; Lift，Gain，ROC。</p>
+<p>ROC -&gt; AUC，KS -&gt; GINI。</p>
+<p>MSE独立出来。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525172747965.png" alt="image-20200525172747965"></p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525172805312.png" alt="image-20200525172805312"></p>
+<h1><span id="roc-qu-xian"> ROC曲线</span><a href="#roc-qu-xian" class="header-anchor">#</a></h1>
+<h2><span id="hui-gu-hun-yao-ju-zhen-de-tpr-true-positive-rate-he-fpr-false-positive-rate"> 回顾混淆矩阵的TPR(True Positive Rate)和FPR(False Positive Rate)</span><a href="#hui-gu-hun-yao-ju-zhen-de-tpr-true-positive-rate-he-fpr-false-positive-rate" class="header-anchor">#</a></h2>
 <p>混淆矩阵，横着的P、N是预测结果阳性还是阴性。竖着的是说预测是否正确。</p>
 <table>
 <thead>
@@ -445,6 +477,50 @@
 <blockquote>
 <p>更多关于TPR： /02_ml/01_THEORY/00_theory.ipynb#TPR(True-Positive-Rate)</p>
 </blockquote>
+<h2><span id="roc-qu-xian"> ROC曲线</span><a href="#roc-qu-xian" class="header-anchor">#</a></h2>
+<p>在一个二分类模型中，假设采用逻辑回归分类器，其给出针对每个实例为正类的概率，那么通过设定一个阈值如0.6，概率大于等于0.6的为正类，小于0.6的为负类。对应的就可以算出一组(FPR,TPR)，在平面中得到对应坐标点。随着阈值的逐渐减小，越来越多的实例被划分为正类，但是这些正类中同样也掺杂着真正的负实例，即TPR和FPR会同时增大。阈值最大时，对应坐标点为(0,0)，阈值最小时，对应坐标点(1,1)。</p>
+<p>如下面这幅图，(a)图中实线为ROC曲线，线上每个点对应一个阈值。纵坐标TPR，横坐标FPR。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525174307499.png" alt="image-20200525174307499"></p>
+<p>(a) 理想情况下，TPR应该接近1，FPR应该接近0。ROC曲线上的每一个点对应于一个threshold，对于一个分类器，每个threshold下会有一个TPR和FPR。比如Threshold最大时，TP=FP=0，对应于原点；Threshold最小时，TN=FN=1，对应于右上角的点(1,1)。<br>
+(b) P和N得分不作为特征间距离d的一个函数，随着阈值theta增加，TP和FP都增加。</p>
+<ul>
+<li>横轴FPR：1-TNR，1-Specificity，FPR越大，预测正类中实际负类越多。</li>
+<li>纵轴TPR：Sensitivity(正类覆盖率)，TPR越大，预测正类中实际正类越多。</li>
+<li>理想目标：TPR=1，FPR=0，即图中(0,1)点，故ROC曲线越靠拢(0,1)点，越偏离45度对角线越好，Sensitivity、Specificity越大效果越好。</li>
+</ul>
+<h2><span id="roc-qu-xian-li-jie"> ROC曲线理解</span><a href="#roc-qu-xian-li-jie" class="header-anchor">#</a></h2>
+<p><strong>主要是关于阈值的理解</strong><br>
+roc_curve里面有一个阈值数组，里面的原理：</p>
+<ul>
+<li>先按照概率值逆序排序</li>
+<li>计算排序后所有前后之间的概率差</li>
+<li>得到的差值数组里面有很多为0的（排序后前后概率相同），丢掉</li>
+<li>源码里还根据二阶导数判断拐点</li>
+<li>剩下的作为阈值数组</li>
+<li>以上面的阈值数组下标为界，数所有label为1,0的样本【累计值】(cumsum)为tps和fps数组（有权加权）</li>
+<li>数组tps除以最后一个tps[-1]得到tpr，fpr同理。（这里并没有判断概率值是否大于或者小于0.5，因为排序后此处这个概率值就是阈值，概率值大于这个阈值的里面，所有的+就是TP，所有的-就是FP。对应tps[i]和fps[i]）</li>
+<li>这样计算出来的tpr 、fpr数组比原始样本数少很多（因为阈值的原因），具体理解如下</li>
+</ul>
+<p>如果大家对二值分类模型熟悉的话，都会知道其输出一般都是预测样本为正例的概率，而事实上，ROC曲线正是通过不断移动分类器的“阈值”来生成曲线上的一组关键点的。可能这样讲有点抽象，还是举刚才雷达兵的例子。每一个雷达兵用的都是同一台雷达返回的结果，但是每一个雷达兵内心对其属于敌军轰炸机的判断是不一样的，可能1号兵解析后认为结果大于0.9，就是轰炸机，2号兵解析后认为结果大于0.85，就是轰炸机，依次类推，每一个雷达兵内心都有自己的一个判断标准（也即对应分类器的不同“阈值”），这样针对每一个雷达兵（样本输出），都能计算出一个ROC曲线上的关键点（一组FPR,TPR值），把大家的点连起来，也就是最早的ROC曲线了。</p>
+<p>为方便大家进一步理解，本菇也在网上找到了一个示例跟大家一起分享【4】。下图是一个二分模型真实的输出结果，一共有20个样本，输出的概率就是模型判定其为正例的概率，第二列是样本的真实标签。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525195550264.png" alt="image-20200525195550264"></p>
+<ul>
+<li>现在我们<strong>指定一个阈值为0.9，那么只有第一个样本（0.9）会被归类为正例，而其他所有样本都会被归为负例</strong></li>
+<li>因此，对于0.9这个阈值，我们可以计算出FPR为0，TPR为0.1（因为总共10个正样本，预测正确的个数为1），那么我们就知道曲线上必有一个点为(0, 0.1)。</li>
+<li>依次选择不同的阈值（或称为“截断点”），画出全部的关键点以后，再连接关键点即可最终得到ROC曲线如下图所示。</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525195618707.png" alt="image-20200525195618707"></p>
+<h4><span id="sklearn-zhong-de-hui-zhi-yuan-li-solveks-he-roc-curve-dai-ma-zhong"> <strong>sklearn中的绘制原理：</strong>（SolveKS和roc_curve代码中）</span><a href="#sklearn-zhong-de-hui-zhi-yuan-li-solveks-he-roc-curve-dai-ma-zhong" class="header-anchor">#</a></h4>
+<p>其实还有一种更直观的绘制ROC曲线的方法，这边简单提一下。：</p>
+<ul>
+<li>就是把横轴的刻度间隔设为1/N，纵轴的刻度间隔设为1/P，N和P分别为负样本与正样本数量。</li>
+<li>然后再根据模型的输出结果【概率降序】排列，</li>
+<li>依次遍历样本，从0开始绘制ROC曲线，每遇到一个正样本就沿纵轴方向绘制一个刻度间隔的曲线，</li>
+<li>每遇到一个负样本就沿横轴方向绘制一个刻度间隔的曲线，遍历完所有样本点以后，曲线也就绘制完成了。</li>
+<li>究其根本，其最大的好处便是不需要再去指定阈值寻求关键点了，每一个样本的输出概率都算是一个阈值了。当然，无论是工业界还是学术界的实现，都不可能手动去绘制，下面就来讲一下如何用Python高效绘制ROC曲线。</li>
+</ul>
+<h1><span id="ks-zhi-biao"> KS指标</span><a href="#ks-zhi-biao" class="header-anchor">#</a></h1>
+<h2><span id="ks-zhi-ding-yi"> KS值定义</span><a href="#ks-zhi-ding-yi" class="header-anchor">#</a></h2>
 <h2><span id="mo-xing-de-ks-zhi"> 模型的KS值</span><a href="#mo-xing-de-ks-zhi" class="header-anchor">#</a></h2>
 <ul>
 <li>最理想的模型，是TPR尽量高而FPR尽量低（<strong>召回尽可能多的坏人，漏掉尽可能少的好人</strong>），然而任何模型在提高正确预测概率的同时，也会难以避免地增加误判率。</li>
@@ -563,7 +639,7 @@ TPR和FPR曲线分隔最开的位置就是最好的“截断点”，最大间�
 </ul>
 PSI = sum[（实际占比-预期占比）* ln（实际占比/预期占比）]
 
-<p>举例：</p>
+<h2><span id="ji-suan-ju-li"> 计算举例：</span><a href="#ji-suan-ju-li" class="header-anchor">#</a></h2>
 <ul>
 <li>
 <p>比如训练一个logistic回归模型，预测时候会有个概率输出p。</p>
@@ -575,7 +651,7 @@ PSI = sum[（实际占比-预期占比）* ln（实际占比/预期占比）]
 <p>现在用这个模型去对新的样本（val或oft）进行预测，预测结果叫p2，按p1的区间也划分为10等分。</p>
 </li>
 <li>
-<p>实际占比就是p2上在各区间的用户占比，预期占比就是p1上各区间的用户占比。【如果模型是有效的，那么根据p1的区间划分出来的人群占总比和p2划分出来的各个区间的人群占总比应该是大体一致的】</p>
+<p>实际占比就是<strong>p2上在各区间的用户占比</strong>，预期占比就是p1上各区间的用户占比。【<strong>如果模型是有效的，那么根据p1的区间划分出来的人群占总比和p2划分出来的各个区间的人群占总比应该是大体一致的</strong>】</p>
 </li>
 <li>
 <p>意义就是如果模型跟稳定，那么p1和p2上各区间的用户应该是相近的，占比不会变动很大，也就是预测出来的概率不会差距很大。</p>
@@ -614,6 +690,94 @@ PSI = sum[（实际占比-预期占比）* ln（实际占比/预期占比）]
 </ul>
 </li>
 </ul>
+<p>如下图：</p>
+<ul>
+<li>先把左边的概率或者score十等分，然后在actual（基准数据集，如dev）上面将样本进行划分</li>
+<li>对上面dev上各个箱内样本计算<strong>各个分箱内的用户站占体用户的比值</strong>得到Actual列</li>
+<li>同样的上面分箱阈值对Expected数据集进行划分，得到其上各个箱内样本数，计算出各个箱内占总比Expected列</li>
+<li>两列相减，乘以 相除的对数值得到index列</li>
+<li>sum所有10箱即可得到总体模型的PSI</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525193701620.png" alt="image-20200525193701620"></p>
+<blockquote>
+<p><a href="https://www.cnblogs.com/webRobot/p/9133507.html" target="_blank" rel="noopener">https://www.cnblogs.com/webRobot/p/9133507.html</a></p>
+</blockquote>
+<h2><span id="toad-di-ceng-de-psi-shi-xian"> toad底层的PSI实现</span><a href="#toad-di-ceng-de-psi-shi-xian" class="header-anchor">#</a></h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># test 和base 分别是模型在两个数据集上的概率预测输出</span></span><br><span class="line">toad.metrics.PSI(test, base)</span><br><span class="line"><span class="comment"># 底层实现是先求test 和base  概率值的value_counts，normalize使得返回的数值被归一化。counts成了一个权重</span></span><br><span class="line"><span class="comment"># 这里的test_prop是一个series，index是之前test的概率，value是归一化后的counts</span></span><br><span class="line">test_prop = pd.Series(test).value_counts(normalize = <span class="literal">True</span>, dropna = <span class="literal">False</span>)</span><br><span class="line">base_prop = pd.Series(base).value_counts(normalize = <span class="literal">True</span>, dropna = <span class="literal">False</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 然后两个series相减，只会index相同的相减，也就是概率相同的相减，别的都是Nan</span></span><br><span class="line"><span class="comment"># 相除也一样</span></span><br><span class="line"><span class="comment"># 得到一个极其稀疏的series，绝大部分都是nan（因为概率相同的很少）</span></span><br><span class="line"><span class="comment"># 最后相乘的时候只会乘这些在test和base上概率相同的部分</span></span><br><span class="line"><span class="comment"># 再求和</span></span><br><span class="line">psi = np.sum((test_prop - base_prop) * np.log(test_prop / base_prop))</span><br></pre></td></tr></table></figure>
+<h1><span id="gini-zhi-shu"> Gini指数</span><a href="#gini-zhi-shu" class="header-anchor">#</a></h1>
+<p>·GINI系数:也是用于模型风险区分能力进行评估。(使用较少)</p>
+<ul>
+<li>GINI统计值衡量坏账户数在好账户数上的的累积分布与随机分布曲线之间的面积，好账户与坏账户分布之间的差异越大，GINI指标越高，表明模型的风险区分能力越强。</li>
+<li>GINI系数的计算步骤如下：
+<ul>
+<li>
+<ol>
+<li>计算每个评分区间的好坏账户数。</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>计算每个评分区间的累计好账户数占总好账户数比率（累计good%）和累计坏账户数占总坏账户数比率(累计bad%)。</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>按照累计好账户占比和累计坏账户占比得出下图所示曲线ADC。</li>
+</ol>
+</li>
+<li>
+<ol>
+<li>计算出图中阴影部分面积，阴影面积占直角三角形ABC面积的百分比，即为GINI系数。</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p><a href="https://www.zhihu.com/question/37405102/answer/106668941" target="_blank" rel="noopener">https://www.zhihu.com/question/37405102/answer/106668941</a></p>
+</blockquote>
+<h1><span id="bu-huo-lu-capture-rate"> 捕获率capture rate</span><a href="#bu-huo-lu-capture-rate" class="header-anchor">#</a></h1>
+<p><strong>我们是低分拒绝模型，希望低分段内坏人尽量多，好人尽量少误伤！</strong></p>
+<p>计算步骤：</p>
+<ul>
+<li>（1）将用户分数降序排列</li>
+<li>（2）对排序后的用户进行等频分箱</li>
+<li>（3）计算【累计到每一箱的累计负样本数】 <strong>占</strong> 【所有负样本】的比值。（cumsum/sum）</li>
+</ul>
+<p>用于衡量在低分区间捕捉坏客户的能力，希望模型能尽可能的在更靠前的箱内，捕捉出更多比例的坏人</p>
+<table>
+<thead>
+<tr>
+<th>分段</th>
+<th>2018/12/31</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>capture 5%</td>
+<td>13.5%</td>
+</tr>
+<tr>
+<td>capture 10%</td>
+<td>24.2%</td>
+</tr>
+<tr>
+<td>capture 20%</td>
+<td>48.8%</td>
+</tr>
+</tbody>
+</table>
+<p>一些表现比较好的B卡，前20%用户中可以捕获到7 80%的坏人。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200525195244038.png" alt="image-20200525195244038"></p>
+<h2><span id="jian-shao-guo-ni-he-fang-fa"> 减少过拟合方法：</span><a href="#jian-shao-guo-ni-he-fang-fa" class="header-anchor">#</a></h2>
+<ul>
+<li>更多的数据</li>
+<li>对变量做筛选（模型更简单）</li>
+<li>分箱。因为分箱的时候，减少了过拟合（变量变得更稳定，降低噪音）</li>
+</ul>
+<blockquote>
+<p><a href="https://www.jianshu.com/p/c61ae11cc5f6" target="_blank" rel="noopener">https://www.jianshu.com/p/c61ae11cc5f6</a></p>
+</blockquote>
 
       
     </div>
@@ -706,11 +870,17 @@ PSI = sum[（实际占比-预期占比）* ln（实际占比/预期占比）]
 
     <div class="copyright">
     	
-        <div class="publishby">
-        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
-        </div>
+        <!--div class="publishby">
+        	Theme by <a href="#" target="_blank"> . </a>base on <a href="#">pure</a>.
+        </div-->
+       <div>
+         <span id="busuanzi_container_site_pv">
+            本站总访问量<span id="busuanzi_value_site_pv"></span>次
+         </span>
+       </div>
     </div>
 </footer>
+
   <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
 <script>
 window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
@@ -747,6 +917,8 @@ window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
 
 
    
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
 
 
 

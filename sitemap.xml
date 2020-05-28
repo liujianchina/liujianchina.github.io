@@ -2,9 +2,37 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://blog.sofunnyai.com/article/bayes_optimization.html</loc>
+    
+    <lastmod>2020-05-28T04:48:30.411Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/7_note.html</loc>
+    
+    <lastmod>2020-05-28T04:12:30.350Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/woe-iv.html</loc>
+    
+    <lastmod>2020-05-27T11:02:12.351Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://blog.sofunnyai.com/article/strategy.html</loc>
     
-    <lastmod>2020-05-25T09:22:58.773Z</lastmod>
+    <lastmod>2020-05-26T05:06:31.825Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/ks_psi.html</loc>
+    
+    <lastmod>2020-05-25T11:57:12.481Z</lastmod>
     
   </url>
   
@@ -30,13 +58,6 @@
   </url>
   
   <url>
-    <loc>https://blog.sofunnyai.com/article/ks_psi.html</loc>
-    
-    <lastmod>2020-05-23T14:51:07.319Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://blog.sofunnyai.com/article/build-a-blog-base-on-hexo-github.html</loc>
     
     <lastmod>2020-05-23T08:26:59.245Z</lastmod>
@@ -47,13 +68,6 @@
     <loc>https://blog.sofunnyai.com/article/hexo-blog-img-password.html</loc>
     
     <lastmod>2020-05-23T08:22:38.607Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://blog.sofunnyai.com/article/woe-iv.html</loc>
-    
-    <lastmod>2020-05-22T07:41:28.841Z</lastmod>
     
   </url>
   
