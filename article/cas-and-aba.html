@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>CAS比较并交换的原理和ABA问题 | 树先生的博客</title>
+  <meta name="description" content="CAS简介  Atomic修饰的类为啥是线程安全的？如AtomicInteger CAS缺点 小结  CAS CAS应用     ABA问题是什么？原子更新引用是什么？  CAS导致ABA问题 ABA问题 原子引用AtomicReference   带版本的原子引用解决ABA问题 AtomicStampedReference LongAdder（CAS机制优化）  为什么有了AtomicL">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CAS比较并交换的原理和ABA问题">
+<meta property="og:url" content="https://blog.sofunnyai.com/article/cas-and-aba.html">
+<meta property="og:site_name" content="树先生的金融风控工程师博客">
+<meta property="og:description" content="CAS简介  Atomic修饰的类为啥是线程安全的？如AtomicInteger CAS缺点 小结  CAS CAS应用     ABA问题是什么？原子更新引用是什么？  CAS导致ABA问题 ABA问题 原子引用AtomicReference   带版本的原子引用解决ABA问题 AtomicStampedReference LongAdder（CAS机制优化）  为什么有了AtomicL">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601133439289.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601212926046.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601214101655.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601215404311.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601235736890.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601235815152.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601235850232.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601235924711.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601235953395.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200602000026847.png">
+<meta property="article:published_time" content="2018-03-01T05:05:11.000Z">
+<meta property="article:modified_time" content="2020-06-01T16:31:44.597Z">
+<meta property="article:author" content="树先生">
+<meta property="article:tag" content="jdk">
+<meta property="article:tag" content="源码">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="并发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200601133439289.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.sofunnyai.com/article/cas-and-aba.html">
+  
+    <link rel="alternate" href="/atom.xml" title="树先生的金融风控工程师博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="" target="_blank">
+          <img class="img-circle img-rotate" src="/images/cartoon_header.jpeg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">树先生</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Risk Control Engineer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎讨论金融风控业务和工程技巧</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SpringCloud/">SpringCloud</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ml/">ml</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/v2/">v2</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jdk/" rel="tag">jdk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/note/" rel="tag">note</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/private/" rel="tag">private</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/risk/" rel="tag">risk</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/strategy/" rel="tag">strategy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/v2/" rel="tag">v2</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/SpringCloud/" style="font-size: 13px;">SpringCloud</a> <a href="/tags/hexo/" style="font-size: 13.67px;">hexo</a> <a href="/tags/interview/" style="font-size: 13px;">interview</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jdk/" style="font-size: 13px;">jdk</a> <a href="/tags/mysql/" style="font-size: 13px;">mysql</a> <a href="/tags/note/" style="font-size: 13px;">note</a> <a href="/tags/private/" style="font-size: 13.33px;">private</a> <a href="/tags/risk/" style="font-size: 14px;">risk</a> <a href="/tags/strategy/" style="font-size: 13px;">strategy</a> <a href="/tags/v2/" style="font-size: 13px;">v2</a> <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 13px;">中间件</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 13px;">多线程</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">并发</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 13px;">数据结构</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">机器学习</a> <a href="/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13.33px;">源码</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13.33px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13.33px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 13.67px;">评分卡</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13.33px;">运维</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13.33px;">闲杂</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2009/09/">九月 2009</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/strategy.html" class="title">风控策略相关的一切</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-04-15T06:37:22.000Z" itemprop="datePublished">2020-04-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/vintage_rollrate_fpd.html" class="title">互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-21T17:25:33.000Z" itemprop="datePublished">2020-03-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-01-eureka-ribbon.html" class="title">SpringCloud H版上手测试----01CAP、注册中心、Ribbon实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-02T14:30:40.000Z" itemprop="datePublished">2020-03-02</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/ml/">ml</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/bayes_optimization.html" class="title">基于贝叶斯优化的机器学习超参数优化（未完待续）</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2019-07-16T03:26:32.000Z" itemprop="datePublished">2019-07-16</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/lets-encrypt.html" class="title">let&#39;s-encrypt配置网站免费SSL证书</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2019-07-13T18:44:23.000Z" itemprop="datePublished">2019-07-14</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-CAS和ABA" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      CAS比较并交换的原理和ABA问题
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/article/cas-and-aba.html" class="article-date">
+	  <time datetime="2018-03-01T05:05:11.000Z" itemprop="datePublished">2018-03-01</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/jdk/" rel="tag">jdk</a>, <a class="article-tag-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a>, <a class="article-tag-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a>, <a class="article-tag-link" href="/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/cas-and-aba.html#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <!--此处生成目录-->
+<div class="toc">
+<!-- toc -->
+<ul>
+<li><a href="#cas-jian-jie">CAS简介</a>
+<ul>
+<li><a href="#atomic-xiu-shi-de-lei-wei-sha-shi-xian-cheng-an-quan-de-ru-atomicinteger">Atomic修饰的类为啥是线程安全的？如AtomicInteger</a></li>
+<li><a href="#cas-que-dian">CAS缺点</a></li>
+<li><a href="#xiao-jie">小结</a>
+<ul>
+<li><a href="#cas">CAS</a></li>
+<li><a href="#cas-ying-yong">CAS应用</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#aba-wen-ti-shi-shi-me-yuan-zi-geng-xin-yin-yong-shi-shi-me">ABA问题是什么？原子更新引用是什么？</a>
+<ul>
+<li><a href="#cas-dao-zhi-aba-wen-ti">CAS导致ABA问题</a></li>
+<li><a href="#aba-wen-ti">ABA问题</a></li>
+<li><a href="#yuan-zi-yin-yong-atomicreference">原子引用AtomicReference</a></li>
+</ul>
+</li>
+<li><a href="#dai-ban-ben-de-yuan-zi-yin-yong-jie-jue-aba-wen-ti-atomicstampedreference">带版本的原子引用解决ABA问题 AtomicStampedReference</a></li>
+<li><a href="#longadder-cas-ji-zhi-you-hua">LongAdder（CAS机制优化）</a>
+<ul>
+<li><a href="#wei-shi-me-you-liao-atomiclong-huan-yao-xin-zeng-yi-ge-longadder-ni">为什么有了AtomicLong还要新增一个LongAdder呢</a></li>
+</ul>
+<ul>
+<li><a href="#can-kao">参考</a></li>
+</ul>
+</li>
+</ul>
+<!-- tocstop -->
+</div>
+<p><strong>文章主线:</strong></p>
+<p><strong>CAS----&gt;Unsafe----&gt;CAS底层实现和思想----&gt;ABA问题----&gt;原子引用更新----&gt;如何规避ABA问题</strong></p>
+<p>这篇博客还不错</p>
+<blockquote>
+<p><a href="https://blog.csdn.net/javazejian/article/details/72772470" target="_blank" rel="noopener">https://blog.csdn.net/javazejian/article/details/72772470</a></p>
+</blockquote>
+<h1><span id="cas-jian-jie"> CAS简介</span><a href="#cas-jian-jie" class="header-anchor">#</a></h1>
+<ul>
+<li>
+<p>CompareAndSet，比较并交换思想，底层是<strong>CPU并发源语言</strong>。功能是判断某个内存是为是否是预期的值，true则更新，false放弃。过程是原子的（线程安全）。</p>
+</li>
+<li>
+<p>CPU原语音硬件实现，执行必须连续，所以天生就是原子的。线程安全。</p>
+</li>
+<li>
+<p>底层通过<code>Unsafe</code>类实现，Unsafe中的<code>CAS</code>方法JVM会生成汇编指令。</p>
+</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200601133439289.png" alt="image-20200601133439289"></p>
+<h2><span id="atomic-xiu-shi-de-lei-wei-sha-shi-xian-cheng-an-quan-de-ru-atomicinteger"> Atomic修饰的类为啥是线程安全的？如AtomicInteger</span><a href="#atomic-xiu-shi-de-lei-wei-sha-shi-xian-cheng-an-quan-de-ru-atomicinteger" class="header-anchor">#</a></h2>
+<ul>
+<li><code>AtomicInteger.java</code> 的 <code>getAndIncrement</code>方法，获取值并+1，底层借助了JDK的rt.jar中的<code>unsafe</code>类的native方法。</li>
+<li>unsafe类是<code>sun.misc.Unsafe</code>，使用本地方法帮Java操纵底层。如读写操纵特定内存位置的数据。----直接操纵操作系统执行任务</li>
+<li>下面代码里直接用<strong>unsafe去操纵内存偏移位置上的对象</strong>，是不允许中断的连续的指令，是线程安全的，所以没有并发问题。</li>
+<li>变量value使用volatile修饰，保证多线程的可见性</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">int</span> value;  <span class="comment">// 当前AtomicInteger内部使用了一个volatile修饰的int存储值。</span></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Atomically increments by one the current value.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> the previous value</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> <span class="title">getAndIncrement</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> unsafe.getAndAddInt(<span class="keyword">this</span>, valueOffset, <span class="number">1</span>);   <span class="comment">// 传入当前AtomicInteger对象，在内存的地址偏移量对应对象，加1</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>unsafe.java他的底层实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// unsafe类的  getAndAddInt 方法</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> <span class="title">getAndAddInt</span><span class="params">(Object var1, <span class="keyword">long</span> var2, <span class="keyword">int</span> var4)</span> </span>&#123;            </span><br><span class="line">    <span class="comment">// var1 是上面的this对象，就是当前的那个Integer，var2是unsafe找到的内存地址，var4是要新增的值</span></span><br><span class="line">        <span class="keyword">int</span> var5;  <span class="comment">// var5 是内存快照里面的值</span></span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">            var5 = <span class="keyword">this</span>.getIntVolatile(var1, var2);   <span class="comment">// 当前这个var1（上面this对象）在内存地址var2上去取到volatile的快照值放到var5中</span></span><br><span class="line">        &#125; <span class="keyword">while</span>(!<span class="keyword">this</span>.compareAndSwapInt(var1, var2, var5, var5 + var4));    </span><br><span class="line">           <span class="comment">// var1对象在var2内存地址上的值和快照值var5比较，相同就给var5+var4，结束do...while。如果拿出来的快照值不相等，继续do...while，上面去继续</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> var5;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// getIntVolatile  和  compareAndSwapInt是当前unsafe类中的native方法，借助CPU源语实现线程安全。（后面有个JVM native方法的源码）</span></span><br></pre></td></tr></table></figure>
+<p>var5：就是我们从主内存volatile中拷贝到工作内存中的值操作的时候，需要比较工作内存中的值，和主内存中的值进行比较</p>
+<p>假设执行 compareAndSwapInt返回false，那么就一直执行 while方法，直到期望的值和真实值一样</p>
+<ul>
+<li>val1：AtomicInteger对象本身</li>
+<li>var2：该对象值的引用内存地址</li>
+<li>var4：需要修改变动的数量</li>
+<li>var5：用var1和var2找到的内存中的真实值
+<ul>
+<li>用该对象当前的值与var5比较</li>
+<li>如果相同，更新var5 + var4 并返回true，结束循环。</li>
+<li>如果不同，继续取volatile值然后再比较，直到更新完成</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200601212926046.png" alt="image-20200601212926046"></p>
+<p>这里没有用synchronized，而用CAS，这样提高了并发性，也能够实现一致性，是因为每个线程进来后，进入的do while循环，然后不断的获取内存中的值，判断是否为最新，然后在进行更新操作。</p>
+<p>假设线程A和线程B同时执行getAndAddInt操作（分别跑在不同的CPU上）</p>
+<ol>
+<li>AtomicInteger里面的value原始值为3，即主内存中AtomicInteger的 value 为3，根据JMM模型，线程A和线程B各自持有一份价值为3的副本，分别存储在各自的工作内存</li>
+<li>线程A通过getIntVolatile(var1 , var2) 拿到value值3，这是线程A被挂起（该线程失去CPU执行权）</li>
+<li>线程B也通过getIntVolatile(var1, var2)方法获取到value值也是3，此时刚好线程B没有被挂起，并执行了compareAndSwapInt方法，比较内存的值也是3，成功修改内存值为4，线程B打完收工，一切OK</li>
+<li>这是线程A恢复，执行CAS方法，比较发现自己手里的数字3和主内存中的数字4不一致，说明该值已经被其它线程抢先一步修改过了，那么A线程本次修改失败，只能够重新读取后在来一遍了，也就是在执行do while</li>
+<li>线程A重新获取value值，因为变量value被volatile修饰，所以其它线程对它的修改，线程A总能够看到，线程A继续执行compareAndSwapInt进行比较替换，直到成功。</li>
+</ol>
+<p>compareAndSwapInt的底层CPU源语实现：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200601214101655.png" alt="image-20200601214101655"></p>
+<p>Unsafe类 + CAS思想： 也就是自旋，自我旋转</p>
+<h2><span id="cas-que-dian"> CAS缺点</span><a href="#cas-que-dian" class="header-anchor">#</a></h2>
+<p>和synchronized比较，没有加锁每个线程都可以同时竞争并发计算，但是也有以下缺点：</p>
+<ul>
+<li>循环太多的时候，自旋太多。do…while太多，CPU开销大。（没有锁，需要大量比较）</li>
+<li>只能保证一个变量的原子性，不像synchronized可以对多个变量进行原子性操作。</li>
+<li>引出了ABA问题，两个线程在执行CAS竞争的时候，一个线程T1很慢，另一个T2很快。初始的时候快照变量都是A，在拿到线程内存中后，T2修改为B并CAS写回成功。然后T2再来一次CAS把变量从B改为A，后来T1才回来，一看主内存还是A，CAS成功改成C。但这时候的A和刚才的A虽然值一样，但是可能业务发生了变化。造成问题。具体见下一章。</li>
+</ul>
+<h2><span id="xiao-jie"> 小结</span><a href="#xiao-jie" class="header-anchor">#</a></h2>
+<h3><span id="cas"> CAS</span><a href="#cas" class="header-anchor">#</a></h3>
+<p>CAS是compareAndSwap，比较当前工作内存中的值和主物理内存中的值，如果相同则执行规定操作，否者继续比较直到主内存和工作内存的值一致为止</p>
+<h3><span id="cas-ying-yong"> CAS应用</span><a href="#cas-ying-yong" class="header-anchor">#</a></h3>
+<p>CAS有3个操作数，内存值V，旧的预期值A，要修改的更新值B。当且仅当预期值A和内存值V相同时，将内存值V修改为B，否者什么都不做</p>
+<h1><span id="aba-wen-ti-shi-shi-me-yuan-zi-geng-xin-yin-yong-shi-shi-me"> ABA问题是什么？原子更新引用是什么？</span><a href="#aba-wen-ti-shi-shi-me-yuan-zi-geng-xin-yin-yong-shi-shi-me" class="header-anchor">#</a></h1>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200601215404311.png" alt="image-20200601215404311"></p>
+<p>假设现在有两个线程，分别是T1 和 T2，然后T1执行某个操作的时间为10秒，T2执行某个时间的操作是2秒，最开始AB两个线程，分别从主内存中获取A值，但是因为B的执行速度更快，他先把A的值改成B，然后在修改成A，然后执行完毕，T1线程在10秒后，执行完毕，判断内存中的值为A，并且和自己预期的值一样，它就认为没有人更改了主内存中的值，就快乐的修改成B，但是实际上 可能中间经历了 ABCDEFA 这个变换，也就是中间的值经历了狸猫换太子。</p>
+<p>所以ABA问题就是：在获取主内存值的时候，该内存值在我们写入主内存的时候，已经被修改了N次，但是最终又改成原来的值了</p>
+<h2><span id="cas-dao-zhi-aba-wen-ti"> CAS导致ABA问题</span><a href="#cas-dao-zhi-aba-wen-ti" class="header-anchor">#</a></h2>
+<p>CAS算法实现了一个重要的前提，<strong>需要取出内存中某时刻的数据，并在当下时刻比较并替换，那么这个时间差会导致数据的变化。</strong></p>
+<p>比如说一个线程one从内存位置V中取出A，这时候另外一个线程two也从内存中取出A，并且线程two进行了一些操作将值变成了B，然后线程two又将V位置的数据变成A，这时候线程one进行CAS操作发现内存中仍然是A，然后线程one操作成功</p>
+<p><code>尽管线程one的CAS操作成功，但是不代表这个过程就是没有问题的，看业务情况。</code></p>
+<h2><span id="aba-wen-ti"> ABA问题</span><a href="#aba-wen-ti" class="header-anchor">#</a></h2>
+<p>如果业务只管最终的数值是无所谓的，最终都是A即可。ABA问题就可以接受。（只看结果）</p>
+<p>但是如果业务要求中间不能被别的线程偷偷改变还不知道（如支付类）。ABA问题就无法被接受。（要求过程）</p>
+<h2><span id="yuan-zi-yin-yong-atomicreference"> 原子引用AtomicReference</span><a href="#yuan-zi-yin-yong-atomicreference" class="header-anchor">#</a></h2>
+<p>原子引用其实和原子包装类是差不多的概念，就是将一个java类，用原子引用类进行包装起来，那么这个类就具备了原子性.</p>
+<p>但是原子引用打来了ABA问题。</p>
+<h1><span id="dai-ban-ben-de-yuan-zi-yin-yong-jie-jue-aba-wen-ti-atomicstampedreference"> 带版本的原子引用解决ABA问题 AtomicStampedReference</span><a href="#dai-ban-ben-de-yuan-zi-yin-yong-jie-jue-aba-wen-ti-atomicstampedreference" class="header-anchor">#</a></h1>
+<p>通过一个版本号stamp来解决ABA问题，内同一致但是版本号不一致还是不能提交修改。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.sam.phoenix.concurrent;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> lombok.AllArgsConstructor;</span><br><span class="line"><span class="keyword">import</span> lombok.Data;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.concurrent.TimeUnit;</span><br><span class="line"><span class="keyword">import</span> java.util.concurrent.atomic.AtomicReference;</span><br><span class="line"><span class="keyword">import</span> java.util.concurrent.atomic.AtomicStampedReference;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * CAS虽然可以自旋解决变量竞争的线程安全问题，但是会带来ABA问题</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * CAS算法实现了一个重要的前提：**需要取出内存中某时刻的数据，并在当下时刻比较并替换，那么这个时间差会导致数据的变化。**</span></span><br><span class="line"><span class="comment"> * 比如说一个线程one从内存位置V中取出A，这时候另外一个线程two也从内存中取出A，并且线程two进行了一些操作将值变成了B，然后线程two又将V位置的数据变成A，这时候线程one进行CAS操作发现内存中仍然是A，然后线程one操作成功</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * `尽管线程one的CAS操作成功，但是不代表这个过程就是没有问题的，看业务情况。`</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * ## ABA问题</span></span><br><span class="line"><span class="comment"> * 如果业务只管最终的数值是无所谓的，最终都是A即可。ABA问题就可以接受。（只看结果）</span></span><br><span class="line"><span class="comment"> * 但是如果业务要求中间不能被别的线程偷偷改变还不知道（如支付类）。ABA问题就无法被接受。（要求过程）</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CAS_ABA</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"--------------------以下是一个CAS引发的ABA问题的demo-------------------------"</span>);</span><br><span class="line">        casABA();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            TimeUnit.SECONDS.sleep(<span class="number">5</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"-----------------------以下是一个ABA解决，使用带版本号的stampRefference-------------------------"</span>);</span><br><span class="line">        resolveABA();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            TimeUnit.SECONDS.sleep(<span class="number">10</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 演示CAS带来的ABA问题</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">casABA</span><span class="params">()</span></span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 初始化原子引用</span></span><br><span class="line">        <span class="comment">// 定义一个原子引用（包装了一个自定义类），初始化值是张三</span></span><br><span class="line">        AtomicReference&lt;User&gt; atomicUser = <span class="keyword">new</span> AtomicReference&lt;User&gt;();</span><br><span class="line">        User z3 = <span class="keyword">new</span> User(<span class="string">"z3"</span>, <span class="number">33</span>);</span><br><span class="line">        atomicUser.set(z3);</span><br><span class="line">        <span class="keyword">new</span> Thread(()-&gt;&#123;</span><br><span class="line">            <span class="comment">// 完成一次ABA</span></span><br><span class="line">            User l4 = <span class="keyword">new</span> User(<span class="string">"l4"</span>, <span class="number">44</span>);</span><br><span class="line">            atomicUser.compareAndSet(z3, l4);  <span class="comment">// 对比主内存，如果是张三，就修改为李四</span></span><br><span class="line">            atomicUser.compareAndSet(l4,z3);   <span class="comment">// 对比主内存，如果是李四，就修改为张三</span></span><br><span class="line">        &#125;,<span class="string">"t1"</span>).start();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">new</span> Thread(()-&gt;&#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="comment">// 睡眠1秒，等待上面ABA完成(上面偷梁换柱，偷偷改过一次)</span></span><br><span class="line">                TimeUnit.SECONDS.sleep(<span class="number">1</span>);</span><br><span class="line">                User w5 = <span class="keyword">new</span> User(<span class="string">"w5"</span>, <span class="number">55</span>);</span><br><span class="line">                <span class="keyword">boolean</span> result = atomicUser.compareAndSet(z3, w5); <span class="comment">// 虽然更新成功，但是其实里面的z3已经被修改过一次了</span></span><br><span class="line">                System.out.println(<span class="string">"最终t2"</span>+result+<span class="string">",atomicUser中的user："</span>+atomicUser.get());</span><br><span class="line">                System.out.println(<span class="string">"虽然更新成功，但是其实里面的z3已经被修改过一次了,某些业务场景会出错!!!"</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,<span class="string">"t2"</span>).start();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 延时使用版本号解决ABA问题</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">resolveABA</span><span class="params">()</span></span>&#123;</span><br><span class="line">        User z3 = <span class="keyword">new</span> User(<span class="string">"z3"</span>, <span class="number">33</span>);</span><br><span class="line">        <span class="comment">// 初始化一个张三进去，版本号是1</span></span><br><span class="line">        AtomicStampedReference&lt;User&gt; stampedReference = <span class="keyword">new</span> AtomicStampedReference&lt;&gt;(z3, <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">new</span> Thread(()-&gt;&#123;</span><br><span class="line">            User l4 = <span class="keyword">new</span> User(<span class="string">"l4"</span>, <span class="number">44</span>);</span><br><span class="line">            <span class="comment">// 期待是张三，相等的话就改成李四，同时期待版本号是1</span></span><br><span class="line">            <span class="keyword">int</span> stamp = stampedReference.getStamp();</span><br><span class="line">            <span class="comment">// 休眠1秒，等待下面的线程获取同样的版本号</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                TimeUnit.SECONDS.sleep(<span class="number">1</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">boolean</span> result = stampedReference.compareAndSet(z3, l4, stamp,stamp+<span class="number">1</span>);</span><br><span class="line">            System.out.println(Thread.currentThread().getName()+<span class="string">"尝试更新版本号"</span>+stamp+<span class="string">"，结果："</span>+result+<span class="string">",stampedReference中最新的数据："</span>+stampedReference.getReference()+<span class="string">"最新版本号"</span>+stampedReference.getStamp());</span><br><span class="line">            stamp = stampedReference.getStamp();</span><br><span class="line">            result = stampedReference.compareAndSet(l4, z3, stamp,stamp+<span class="number">1</span>);</span><br><span class="line">            System.out.println(Thread.currentThread().getName()+<span class="string">"尝试更新版本号"</span>+stamp+<span class="string">"，结果："</span>+result+<span class="string">",stampedReference中最新的数据："</span>+stampedReference.getReference()+<span class="string">"最新版本号"</span>+stampedReference.getStamp());</span><br><span class="line">        &#125;,<span class="string">"t3"</span>).start();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 因为持有的版本号是老的，会更新失败！</span></span><br><span class="line">        <span class="keyword">new</span> Thread(()-&gt;&#123;</span><br><span class="line">            User w5 = <span class="keyword">new</span> User(<span class="string">"w5"</span>, <span class="number">55</span>);</span><br><span class="line">            <span class="keyword">int</span> stamp = stampedReference.getStamp();</span><br><span class="line">            <span class="comment">// 睡3秒，等上面完成sleep和CAS</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                TimeUnit.SECONDS.sleep(<span class="number">3</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">boolean</span> result = stampedReference.compareAndSet(z3, w5, stamp,stamp+<span class="number">1</span>);</span><br><span class="line">            System.out.println(Thread.currentThread().getName()+<span class="string">"尝试更新版本号"</span>+stamp+<span class="string">"，结果："</span>+result+<span class="string">",stampedReference中最新的数据："</span>+stampedReference.getReference()+<span class="string">"最新版本号"</span>+stampedReference.getStamp());</span><br><span class="line">        &#125;,<span class="string">"t4"</span>).start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="meta">@AllArgsConstructor</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">User</span></span>&#123;</span><br><span class="line">    <span class="keyword">private</span> String name;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> age;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1><span id="longadder-cas-ji-zhi-you-hua"> LongAdder（CAS机制优化）</span><a href="#longadder-cas-ji-zhi-you-hua" class="header-anchor">#</a></h1>
+<p>LongAdder是java8为我们提供的新的类，跟AtomicLong有相同的效果。是对CAS机制的优化</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">LongAdder：</span><br><span class="line"><span class="comment">//变量声明</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> LongAdder count = <span class="keyword">new</span> LongAdder();</span><br><span class="line"><span class="comment">//变量操作</span></span><br><span class="line">count.increment();</span><br><span class="line"><span class="comment">//变量取值</span></span><br><span class="line">count</span><br></pre></td></tr></table></figure>
+<h3><span id="wei-shi-me-you-liao-atomiclong-huan-yao-xin-zeng-yi-ge-longadder-ni"> 为什么有了AtomicLong还要新增一个LongAdder呢</span><a href="#wei-shi-me-you-liao-atomiclong-huan-yao-xin-zeng-yi-ge-longadder-ni" class="header-anchor">#</a></h3>
+<p>原因是：CAS底层实现是在一个死循环中不断地尝试修改目标值，直到修改成功。如果竞争不激烈的时候，修改成功率很高，否则失败率很高。在失败的时候，这些重复的原子性操作会耗费性能。（不停的<strong>自旋</strong>，进入一个无限重复的循环中）</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200601235736890.png" alt="image-20200601235736890"></p>
+<p>核心思想：将热点数据分离。**</p>
+<p>比如说它可以将AtomicLong内部的内部核心数据value分离成一个数组，每个线程访问时，通过hash等算法映射到其中一个数字进行计数，而最终的计数结果则为这个数组的求和累加，其中热点数据value会被分离成多个单元的cell，每个cell独自维护内部的值。当前对象的实际值由所有的cell累计合成，这样热点就进行了有效地分离，并提高了并行度。这相当于将AtomicLong的单点的更新压力分担到各个节点上。在低并发的时候通过对base的直接更新，可以保障和AtomicLong的性能基本一致。而在高并发的时候通过分散提高了性能。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public void increment() &#123;</span><br><span class="line">    add(1L);</span><br><span class="line">&#125;</span><br><span class="line">public void add(long x) &#123;</span><br><span class="line">    Cell[] as; long b, v; int m; Cell a;</span><br><span class="line">    if ((as &#x3D; cells) !&#x3D; null || !casBase(b &#x3D; base, b + x)) &#123;</span><br><span class="line">        boolean uncontended &#x3D; true;</span><br><span class="line">        if (as &#x3D;&#x3D; null || (m &#x3D; as.length - 1) &lt; 0 ||</span><br><span class="line">            (a &#x3D; as[getProbe() &amp; m]) &#x3D;&#x3D; null ||</span><br><span class="line">            !(uncontended &#x3D; a.cas(v &#x3D; a.value, v + x)))</span><br><span class="line">            longAccumulate(x, null, uncontended);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是这个CAS有没有问题呢？肯定是有的。比如说大量的线程同时并发修改一个AtomicInteger，可能有<strong>很多线程会不停的自旋</strong>，进入一个无限重复的循环中。</p>
+<p>这些线程不停地获取值，然后发起CAS操作，但是发现这个值被别人改过了，于是再次进入下一个循环，获取值，发起CAS操作又失败了，再次进入下一个循环。</p>
+<p>在大量线程高并发更新AtomicInteger的时候，这种问题可能会比较明显，导致大量线程空循环，自旋转，性能和效率都不是特别好。</p>
+<p>于是，当当当当，Java 8推出了一个新的类，<strong>LongAdder</strong>，他就是尝试使用分段CAS以及自动分段迁移的方式来大幅度提升多线程高并发执行CAS操作的性能！</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200601235815152.png" alt="image-20200601235815152"></p>
+<p>在LongAdder的底层实现中，首先有一个base值，刚开始多线程来不停的累加数值，都是对base进行累加的，比如刚开始累加成了base = 5。</p>
+<p>接着如果发现并发更新的线程数量过多，在发生竞争的情况下，会有一个Cell数组用于将不同线程的操作离散到不同的节点上去 ==(会根据需要扩容，最大为CPU核）==就会开始施行<strong>分段CAS的机制</strong>，也就是内部会搞一个Cell数组，每个数组是一个数值分段。</p>
+<p>这时，让大量的线程分别去对不同Cell内部的value值进行CAS累加操作，这样就把CAS计算压力分散到了不同的Cell分段数值中了！</p>
+<p>这样就可以大幅度的降低多线程并发更新同一个数值时出现的无限循环的问题，大幅度提升了多线程并发更新数值的性能和效率！</p>
+<p>而且他内部实现了<strong>自动分段迁移的机制</strong>，也就是如果某个Cell的value执行CAS失败了，那么就会自动去找另外一个Cell分段内的value值进行CAS操作。</p>
+<p>这样也解决了线程空旋转、自旋不停等待执行CAS操作的问题，让一个线程过来执行CAS时可以尽快的完成这个操作。</p>
+<p>最后，如果你要从LongAdder中获取当前累加的总值，就会把base值和所有Cell分段数值加起来返回给你。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200601235850232.png" alt="image-20200601235850232"></p>
+<p>如上图所示，LongAdder则是内部维护多个Cell变量，每个Cell里面有一个初始值为0的long型变量，在同等并发量的情况下，争夺单个变量的线程会减少，这是变相的减少了争夺共享资源的并发量，另外多个线程在争夺同一个原子变量时候，</p>
+<p>如果失败并不是自旋CAS重试，而是尝试获取其他原子变量的锁，最后当获取当前值时候是把所有变量的值累加后再加上base的值返回的。</p>
+<p>LongAdder维护了要给延迟初始化的原子性更新数组和一个基值变量base数组的大小保持是2的N次方大小，数组表的下标使用每个线程的hashcode值的掩码表示，数组里面的变量实体是Cell类型。</p>
+<p>Cell 类型是Atomic的一个改进，用来减少缓存的争用，对于大多数原子操作字节填充是浪费的，因为原子操作都是无规律的分散在内存中进行的，多个原子性操作彼此之间是没有接触的，但是原子性数组元素彼此相邻存放将能经常共享缓存行，也就是<strong>伪共享</strong>。所以这在性能上是一个提升。（补充：可以看到Cell类用Contended注解修饰，这里主要是解决false sharing(伪共享的问题)，不过个人认为伪共享翻译的不是很好，或者应该是错误的共享，比如两个volatile变量被分配到了同一个缓存行，但是这两个的更新在高并发下会竞争，比如线程A去更新变量a，线程B去更新变量b，但是这两个变量被分配到了同一个缓存行，因此会造成每个线程都去争抢缓存行的所有权，例如A获取了所有权然后执行更新这时由于volatile的语义会造成其刷新到主存，但是由于变量b也被缓存到同一个缓存行，因此就会造成cache miss，这样就会造成极大的性能损失）<br>
+<strong>LongAdder的add操作图</strong></p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200601235924711.png" alt="image-20200601235924711"></p>
+<p>可以看到，只有从未出现过并发冲突的时候，base基数才会使用到，一旦出现了并发冲突，之后所有的操作都只针对Cell[]数组中的单元Cell。<br>
+如果Cell[]数组未初始化，会调用父类的longAccumelate去初始化Cell[]，如果Cell[]已经初始化但是冲突发生在Cell单元内，则也调用父类的longAccumelate，此时可能就需要对Cell[]扩容了。<br>
+<strong>另外由于Cells占用内存是相对比较大的，所以一开始并不创建，而是在需要时候再创建，也就是惰性加载，当一开始没有空间时候，所有的更新都是操作base变量。</strong></p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200601235953395.png" alt="image-20200601235953395"></p>
+<p>如上图代码：<br>
+例如32、64位操作系统的缓存行大小不一样，因此JAVA8中就增加了一个注<code>@sun.misc.Contended</code>解用于解决这个问题,由JVM去插入这些变量，<a href="http://xn--openjdk-hc5k25at0ntqhnpa7548b.java.net/jeps/142" target="_blank" rel="noopener">具体可以参考openjdk.java.net/jeps/142</a> ，但是通常来说对象是不规则的分配到内存中的，但是数组由于是连续的内存，因此可能会共享缓存行，因此这里加一个Contended注解以防cells数组发生伪共享的情况。</p>
+<p>为了降低高并发下多线程对一个变量CAS争夺失败后大量线程会自旋而造成降低并发性能问题，LongAdder内部通过根据并发请求量来维护多个Cell元素(一个动态的Cell数组)来分担对单个变量进行争夺资源。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200602000026847.png" alt="image-20200602000026847"></p>
+<p>可以看到LongAdder继承自Striped64类，Striped64内部维护着三个变量，LongAdder的真实值其实就是base的值与Cell数组里面所有Cell元素值的累加，base是个基础值，默认是0，cellBusy用来实现自旋锁，当创建Cell元素或者扩容Cell数组时候用来进行线程间的同步。</p>
+<p>在无竞争下直接更新base，类似AtomicLong高并发下，会将每个线程的操作hash到不同的cells数组中，从而将AtomicLong中更新一个value的行为优化之后，分散到多个value中<br>
+从而降低更新热点，而需要得到当前值的时候，直接 将所有cell中的value与base相加即可，但是跟AtomicLong(compare and change -&gt; xadd)的CAS不同，incrementAndGet操作及其变种可以返回更新后的值，而LongAdder返回的是void。</p>
+<p>由于Cell相对来说比较占内存，因此这里采用懒加载的方式，在无竞争的情况下直接更新base域，在第一次发生竞争的时候(CAS失败)就会创建一个大小为2的cells数组，每次扩容都是加倍，只到达到CPU核数。同时我们知道扩容数组等行为需要只能有一个线程同时执行，因此需要一个锁，这里通过CAS更新cellsBusy来实现一个简单的spin lock。</p>
+<p>数组访问索引是通过Thread里的threadLocalRandomProbe域取模实现的，这个域是ThreadLocalRandom更新的，cells的数组大小被限制为CPU的核数，因为即使有超过核数个线程去更新，但是每个线程也只会和一个CPU绑定，更新的时候顶多会有cpu核数个线程，因此我们只需要通过hash将不同线程的更新行为离散到不同的slot即可。<br>
+我们知道线程、线程池会被关闭或销毁，这个时候可能这个线程之前占用的slot就会变成没人用的，但我们也不能清除掉，因为一般web应用都是长时间运行的，线程通常也会动态创建、销毁，很可能一段时间后又会被其他线程占用，而对于短时间运行的，例如单元测试，清除掉有啥意义呢？</p>
+<h2><span id="can-kao"> 参考</span><a href="#can-kao" class="header-anchor">#</a></h2>
+<blockquote>
+<p><a href="https://blog.csdn.net/eluanshi12/article/details/84871879" target="_blank" rel="noopener">AtomicLong与LongAdder（CAS机制的优化）</a></p>
+</blockquote>
+<blockquote>
+<p><a href="https://mp.weixin.qq.com/s/KFsqsCVgyiiTDXMR-Hu1-Q" target="_blank" rel="noopener">大白话聊聊Java并发面试问题之Java 8如何优化CAS性能？</a></p>
+</blockquote>
+<blockquote>
+<p><a href="https://blog.csdn.net/wolf_love666/article/details/87693771" target="_blank" rel="noopener">https://blog.csdn.net/wolf_love666/article/details/87693771</a></p>
+</blockquote>
+<blockquote>
+<p><a href="https://gitee.com/moxi159753/LearningNotes" target="_blank" rel="noopener">https://gitee.com/moxi159753/LearningNotes</a></p>
+</blockquote>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.sofunnyai.com/article/cas-and-aba.html" title="CAS比较并交换的原理和ABA问题" target="_blank" rel="external">https://blog.sofunnyai.com/article/cas-and-aba.html</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/cartoon_header.jpeg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="" target="_blank"><span class="text-dark">树先生</span><small class="ml-1x">Risk Control Engineer</small></a></h3>
+        <div>一个金融风控软件工程师。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/article/7_note.html" title="7_note"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/article/woe-iv.html" title="深入理解woe和iv"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <!--div class="publishby">
+        	Theme by <a href="#" target="_blank"> . </a>base on <a href="#">pure</a>.
+        </div-->
+       <div>
+         <span id="busuanzi_container_site_pv">
+            本站总访问量<span id="busuanzi_value_site_pv"></span>次
+         </span>
+       </div>
+    </div>
+</footer>
+
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '37d6fe220531a0253492',
+    clientSecret: 'b20bb830af693e7d62e5efe08048c9d42234ba2f',
+    repo: 'liujianchina.github.io',
+    owner: 'liujianchina',
+    admin: ['liujianchina'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>
