@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>AQS原理 | 树先生的博客</title>
+  <meta name="description" content="锁的前世今生  乐观锁与悲观锁   AQS  AQS是啥 同步的抽象与各种实现：   从ReentrantLock说起  ReentrantLock的源码 AQS的内部 双向链表实现的同步队列 AQS加锁的源码  acquire入口—核心方法 tryAcquire子类实现的模板 addWaiter-线程如何排队— 自旋添加到尾部，直到成功为止 所以ReentrantLock排队的过程是：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AQS原理">
+<meta property="og:url" content="https://blog.sofunnyai.com/article/aqs.html">
+<meta property="og:site_name" content="树先生的金融风控工程师博客">
+<meta property="og:description" content="锁的前世今生  乐观锁与悲观锁   AQS  AQS是啥 同步的抽象与各种实现：   从ReentrantLock说起  ReentrantLock的源码 AQS的内部 双向链表实现的同步队列 AQS加锁的源码  acquire入口—核心方法 tryAcquire子类实现的模板 addWaiter-线程如何排队— 自旋添加到尾部，直到成功为止 所以ReentrantLock排队的过程是：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615024301986.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200614222312482.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200608153944872.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200607134100117.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615023855502.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200607143948752.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200607144001939.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200607152436844.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615014513513.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/v2-a9f87db22807c9c435b61975055b3d58_r.jpg">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200608160739853.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615143328743.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615150705528.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615151414084.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615164128985.png">
+<meta property="article:published_time" content="2018-03-02T05:24:15.000Z">
+<meta property="article:modified_time" content="2020-06-15T08:53:51.485Z">
+<meta property="article:author" content="树先生">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="并发编程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615024301986.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.sofunnyai.com/article/aqs.html">
+  
+    <link rel="alternate" href="/atom.xml" title="树先生的金融风控工程师博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="" target="_blank">
+          <img class="img-circle img-rotate" src="/images/cartoon_header.jpeg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">树先生</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Risk Control Engineer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎讨论金融风控业务和工程技巧</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/DesignPattern/">DesignPattern</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SpringCloud/">SpringCloud</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ml/">ml</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/v2/">v2</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%B9%B6%E5%8F%91/">并发</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/DesignPattern/" rel="tag">DesignPattern</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jdk/" rel="tag">jdk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/note/" rel="tag">note</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/private/" rel="tag">private</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/risk/" rel="tag">risk</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/strategy/" rel="tag">strategy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/v2/" rel="tag">v2</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" rel="tag">并发编程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/DesignPattern/" style="font-size: 13.25px;">DesignPattern</a> <a href="/tags/SpringCloud/" style="font-size: 13.5px;">SpringCloud</a> <a href="/tags/hexo/" style="font-size: 13.5px;">hexo</a> <a href="/tags/interview/" style="font-size: 13px;">interview</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jdk/" style="font-size: 13px;">jdk</a> <a href="/tags/mysql/" style="font-size: 13px;">mysql</a> <a href="/tags/note/" style="font-size: 13px;">note</a> <a href="/tags/private/" style="font-size: 13.25px;">private</a> <a href="/tags/risk/" style="font-size: 13.75px;">risk</a> <a href="/tags/strategy/" style="font-size: 13px;">strategy</a> <a href="/tags/v2/" style="font-size: 13px;">v2</a> <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 13.25px;">中间件</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 14px;">多线程</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13.75px;">并发</a> <a href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" style="font-size: 13px;">并发编程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 13px;">数据结构</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">机器学习</a> <a href="/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13.25px;">源码</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13.25px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13.25px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 13.5px;">评分卡</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13.25px;">运维</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13.25px;">闲杂</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">二月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2009/09/">九月 2009</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/strategy.html" class="title">风控策略相关的一切</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-04-15T06:37:22.000Z" itemprop="datePublished">2020-04-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-03-hystrix.html" class="title">SpringCloud组件03---Hystrix实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-23T09:34:41.000Z" itemprop="datePublished">2020-03-23</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-02-open-feign.html" class="title">SpringCloud组件02---OpenFeign实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-22T04:22:51.000Z" itemprop="datePublished">2020-03-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/vintage_rollrate_fpd.html" class="title">互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-21T17:25:33.000Z" itemprop="datePublished">2020-03-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-01-eureka-ribbon.html" class="title">SpringCloud组件01---CAP、注册中心、Ribbon实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-02T14:30:40.000Z" itemprop="datePublished">2020-03-02</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-aqs" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      AQS原理
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/article/aqs.html" class="article-date">
+	  <time datetime="2018-03-02T05:24:15.000Z" itemprop="datePublished">2018-03-02</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a>, <a class="article-tag-link" href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" rel="tag">并发编程</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/aqs.html#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <!--此处生成目录-->
+<div class="toc">
+<!-- toc -->
+<ul>
+<li><a href="#suo-de-qian-shi-jin-sheng">锁的前世今生</a>
+<ul>
+<li><a href="#le-guan-suo-yu-bei-guan-suo">乐观锁与悲观锁</a></li>
+</ul>
+</li>
+<li><a href="#aqs">AQS</a>
+<ul>
+<li><a href="#aqs-shi-sha">AQS是啥</a></li>
+<li><a href="#tong-bu-de-chou-xiang-yu-ge-chong-shi-xian">同步的抽象与各种实现：</a></li>
+</ul>
+</li>
+<li><a href="#cong-reentrantlock-shuo-qi">从ReentrantLock说起</a>
+<ul>
+<li><a href="#reentrantlock-de-yuan-ma">ReentrantLock的源码</a></li>
+<li><a href="#aqs-de-nei-bu">AQS的内部</a></li>
+<li><a href="#shuang-xiang-lian-biao-shi-xian-de-tong-bu-dui-lie">双向链表实现的同步队列</a></li>
+<li><a href="#aqs-jia-suo-de-yuan-ma">AQS加锁的源码</a>
+<ul>
+<li><a href="#acquire-ru-kou-he-xin-fang-fa">acquire入口—核心方法</a></li>
+<li><a href="#tryacquire-zi-lei-shi-xian-de-mo-ban">tryAcquire子类实现的模板</a></li>
+<li><a href="#addwaiter-xian-cheng-ru-he-pai-dui-zi-xuan-tian-jia-dao-wei-bu-zhi-dao-cheng-gong-wei-zhi">addWaiter-线程如何排队— 自旋添加到尾部，直到成功为止</a></li>
+<li><a href="#suo-yi-reentrantlock-pai-dui-de-guo-cheng-shi">所以ReentrantLock排队的过程是：</a></li>
+<li><a href="#acquirequeued-wei-ru-dui-huo-qu-suo">acquireQueued—尾入队获取锁</a></li>
+<li><a href="#shouldparkafterfailedacquire-pan-duan-huo-qu-suo-shi-bai-hou-shi-fou-ying-gai-park-zu-duan">shouldParkAfterFailedAcquire 判断获取锁失败后是否应该park阻断</a></li>
+<li><a href="#gong-ping-suo-he-fei-gong-ping-suo-de-ti-xian">公平锁和非公平锁的体现</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#aqs-suo-shi-fang-de-yuan-ma">AQS锁释放的源码</a></li>
+<li><a href="#aqs-de-conditionobject">AQS的ConditionObject</a></li>
+<li><a href="#reentrantreadwritelock-du-xie-suo-gong-xiang-suo">ReentrantReadWriteLock读写锁（共享锁）</a>
+<ul>
+<li><a href="#du-xie-suo-de-status-she-ji">读写锁的status设计</a></li>
+<li><a href="#xie-suo-de-dai-ma">写锁的代码</a></li>
+<li><a href="#jie-zhao-shi-du-suo-de-dai-ma">接着是读锁的代码：</a></li>
+</ul>
+</li>
+<li><a href="#can-kao">参考</a></li>
+</ul>
+<!-- tocstop -->
+</div>
+<h1><span id="suo-de-qian-shi-jin-sheng"> 锁的前世今生</span><a href="#suo-de-qian-shi-jin-sheng" class="header-anchor">#</a></h1>
+<p>先来一个镇楼图，来自美团技术：</p>
+<p>锁的升级过程可以参见<a href="../volatile-and-synchronized.html">《多线程之volatile和synchronized》</a></p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200615024301986.png" alt="image-20200615024301986"></p>
+<h2><span id="le-guan-suo-yu-bei-guan-suo"> 乐观锁与悲观锁</span><a href="#le-guan-suo-yu-bei-guan-suo" class="header-anchor">#</a></h2>
+<ul>
+<li>悲观锁：对于同一个数据的并发操作，悲观锁认为自己在使用数据的时候<strong>一定有别的线程来修改数据，因此在获取数据的时候会先加锁，确保数据不会被别的线程修改。<strong>Java中，synchronized关键字和Lock的实现类都是悲观锁。（不能并发修改，只能排队顺序）-------适合</strong>写操作多</strong>的场景，先加锁可以保证<strong>写操作时数据正确</strong>。</li>
+<li>乐观锁：而乐观锁认为自己在使用数据时<strong>不会有别的线程修改数据，所以不会添加锁，只是在更新数据的时候去判断之前有没有别的线程更新了这个数据。如果这个数据没有被更新，当前线程将自己修改的数据成功写入。如果数据已经被其他线程更新，则根据不同的实现方式执行不同的操作（例如报错或者自动重试）。</strong> （可能并发修改，如果真并发修改了，再议）--------------适合读操作多(写少)的场景，不加锁的特点能够使其<strong>读操作的性能大幅提升</strong>。(没有加锁开销)</li>
+<li>乐观锁在Java中是通过使用无锁编程来实现，最常采用的是CAS算法，Java原子类中的递增操作就通过CAS自旋实现的。</li>
+</ul>
+<h1><span id="aqs"> AQS</span><a href="#aqs" class="header-anchor">#</a></h1>
+<h2><span id="aqs-shi-sha"> AQS是啥</span><a href="#aqs-shi-sha" class="header-anchor">#</a></h2>
+<p>如果从来没有听说过AQS的同学要知道这个，可以先看下<code>ReentrantLock</code>，<code>ReentrantLock</code>实现了一个<code>Lock</code>接口，并持有一个私有抽象静态<code>Sync</code>对象，这个抽象<code>Sync</code>又有两个实现，分别是公平锁<code>FairLock</code>和非公平锁<code>NonFiarLock</code>。缺省是非公平锁。</p>
+<ul>
+<li><strong>公平锁</strong>：多个线程按照申请锁的顺序去获得锁，后申请锁的线程需要排队，等它之前的线程获得锁并释放后，它才能获得锁；</li>
+<li><strong>非公平锁</strong>：线程获得锁的顺序于申请锁的顺序无关，申请锁的线程可以直接尝试获得锁，谁抢到就是谁的；</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200614222312482.png" alt="image-20200614222312482"></p>
+<p>具体的结构代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ReentrantLock</span> <span class="keyword">implements</span> <span class="title">Lock</span>, <span class="title">java</span>.<span class="title">io</span>.<span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = <span class="number">7373984872572414699L</span>;</span><br><span class="line">    <span class="comment">/** Synchronizer providing all implementation mechanics */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Sync sync;   <span class="comment">// 实际ReentrantLock到底是公平还是非公平是new的时候指定的实现类。</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Base of synchronization control for this lock. Subclassed</span></span><br><span class="line"><span class="comment">     * into fair and nonfair versions below. Uses AQS state to</span></span><br><span class="line"><span class="comment">     * represent the number of holds on the lock.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">abstract</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Sync</span> <span class="keyword">extends</span> <span class="title">AbstractQueuedSynchronizer</span> </span>&#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = -<span class="number">5179523762034025860L</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * Performs &#123;<span class="doctag">@link</span> Lock#lock&#125;. The main reason for subclassing</span></span><br><span class="line"><span class="comment">         * is to allow fast path for nonfair version.</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="function"><span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+<p>而抽象类<code>Sync</code>继承的<code>AbstractQueuedSynchronizer</code>类（简称AQS，抽象队列同步器）是是一个可以用来实现线程同步的基础工具。也就是说我们常用的<code>ReentrantLock</code>底层是由<code>AQS</code>实现的。</p>
+<p>也就是说：AQS是一个提供了同步功能的<strong>基础设施</strong>，可以用它来完成锁同步等功能。在Java的并发包中大量使用。</p>
+<h2><span id="tong-bu-de-chou-xiang-yu-ge-chong-shi-xian"> 同步的抽象与各种实现：</span><a href="#tong-bu-de-chou-xiang-yu-ge-chong-shi-xian" class="header-anchor">#</a></h2>
+<p><strong>器AQS是公共逻辑，各种Lock的实现算是自定义的业务逻辑：</strong></p>
+<p>AQS和Sync、FairSync、NonfairSync都是公共的抽象逻辑，而Lock、ReadLock、ReentrantLock都算是业务逻辑。这些业务逻辑是有各个场景的特点，给予我们的公共抽象逻辑基础设施来实现的。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200608153944872.png" alt="image-20200608153944872"></p>
+<p>比如CountdownLatch里面也是有AQS和实现的。</p>
+<p>此外<code>ReentrantLock</code>底层的Lock接口还保证了<code>ReentrantLock</code>的行为具有以下方法实现：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200607134100117.png" alt="image-20200607134100117"></p>
+<h1><span id="cong-reentrantlock-shuo-qi"> 从ReentrantLock说起</span><a href="#cong-reentrantlock-shuo-qi" class="header-anchor">#</a></h1>
+<p>ReentrantLock作为JUC包提供的可重入锁，和Synchronized关键字的区别如下：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200615023855502.png" alt="image-20200615023855502"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// **************************Synchronized的使用方式**************************</span></span><br><span class="line"><span class="comment">// 1.用于代码块</span></span><br><span class="line"><span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;&#125;</span><br><span class="line"><span class="comment">// 2.用于对象</span></span><br><span class="line"><span class="keyword">synchronized</span> (object) &#123;&#125;</span><br><span class="line"><span class="comment">// 3.用于方法</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">test</span> <span class="params">()</span> </span>&#123;&#125;</span><br><span class="line"><span class="comment">// 4.可重入</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++) &#123;</span><br><span class="line">	<span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// **************************ReentrantLock的使用方式**************************</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span> <span class="params">()</span> throw Exception </span>&#123;</span><br><span class="line">	<span class="comment">// 1.初始化选择公平锁、非公平锁</span></span><br><span class="line">	ReentrantLock lock = <span class="keyword">new</span> ReentrantLock(<span class="keyword">true</span>);</span><br><span class="line">	<span class="comment">// 2.可用于代码块</span></span><br><span class="line">	lock.lock();</span><br><span class="line">	<span class="keyword">try</span> &#123;</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			<span class="comment">// 3.支持多种加锁方式，比较灵活; 具有可重入特性</span></span><br><span class="line">			<span class="keyword">if</span>(lock.tryLock(<span class="number">100</span>, TimeUnit.MILLISECONDS))&#123; &#125;</span><br><span class="line">		&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">			<span class="comment">// 4.手动释放锁</span></span><br><span class="line">			lock.unlock()</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">		lock.unlock();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a href="https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html" target="_blank" rel="noopener">https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html</a></p>
+</blockquote>
+<h2><span id="reentrantlock-de-yuan-ma"> ReentrantLock的源码</span><a href="#reentrantlock-de-yuan-ma" class="header-anchor">#</a></h2>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ReentrantLock</span> <span class="keyword">implements</span> <span class="title">Lock</span>, <span class="title">java</span>.<span class="title">io</span>.<span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Sync sync;</span><br><span class="line">    <span class="comment">// 继承AQS，有一些默认实现</span></span><br><span class="line">    <span class="keyword">abstract</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Sync</span> <span class="keyword">extends</span> <span class="title">AbstractQueuedSynchronizer</span> </span>&#123;</span><br><span class="line">      <span class="comment">//......  一些AQS的抽象方法实现</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 一些Sync抽象方法的实现（主要是非公平加锁和公平加锁，这里以非公平为例）</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">NonfairSync</span> <span class="keyword">extends</span> <span class="title">Sync</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">final</span> <span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (compareAndSetState(<span class="number">0</span>, <span class="number">1</span>))  <span class="comment">// CAS修改爷爷类AQS的state，去加锁--------------保证原子性</span></span><br><span class="line">                setExclusiveOwnerThread(Thread.currentThread());  <span class="comment">// 修改成功的话去设置AQS当前锁的独占线程是我</span></span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                acquire(<span class="number">1</span>);  <span class="comment">// 修改失败的就去AQS执行aquire尝试获得锁，看下面AQS</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 实现AQS报错的源码获取一次锁，公平和非公平是两个实现，此处是非公平</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">tryAcquire</span><span class="params">(<span class="keyword">int</span> acquires)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> nonfairTryAcquire(acquires);   <span class="comment">// nonfairTryAcquire的实现：判断状态为0，独占是当前线程就重入+1返回true。不是重入的话就CAS抢占锁并设置AQS独占线程是我返回true，state=1或者没抢到返回false。</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>ReentrantLock内部使用了一个AQS的模板实现Sync，这个Sync又针对公平锁和非公平锁有两种实现。</li>
+<li>非公平锁一上来就先CAS去修改AQS的锁状态state（unsafe用内存偏移量去修改，保证原子性），再去<code>acquire(1)</code></li>
+<li>公平的是上来就去<code>acquire(1)</code></li>
+<li><code>acquire(1)</code>可以看下面AQS的部分</li>
+</ul>
+<h2><span id="aqs-de-nei-bu"> AQS的内部</span><a href="#aqs-de-nei-bu" class="header-anchor">#</a></h2>
+<p>开门见山：</p>
+<ul>
+<li>AQS内部有一个双向链表实现一个FIFO的同步队列来维护当前获取锁失败的线程。</li>
+<li>使用一个<strong>volatile的int类型的同步状态state</strong>和一系列方法实现同步。（state的各个值什么含义是给子类去实现的）</li>
+<li>AQS内部还有一个当前独占线程，来标识谁在占用同步状态</li>
+</ul>
+<p><code>AbstractQueuedSynchronizer</code>使用了模板方法的设计模式，把大部分的流程都实现了，但关键步骤使用抽象方法、抛异常的方式，交给子类去强制实现个性化定制。如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 独占地获取锁和释放锁(非共享读写锁)</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">tryAcquire</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">tryRelease</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 还有更多，见下图</span></span><br></pre></td></tr></table></figure>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200607143948752.png" alt="image-20200607143948752"></p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200607144001939.png" alt="image-20200607144001939"></p>
+<p><code>AQS</code>提供的模板方法主要分为三类：</p>
+<ul>
+<li>独占式地获取和释放锁；</li>
+<li>共享式地获取和释放锁；</li>
+<li>查询<code>AQS</code>的同步队列中正在等待的线程情况；</li>
+</ul>
+<h2><span id="shuang-xiang-lian-biao-shi-xian-de-tong-bu-dui-lie"> 双向链表实现的同步队列</span><a href="#shuang-xiang-lian-biao-shi-xian-de-tong-bu-dui-lie" class="header-anchor">#</a></h2>
+<ul>
+<li>AQS里面有一个volatile int类型的锁状态<code>state</code>，多线程CAS竞争修改。</li>
+<li>AQS同步器内部有一个同步队列，每次线程获取锁失败就会增加一个Node到队尾，释放锁成功就会唤起队列最前面的Node中的线程，这个线程再去尝试。</li>
+<li>队列中的头节点<code>head</code>就是当前已经获取了锁，正在执行的线程对应的节点；而之后的这些节点，则对应着获取锁失败，正在排队的线程。</li>
+<li>AQS持有链表的<code>head</code>和<code>tail</code>节点，每个Node节点里面除了<code>pre</code>和<code>next</code>还有当前的线程。</li>
+<li>当一个线程获取锁失败，它会被封装成一个<code>Node</code>，加入同步队列的尾部排队，同时线程会进入阻塞状态。</li>
+<li>而当头节点对应的线程释放锁时，它会唤醒它的下一个节点。</li>
+<li>被唤醒的节点对应的线程开始尝试获取锁，若获取成功，它就会将自己置为<code>head</code>，然后将原来的<code>head</code>移出队列。</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200607152436844.png" alt="image-20200607152436844"></p>
+<h2><span id="aqs-jia-suo-de-yuan-ma"> AQS加锁的源码</span><a href="#aqs-jia-suo-de-yuan-ma" class="header-anchor">#</a></h2>
+<h3><span id="acquire-ru-kou-he-xin-fang-fa"> acquire入口—核心方法</span><a href="#acquire-ru-kou-he-xin-fang-fa" class="header-anchor">#</a></h3>
+<p><code>ReentrantLock</code>的<code>lock()</code>方法调用了<code>AQS</code>的下面方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 原文注释说：这是一个独占模式、忽略被打断。通过至少一次成功的tryAcquire就能拿到锁。</span></span><br><span class="line"><span class="comment">// 否则线程入队，反复调用tryAcquire被阻塞、解阻塞，直到返回true。</span></span><br><span class="line"><span class="comment">// 这个方法可以用来实现Lock.lock()</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">acquire</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;    <span class="comment">// FiarSync这里直接传了1进来调用</span></span><br><span class="line">        <span class="keyword">if</span> (!tryAcquire(arg) &amp;&amp;   <span class="comment">// tryAcquire成功则啥也没干地结束，失败继续，公平锁实现的时候如果有等的更久的会不去抢--------只有自己的时候不会排队</span></span><br><span class="line">            acquireQueued(addWaiter(Node.EXCLUSIVE), arg))  <span class="comment">// 先包装Node，addWriter续尾，再acquireQueued去阻塞</span></span><br><span class="line">            selfInterrupt();  <span class="comment">// 如果里面在队列等待锁的过程中，被别人interrupt了是无法响应的。解锁后这里要继续处理响应interruput方法。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>首先调用<code>tryAcquire</code>尝试获取一次锁，若返回<code>true</code>，表示获取成功，则<code>acquire</code>方法将直接返回（没有构建同步队列）；若返回<code>false</code>，则会继续向后执行<code>acquireQueued</code>方法；-------公平和非公平此处tryAcquire的实现有差异，非公平先去CAS竞争state了一次再去判断重入，公平的直接判断没有等待的(hasQueuedPredecessors)的线程才acquire。</li>
+<li><code>tryAcquire</code>返回<code>false</code>后，将执行<code>acquireQueued</code>，但是这个方法传入的参数调用了<code>addWaiter</code>方法；</li>
+<li><code>addWaiter</code>方法的作用是将当前线封装成同步队列的节点，然后加入到同步队列的尾部进行排队，并返回此节点；（CAS去设置head、tail，失败则for死循环再来一轮。第一个head是一个空节点）</li>
+<li><code>addWaiter</code>方法执行完成后，将它的返回值作为参数，调用<code>acquireQueued</code>方法。<code>acquireQueued</code>方法的作用是让当前线程在同步队列中阻塞，然后在被其他线程唤醒时去获取锁；-----这里会阻塞park</li>
+<li>若线程被唤醒并成功获取锁后，将从<code>acquireQueued</code>方法中退出，同时返回一个<code>boolean</code>值表示当前线程是否被中断，若被中断，则会执行下面的<code>selfInterrupt</code>方法，响应中断；</li>
+</ul>
+<h3><span id="tryacquire-zi-lei-shi-xian-de-mo-ban"> tryAcquire子类实现的模板</span><a href="#tryacquire-zi-lei-shi-xian-de-mo-ban" class="header-anchor">#</a></h3>
+<p><code>tryAcquire</code>是一个模板方法，留给子类的公平锁、非公平锁按场景去实现。不同的场景根据这个arg去修改state字段。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 模板方法，留给子类去实现</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">tryAcquire</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>公平锁实现的时候如果有等的更久的会不去抢，非公平锁上来就CAS抢state从0为1。成功就返回，没成功判断重入，重入返回true，否则false。</p>
+<p>如果tryAcquire没竞争到锁，下面开始排队：</p>
+<h3><span id="addwaiter-xian-cheng-ru-he-pai-dui-zi-xuan-tian-jia-dao-wei-bu-zhi-dao-cheng-gong-wei-zhi"> addWaiter-线程如何排队— 自旋添加到尾部，直到成功为止</span><a href="#addwaiter-xian-cheng-ru-he-pai-dui-zi-xuan-tian-jia-dao-wei-bu-zhi-dao-cheng-gong-wei-zhi" class="header-anchor">#</a></h3>
+<p>获取锁失败后到达<code>addWaiter</code>添加一个等待者：</p>
+<p>将当前线程new 一个Node放到队列尾部，如果队列为空创建一个傀儡节点再添加尾部（傀儡节点就代表现在正在运行的那个线程）。如果加入失败就自旋(enq)直到添加成功，最后返回此节点。</p>
+<p>（CAS去setTail一遍，失败的话后面<code>enq</code>循环一遍一遍CAS保证成功入队续上）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Node <span class="title">addWaiter</span><span class="params">(Node mode)</span> </span>&#123;</span><br><span class="line">        Node node = <span class="keyword">new</span> Node(Thread.currentThread(), mode);</span><br><span class="line">        <span class="comment">// 拿出尾，作为前序节点，第一次是null</span></span><br><span class="line">        Node pred = tail;</span><br><span class="line">        <span class="keyword">if</span> (pred != <span class="keyword">null</span>) &#123;  <span class="comment">// 如果有尾，说明不是第一次，否则是第一次队列未初始化执行下面enq循环再试</span></span><br><span class="line">            node.prev = pred;      <span class="comment">// 新节点的前指针，指向上一个尾</span></span><br><span class="line">            <span class="comment">// CAS将新节点node设置为新尾节点</span></span><br><span class="line">            <span class="keyword">if</span> (compareAndSetTail(pred, node)) &#123;</span><br><span class="line">                pred.next = node;   <span class="comment">// 设置成功，前尾的后指针指向当前新尾</span></span><br><span class="line">                <span class="keyword">return</span> node;</span><br><span class="line">            &#125;  <span class="comment">// 尾为空，执行下面enq初始化队列</span></span><br><span class="line">        &#125;</span><br><span class="line">        enq(node);   <span class="comment">// 初始化并CAS续尾（CAS设置head、tail）</span></span><br><span class="line">        <span class="keyword">return</span> node;  <span class="comment">// 返回</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>没初始化则初始化，然后入队尾，注意初始化的时候new了一个空的傀儡节点作为header，然后再来一轮for循环CAS续上的。（如果没抢到就再来for循环，直到CAS抢到再返回）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Inserts node into queue, initializing if necessary  一次入队，需要的时候进行初始化</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> node the node to insert</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> node's predecessor</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> Node <span class="title">enq</span><span class="params">(<span class="keyword">final</span> Node node)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">            Node t = tail;   <span class="comment">// 拿出尾</span></span><br><span class="line">            <span class="keyword">if</span> (t == <span class="keyword">null</span>) &#123; <span class="comment">// Must initialize   没有尾，说明是第一次，需要初始化一个空的head再往后排</span></span><br><span class="line">                <span class="keyword">if</span> (compareAndSetHead(<span class="keyword">new</span> Node()))   <span class="comment">// head使用CAS初始化了一个虚拟的傀儡节点！这里是重点！！！！此时多线程的锁会竞争</span></span><br><span class="line">                    tail = head; <span class="comment">// 初始化首尾都是同一个，然后重新来for一次添加尾</span></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;  <span class="comment">//第二轮以上for，初始化过，往最后排</span></span><br><span class="line">                node.prev = t;  <span class="comment">// 当前节点的前一个设置为前尾</span></span><br><span class="line">                <span class="keyword">if</span> (compareAndSetTail(t, node)) &#123;   <span class="comment">// CAS去看前尾变化没，没变化就变更新尾，此时多线程的锁会竞争</span></span><br><span class="line">                    t.next = node;   <span class="comment">// 前尾的next指向新尾，尾巴成功修改</span></span><br><span class="line">                    <span class="keyword">return</span> t;   <span class="comment">// CAS续成功才会返回，否则永远来续-----------------------唯一出口</span></span><br><span class="line">                &#125;<span class="comment">// CAS失败，说明前尾变更，被别的线程抢先续尾了，重新来入队续尾</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h3><span id="suo-yi-reentrantlock-pai-dui-de-guo-cheng-shi"> 所以ReentrantLock排队的过程是：</span><a href="#suo-yi-reentrantlock-pai-dui-de-guo-cheng-shi" class="header-anchor">#</a></h3>
+<ul>
+<li>AQS使用一个双向链表来代表线程的先后顺序，head永远是空。AQS内部有status，0-free，&gt;0-lock。Node内部有线程信息和waitStatus(CANCLE/SIGNAL/CONDITION/和共享锁的PROPAGATE)。</li>
+<li>初始状态（也就是锁未被任何线程占用的时候）线程A申请锁<strong>此时，成功获取到锁，无排队线程</strong>（tryAcquire直接拿到true并返回）</li>
+<li>线程B申请该锁，且上一个线程未释放：enq方法的for循环先创建一个<strong>空的Head(只有next指向)初始化队列</strong>，<strong>再来一个for循环添加当前Node</strong>（包含自身线程信息，和pre指向，模式独占或者共享）。</li>
+<li>再来一个线程C申请该锁，且占有该锁的线程未释放：CAS来续尾成功就返回，失败的话去enq里面for的CAS续尾到成功为止。(成功后修改pre和自己的互相指向)</li>
+</ul>
+<p>上面加入到队尾后，返回节点，传入下面的方法去获取锁。</p>
+<h3><span id="acquirequeued-wei-ru-dui-huo-qu-suo"> acquireQueued—尾入队获取锁</span><a href="#acquirequeued-wei-ru-dui-huo-qu-suo" class="header-anchor">#</a></h3>
+<p>acquireQueued方法就是把获取锁失败的Node放入队列中，让这个线程不断进行“获锁”,直到它**“成功获锁”**或者“<strong>不再需要锁（如被中断）</strong>”</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 对队列里的节点node进行独占的、不可打断的获取锁。</span></span><br><span class="line"><span class="comment">    *  acquire()中和condition对象的各种await方法中被使用。</span></span><br><span class="line"><span class="comment">     * Acquires in exclusive uninterruptible mode for thread already in</span></span><br><span class="line"><span class="comment">     * queue. Used by condition wait methods as well as acquire.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> node the node</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> arg the acquire argument</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> &#123;<span class="doctag">@code</span> true&#125; if interrupted while waiting</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">acquireQueued</span><span class="params">(<span class="keyword">final</span> Node node, <span class="keyword">int</span> arg)</span> </span>&#123;  <span class="comment">// acquire方法传入了刚刚加入队尾的一个节点，await方法传入的是一个节点</span></span><br><span class="line">        <span class="keyword">boolean</span> failed = <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">boolean</span> interrupted = <span class="keyword">false</span>;   <span class="comment">// 是否被打断的标识</span></span><br><span class="line">            <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">                <span class="keyword">final</span> Node p = node.predecessor();   <span class="comment">// 拿到当前Node的前序节点</span></span><br><span class="line">                <span class="comment">// 如果前序是head才会去CAS抢占锁。(现在这个线程解锁后也成为新的head了)</span></span><br><span class="line">                <span class="keyword">if</span> (p == head &amp;&amp; tryAcquire(arg)) &#123;   <span class="comment">//(tryAcquire是模板方法，子类FairSync等实现的，去尝试CAS修改state获取锁后，下面再来把自己变成head)</span></span><br><span class="line">                    <span class="comment">// 到这里就是已经获取到锁了，旧头换新头（上面是CAS的，这里没有线程安全问题）</span></span><br><span class="line">                    setHead(node);   <span class="comment">// 这个是把当前节点设置为傀儡节点头，删除里面的thread等信息（已经拿到锁了，放thread没有意义，无助于GC）</span></span><br><span class="line">                    p.next = <span class="keyword">null</span>; <span class="comment">// help GC   释放之前的傀儡头引用，帮助回收</span></span><br><span class="line">                    failed = <span class="keyword">false</span>;</span><br><span class="line">                    <span class="keyword">return</span> interrupted;   <span class="comment">//----------------------------唯一出口。 返回打断标识</span></span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">// 自己不是老二（前序不是head）或者老二获取锁tryAcquire失败了，踏踏实实的先看是否应该park</span></span><br><span class="line">                <span class="comment">// 如果可以的话park等待，然后阻塞检查是否打断。打断了进入if内，没打断就结束这一轮获取。（不可能让一直死循环for来判断，CPU该爆炸了）</span></span><br><span class="line">                <span class="comment">// 不应该park的话就继续下一轮for再来抢占</span></span><br><span class="line">                </span><br><span class="line">            <span class="comment">// shouldParkAfterFailedAcquire方法判断当前线程是否能够进入等待状态，</span></span><br><span class="line">            <span class="comment">// 若当前线程的节点不是头节点的下一个节点，则需要进入等待状态，</span></span><br><span class="line">            <span class="comment">// 在此方法内部，当前线程会找到它的前驱节点中，第一个还在正常等待或执行的节点，</span></span><br><span class="line">            <span class="comment">// 让其作为自己的直接前驱，然后在需要时将自己唤醒（因为其中有些线程可能被中断），</span></span><br><span class="line">            <span class="comment">// 若找到，则返回true，表示自己可以进入等待状态了；</span></span><br><span class="line">            <span class="comment">// 则继续调用parkAndCheckInterrupt方法，当前线程在这个方法中等待，</span></span><br><span class="line">            <span class="comment">// 直到被其他线程唤醒，或者被中断后返回，返回时将返回一个boolean值，</span></span><br><span class="line">            <span class="comment">// 表示这个线程是否被中断，若为true，则将执行下面一行代码，将中断标志置为true</span></span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (shouldParkAfterFailedAcquire(p, node) &amp;&amp;  <span class="comment">// 前面节点是SIGNAL，返回true可以阻塞自己</span></span><br><span class="line">                    parkAndCheckInterrupt()) <span class="comment">// 阻塞等待被唤醒，使用LockSupport.park()	------------------------------------此时外面lock.lock()会阻塞，业务代码等待。</span></span><br><span class="line">                    interrupted = <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        <span class="comment">// 上面代码中只有一个return语句，且return的前一句就是failed = false;</span></span><br><span class="line">        <span class="comment">// 所以只有当异常发生时，failed才会保持true的状态运行到此处；</span></span><br><span class="line">        <span class="comment">// 异常可能是线程被中断，也可能是其他方法中的异常，</span></span><br><span class="line">        <span class="comment">// 比如我们自己实现的tryAcquire方法</span></span><br><span class="line">        <span class="comment">// 此时将取消线程获取锁的动作，将它从同步队列中移除</span></span><br><span class="line">            <span class="keyword">if</span> (failed)</span><br><span class="line">                cancelAcquire(node);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>方法的主流程如下：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200615014513513.png" alt="image-20200615014513513"></p>
+<h3><span id="shouldparkafterfailedacquire-pan-duan-huo-qu-suo-shi-bai-hou-shi-fou-ying-gai-park-zu-duan"> shouldParkAfterFailedAcquire 判断获取锁失败后是否应该park阻断</span><a href="#shouldparkafterfailedacquire-pan-duan-huo-qu-suo-shi-bai-hou-shi-fou-ying-gai-park-zu-duan" class="header-anchor">#</a></h3>
+<p>首先记着这个方法是在一个死循环中，获取锁失败就来执行一遍。为了方式for死循环大量占用CPU，可以想象绝大部分节点必然是返回true，然后park的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 检查并更新无法获取锁的节点的状态。在所有循环里返回true就阻塞。要求传入的pred 就是node的前序Node.pre指向的那个</span></span><br><span class="line"><span class="comment">     * Checks and updates status for a node that failed to acquire.</span></span><br><span class="line"><span class="comment">     * Returns true if thread should block. This is the main signal</span></span><br><span class="line"><span class="comment">     * control in all acquire loops.  Requires that pred == node.prev.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> pred node's predecessor holding status</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> node the node</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> &#123;<span class="doctag">@code</span> true&#125; if thread should block</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">shouldParkAfterFailedAcquire</span><span class="params">(Node pred, Node node)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> ws = pred.waitStatus; <span class="comment">// 前序节点等待状态</span></span><br><span class="line">        <span class="comment">// Node的WaitStatus，这里的SIGNAL是release方法写入的，下面再说</span></span><br><span class="line">        <span class="keyword">if</span> (ws == Node.SIGNAL)   <span class="comment">// 前序节点已经release，发出信号了，返回true标识可以park阻塞---------------这是唯一一个可以阻塞的true返回</span></span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * This node has already set status asking a release</span></span><br><span class="line"><span class="comment">             * to signal it, so it can safely park.</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">if</span> (ws &gt; <span class="number">0</span>) &#123;   <span class="comment">// 前序节点是取消状态，一直往前反向找到一个非取消的，这些Cancelled都被删掉了</span></span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * Predecessor was cancelled. Skip over predecessors and</span></span><br><span class="line"><span class="comment">             * indicate retry.</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            <span class="keyword">do</span> &#123;</span><br><span class="line">                node.prev = pred = pred.prev;</span><br><span class="line">            &#125; <span class="keyword">while</span> (pred.waitStatus &gt; <span class="number">0</span>);</span><br><span class="line">            pred.next = node;         <span class="comment">//--------------其实是删掉了所有中途取消的节点，继续外面的for死循环来进下一轮</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;  <span class="comment">// 前一节点是0或者传播状态，我们需要一个信号，但是还没park阻塞，此轮CAS设置把前一节点为SIGNAL状态，让调用者重新再来一遍就会阻塞他。</span></span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * waitStatus must be 0 or PROPAGATE.  Indicate that we</span></span><br><span class="line"><span class="comment">             * need a signal, but don't park yet.  Caller will need to</span></span><br><span class="line"><span class="comment">             * retry to make sure it cannot acquire before parking.</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            compareAndSetWaitStatus(pred, ws, Node.SIGNAL);   <span class="comment">// pre设置为SIGNAL，下一轮来入口返回true，会阻塞</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;  <span class="comment">//-----------删掉了cancel节点，或者SIGNAL了0或者传播节点，下一轮来阻塞</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>上面方法的流程图如下：</p>
+<blockquote>
+<p><a href="https://zhuanlan.zhihu.com/p/54297968" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/54297968</a></p>
+</blockquote>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/v2-a9f87db22807c9c435b61975055b3d58_r.jpg" alt="preview"></p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200608160739853.png" alt="image-20200608160739853"></p>
+<h3><span id="gong-ping-suo-he-fei-gong-ping-suo-de-ti-xian"> 公平锁和非公平锁的体现</span><a href="#gong-ping-suo-he-fei-gong-ping-suo-de-ti-xian" class="header-anchor">#</a></h3>
+<p>“不管<strong>公平</strong>还是<strong>非公平</strong>模式下，ReentrantLock对于排队中的线程都能保证，排在前面的一定比排在后面的线程优先获得锁”<strong>但是</strong>，非公平模式<strong>不保证</strong>“队列中的第一个线程一定就比新来的（未加入到队列）的线程优先获锁”因为队列中的第一个线程尝试获得锁时，可能刚好来了一个线程也要获取锁，而这个刚来的线程都还未加入到等待队列，此时两个线程同时随机竞争，很有可能，队列中的第一个线程竞争失败（而该线程等待的时间其实比这个刚来的线程等待时间要久）。</p>
+<p>因为非公平锁上来就CAS开抢：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (compareAndSetState(<span class="number">0</span>, <span class="number">1</span>))</span><br><span class="line">                setExclusiveOwnerThread(Thread.currentThread());</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                acquire(<span class="number">1</span>);  <span class="comment">//AQS,会调用下面的方法，直接开枪，可能和队列最前面那个一起竞争。</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">tryAcquire</span><span class="params">(<span class="keyword">int</span> acquires)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> nonfairTryAcquire(acquires);</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>而公平锁<code>hasQueuedPredecessors()</code>返回false，没有排在自己前面的才能去抢：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            acquire(<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * Fair version of tryAcquire.  Don't grant access unless</span></span><br><span class="line"><span class="comment">         * recursive call or no waiters or is first.</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">tryAcquire</span><span class="params">(<span class="keyword">int</span> acquires)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">final</span> Thread current = Thread.currentThread();</span><br><span class="line">            <span class="keyword">int</span> c = getState();</span><br><span class="line">            <span class="keyword">if</span> (c == <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">if</span> (!hasQueuedPredecessors() &amp;&amp;       <span class="comment">// 没有排在自己前面的，才能抢</span></span><br><span class="line">                    compareAndSetState(<span class="number">0</span>, acquires)) &#123;</span><br><span class="line">                    setExclusiveOwnerThread(current);</span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span> (current == getExclusiveOwnerThread()) &#123;</span><br><span class="line">                <span class="keyword">int</span> nextc = c + acquires;</span><br><span class="line">                <span class="keyword">if</span> (nextc &lt; <span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">"Maximum lock count exceeded"</span>);</span><br><span class="line">                setState(nextc);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span> </span>&#123;</span><br><span class="line">        <span class="comment">/** Marker to indicate a node is waiting in shared mode */</span></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">final</span> Node SHARED = <span class="keyword">new</span> Node();</span><br><span class="line">        <span class="comment">/** Marker to indicate a node is waiting in exclusive mode */</span></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">final</span> Node EXCLUSIVE = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//  线程的等待被取消</span></span><br><span class="line">        <span class="comment">/** waitStatus value to indicate thread has cancelled */</span></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CANCELLED =  <span class="number">1</span>;</span><br><span class="line">        <span class="comment">// SIGNAL后继节点即将被唤醒（表示该线程一切都准备好了,就等待锁空闲出来给我）</span></span><br><span class="line">        <span class="comment">/** waitStatus value to indicate successor's thread needs unparking */</span></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SIGNAL    = -<span class="number">1</span>;</span><br><span class="line">        <span class="comment">// 线程在等待某一个条件（Condition）被满足</span></span><br><span class="line">        <span class="comment">/** waitStatus value to indicate thread is waiting on condition */</span></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CONDITION = -<span class="number">2</span>;</span><br><span class="line">        <span class="comment">//下一个共享获取应该是 无条件传播（当线程处在“SHARED”模式时，该字段才会被使用上，EXCLUSIVE独占模式不会）</span></span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * waitStatus value to indicate the next acquireShared should</span></span><br><span class="line"><span class="comment">         * unconditionally propagate</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> PROPAGATE = -<span class="number">3</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * Status field, taking on only the values</span></span><br><span class="line"><span class="comment">             后继节点正在被park block，所以当前节点释放锁或者取消的时候必须要unpark唤醒后继。</span></span><br><span class="line"><span class="comment">             为了避免竞争，获取方法必须首先表明他们需需要一个信号，</span></span><br><span class="line"><span class="comment">             然后会尝试原子性的获取锁，如果失败才会block。</span></span><br><span class="line"><span class="comment">         *   SIGNAL:     The successor of this node is (or will soon be)</span></span><br><span class="line"><span class="comment">         *               blocked (via park), so the current node must</span></span><br><span class="line"><span class="comment">         *               unpark its successor when it releases or</span></span><br><span class="line"><span class="comment">         *               cancels. To avoid races, acquire methods must</span></span><br><span class="line"><span class="comment">         *               first indicate they need a signal,</span></span><br><span class="line"><span class="comment">         *               then retry the atomic acquire, and then,</span></span><br><span class="line"><span class="comment">         *               on failure, block.</span></span><br><span class="line"><span class="comment">         这个节点因为超时或者打断被取消，节点再也不会离开这个状态</span></span><br><span class="line"><span class="comment">         特别是一个线程取消后再也不会block</span></span><br><span class="line"><span class="comment">         *   CANCELLED:  This node is cancelled due to timeout or interrupt.</span></span><br><span class="line"><span class="comment">         *               Nodes never leave this state. In particular,</span></span><br><span class="line"><span class="comment">         *               a thread with cancelled node never again blocks.</span></span><br><span class="line"><span class="comment">         条件：这个节点正在一个条件队列中，他不会用作同步队列的节点，直到被transfer，这时候状态会被设置为0</span></span><br><span class="line"><span class="comment">         </span></span><br><span class="line"><span class="comment">         *   CONDITION:  This node is currently on a condition queue.</span></span><br><span class="line"><span class="comment">         *               It will not be used as a sync queue node</span></span><br><span class="line"><span class="comment">         *               until transferred, at which time the status</span></span><br><span class="line"><span class="comment">         *               will be set to 0. (Use of this value here has</span></span><br><span class="line"><span class="comment">         *               nothing to do with the other uses of the</span></span><br><span class="line"><span class="comment">         *               field, but simplifies mechanics.)</span></span><br><span class="line"><span class="comment">         传播：一个释放锁应该被传播到其他节点，在doReleaseShared中被设置来保证连续传播，除非其他操作介入。</span></span><br><span class="line"><span class="comment">         *   PROPAGATE:  A releaseShared should be propagated to other</span></span><br><span class="line"><span class="comment">         *               nodes. This is set (for head node only) in</span></span><br><span class="line"><span class="comment">         *               doReleaseShared to ensure propagation</span></span><br><span class="line"><span class="comment">         *               continues, even if other operations have</span></span><br><span class="line"><span class="comment">         *               since intervened.</span></span><br><span class="line"><span class="comment">         *   0:          None of the above</span></span><br><span class="line"><span class="comment">         *</span></span><br><span class="line"><span class="comment">         waitStatus以数值型排列以简化使用，非负数代表节点不需要signal</span></span><br><span class="line"><span class="comment">         大多数代码不想要检查特定的数值（只用判断符号）</span></span><br><span class="line"><span class="comment">         * The values are arranged numerically to simplify use.</span></span><br><span class="line"><span class="comment">         * Non-negative values mean that a node doesn't need to</span></span><br><span class="line"><span class="comment">         * signal. So, most code doesn't need to check for particular</span></span><br><span class="line"><span class="comment">         * values, just for sign.</span></span><br><span class="line"><span class="comment">         *</span></span><br><span class="line"><span class="comment">         正常同步代码初始化为0，contidion节点的时候设置为CONDITION(-2),使用CAS修改。</span></span><br><span class="line"><span class="comment">         * The field is initialized to 0 for normal sync nodes, and</span></span><br><span class="line"><span class="comment">         * CONDITION for condition nodes.  It is modified using CAS</span></span><br><span class="line"><span class="comment">         * (or when possible, unconditional volatile writes).</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">volatile</span> <span class="keyword">int</span> waitStatus;</span><br></pre></td></tr></table></figure>
+<p>Node 的类注释机翻</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&lt;p&gt;</span><br><span class="line">等待队列是“ CLH”（Craig，Landin和Hagersten）锁定队列的变体。 </span><br><span class="line">CLH锁通常用于自旋锁。相反，我们将它们用于阻塞同步器，但是使用相同的基本策略，将有关线程的某些控制信息保存在其节点的前身中。</span><br><span class="line">每个节点中的“状态”字段将跟踪线程是否应阻塞。</span><br><span class="line">节点的前任释放时会发出信号。</span><br><span class="line">否则，队列的每个节点都充当一个特定通知样式的监视器，其中包含一个等待线程。虽然状态字段不控制是否授予线程锁等。</span><br><span class="line">线程可能会尝试获取它是否在队列中的第一位。</span><br><span class="line">但是先行并不能保证成功。它只赋予了抗辩的权利。</span><br><span class="line">因此，当前发布的竞争者线程可能需要重新等待。</span><br><span class="line"></span><br><span class="line">&lt;p&gt;要加入CLH锁，您可以自动将其作为新尾部拼接。</span><br><span class="line">要出队，您只需设置头字段。</span><br><span class="line"></span><br><span class="line">&lt;p&gt;插入到CLH队列中，只需要对“ tail”执行一次原子操作，因此有一个从非排队到排队的简单原子分界点。</span><br><span class="line">同样，出队仅涉及更新“头”。但是，节点需要花费更多的精力来确定其后继者是谁，部分原因是要处理由于超时和中断而可能导致的取消。</span><br><span class="line">&lt;p&gt;“ prev”链接（在原始CLH锁中未使用）主要用于处理取消。</span><br><span class="line">如果取消某个节点，则其后继节点（通常）会重新链接到未取消的前任节点。有关自旋锁情况下类似机制的解释，请参见Scott和Scherer的论文，网址为http:&#x2F;&#x2F;www.cs.rochester.edu&#x2F;u&#x2F;scott&#x2F;synchronization&#x2F;。&lt;p&gt;</span><br><span class="line"></span><br><span class="line">我们还使用“下一个”链接来实现阻止机制。</span><br><span class="line">每个节点的线程ID保留在其自己的节点中，因此，前任通过遍历下一个next以确定它是哪个线程，来发信号给下一个节点唤醒。</span><br><span class="line">确定后继者必须避免与新排队的节点竞争以设置其前任节点的“ next”字段。----？ Determination of  successor must avoid races with newly queued nodes to set the &quot;next&quot; fields of their predecessors.</span><br><span class="line"></span><br><span class="line">    在必要时，可以通过在节点的后继者似乎为空时从原子更新的“尾部”反向检查来解决此问题。 </span><br><span class="line">（或者换句话说，next是一种优化，因此我们通常不需要反向扫描。）</span><br><span class="line">&lt;p&gt;Cancellation  对基本算法引入了一些保守性。由于我们必须轮询其他节点的取消，因此我们可能会遗漏没有注意到已取消的节点在我们前面还是后面。要解决此问题，必须始终在取消时取消后继者，使他们能够稳定在新的前任者身上，除非我们能确定一个未取消的前任者将承担这一责任。 &lt;p&gt; CLH队列需要一个虚拟标头节点才能开始。但是，我们不会在构建过程中创建它们，因为如果没有争执，那将是浪费时间。取而代之的是，构造节点，并在第一次争用时设置头和尾指针。 &lt;p&gt;等待条件的线程使用相同的节点，但是使用附加的链接。条件只需要在简单（非并行）链接队列中链接节点，因为仅当它们专用时才可以访问它们。等待时，将节点插入条件队列。收到信号后，该节点将转移到主队列。状态字段的特殊值用于标记节点所在的队列。 &lt;p&gt;感谢Dave Dice，Mark Moir，Victor Luchangco，Bill Scherer和Michael Scott以及JSR-166专家组的成员，对本课程的设计提供了有益的想法，讨论和批评。</span><br></pre></td></tr></table></figure>
+<h1><span id="aqs-suo-shi-fang-de-yuan-ma"> AQS锁释放的源码</span><a href="#aqs-suo-shi-fang-de-yuan-ma" class="header-anchor">#</a></h1>
+<p><code>AbstractQueuedSynchronizer#release()</code> 释放锁的方法，是底层释放锁的实现。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// unlock的实现,就一行代码调用这个AQS的release</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">release</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (tryRelease(arg)) &#123;  <span class="comment">// 尝试释放锁，子类ReentrantLock实现了，如见下面（就是看独占线程ok，state-1，清除独占线程，返回free==0。）</span></span><br><span class="line">            Node h = head; <span class="comment">// 拿到head，head不为空，而且不是刚初始化</span></span><br><span class="line">            <span class="keyword">if</span> (h != <span class="keyword">null</span> &amp;&amp; h.waitStatus != <span class="number">0</span>) <span class="comment">// waitStatus != 0 说明刚刚释放的过程中，又有一个新的来了，被后代把自己的waitStatus改成了SIGNAL</span></span><br><span class="line">                unparkSuccessor(h); <span class="comment">// 解除后继的阻塞</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p><code>ReentrantLock#tryRelease(1)</code>释放锁，不用CAS，因为线程不一样释放不了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">tryRelease</span><span class="params">(<span class="keyword">int</span> releases)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">int</span> c = getState() - releases; <span class="comment">// 锁的总数-释放数量    0的话就释放完了，&gt;0的话说明有重入没释放完</span></span><br><span class="line">            <span class="keyword">if</span> (Thread.currentThread() != getExclusiveOwnerThread())  <span class="comment">// 解锁线程不是当前正在独占的线程就抛异常</span></span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IllegalMonitorStateException();</span><br><span class="line">            <span class="keyword">boolean</span> free = <span class="keyword">false</span>; </span><br><span class="line">            <span class="keyword">if</span> (c == <span class="number">0</span>) &#123; <span class="comment">// 释放完了，清空独占线程</span></span><br><span class="line">                free = <span class="keyword">true</span>;</span><br><span class="line">                setExclusiveOwnerThread(<span class="keyword">null</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            setState(c); <span class="comment">// 给stat设置剩余量，返回是否释放完了</span></span><br><span class="line">            <span class="keyword">return</span> free;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>解锁时唤醒后代：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 解锁时唤醒后代</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">unparkSuccessor</span><span class="params">(Node node)</span> </span>&#123;</span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * If status is negative (i.e., possibly needing signal) try</span></span><br><span class="line"><span class="comment">         * to clear in anticipation of signalling.  It is OK if this</span></span><br><span class="line"><span class="comment">         * fails or if status is changed by waiting thread.</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">int</span> ws = node.waitStatus;</span><br><span class="line">        <span class="keyword">if</span> (ws &lt; <span class="number">0</span>)  <span class="comment">// SIGNAL的，修改自己的wait状态为0</span></span><br><span class="line">            compareAndSetWaitStatus(node, ws, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * Thread to unpark is held in successor, which is normally</span></span><br><span class="line"><span class="comment">         * just the next node.  But if cancelled or apparently null,</span></span><br><span class="line"><span class="comment">         * traverse backwards from tail to find the actual</span></span><br><span class="line"><span class="comment">         * non-cancelled successor.</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        Node s = node.next;</span><br><span class="line">    <span class="comment">// 后代为空（可能是队列从前往后唤醒到最后一个了，或者后代被取消）</span></span><br><span class="line">        <span class="keyword">if</span> (s == <span class="keyword">null</span> || s.waitStatus &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            s = <span class="keyword">null</span>;   <span class="comment">// 从尾巴反向往前走，如果队列是右边这种，就一直往前捋到一个正常的为止(head--cancle---cancle--...---node---tail)</span></span><br><span class="line">            <span class="keyword">for</span> (Node t = tail; t != <span class="keyword">null</span> &amp;&amp; t != node; t = t.prev)</span><br><span class="line">                <span class="keyword">if</span> (t.waitStatus &lt;= <span class="number">0</span>)</span><br><span class="line">                    s = t;</span><br><span class="line">        &#125;</span><br><span class="line">      <span class="comment">// 后代不为空，解除park</span></span><br><span class="line">        <span class="keyword">if</span> (s != <span class="keyword">null</span>)</span><br><span class="line">            LockSupport.unpark(s.thread);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>后继节点唤醒之后，又回到上面的<code>acquireQueued()</code>方法，去进行下一轮死循环，判断pre是不是head，是不是已经解锁了，CAS抢占锁。</p>
+<p>抢到后：head的next置为null，GC回去干掉head。把唤起的自己这个node变成新head，清理新head里面的thread信息和head里的pre信息。</p>
+<p>然后当前唤起节点获取到锁的线程开始继续执行后面的业务方法。。。</p>
+<h1><span id="aqs-de-conditionobject"> AQS的ConditionObject</span><a href="#aqs-de-conditionobject" class="header-anchor">#</a></h1>
+<h1><span id="reentrantreadwritelock-du-xie-suo-gong-xiang-suo"> ReentrantReadWriteLock读写锁（共享锁）</span><a href="#reentrantreadwritelock-du-xie-suo-gong-xiang-suo" class="header-anchor">#</a></h1>
+<p><strong>独享锁</strong>：也叫排他锁，是指该<strong>锁一次只能被一个线程所持有。<strong>如果线程T对数据A加上排它锁后，则其他线程不能再对A加任何类型的锁。获得排它锁的线程即能读数据又能修改数据。JDK中的</strong>synchronized</strong>和JUC中<strong>Lock</strong>的实现类就是互斥锁。</p>
+<p><strong>共享锁</strong>：是指该锁可被多个线程所持有。如果<strong>线程T对数据A加上共享锁后，则其他线程只能对A再加共享锁，不能加排它锁</strong>。获得<strong>共享锁的线程只能读数据，不能修改</strong>数据。</p>
+<p>下面是JDK的读写分离锁代码实现：</p>
+<p>读写分离锁,在读比较多(耗时)的场合比常规的重入锁更加有效率。</p>
+<ul>
+<li>读-读线程互不阻塞,多少各线程都可以并行一起读。</li>
+<li>但是当<code>读-写</code>或者<code>写-写</code>线程相互竞争的时候会阻塞获取锁才可以操作</li>
+</ul>
+<p><strong>ReentrantReadWriteLock内部：</strong></p>
+<ul>
+<li>
+<p>持有一个int类型的status锁状态。</p>
+</li>
+<li>
+<p>一个Sync同步器，同步器继承自AQS，并有公平非公平两种实现。</p>
+</li>
+<li>
+<p>持有一个共享的ReadLock，一个独占的WriteLock。</p>
+</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200615143328743.png" alt="image-20200615143328743"></p>
+<p>可以看到ReentrantReadWriteLock有两把锁：<strong>ReadLock和WriteLock</strong>，由词知意，一个读锁一个写锁，合称“读写锁”。再进一步观察可以发现ReadLock和WriteLock是靠内部类Sync实现的锁。Sync是AQS的一个子类，这种结构在CountDownLatch、ReentrantLock、Semaphore里面也都存在。</p>
+<p>在ReentrantReadWriteLock里面，读锁和写锁的锁主体都是Sync，但读锁和写锁的加锁方式不一样。<strong>读锁是共享锁</strong>，<strong>写锁是独享锁</strong>。<strong>读锁的共享锁可保证并发读非常高效</strong>，<strong>而读写、写读、写写的过程互斥，因为读锁和写锁是分离的</strong>。所以ReentrantReadWriteLock的并发性<strong>相比一般的互斥锁有了很大提升。</strong></p>
+<p>类图如下：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200615150705528.png" alt="image-20200615150705528"></p>
+<h2><span id="du-xie-suo-de-status-she-ji"> 读写锁的status设计</span><a href="#du-xie-suo-de-status-she-ji" class="header-anchor">#</a></h2>
+<p>AQS的时候我们也提到了state字段（int类型，32位），该字段用来描述有多少线程获持有锁。</p>
+<ul>
+<li>在<strong>独享锁中这个值通常是0或者1（如果是重入锁的话state值就是重入的次数）</strong>，在<strong>共享锁中state就是持有锁的数量</strong>。</li>
+<li>但是在ReentrantReadWriteLock中有读、写两把锁，所以需要在一个整型变量state上分别描述读锁和写锁的数量（或者也可以叫状态）。</li>
+<li>于是将state变量“按位切割”切分成了两个部分，高16位表示读锁状态（读锁个数），低16位表示写锁状态（写锁个数）。如下图所示：</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200615151414084.png" alt="image-20200615151414084"></p>
+<p>代码中搞了一个<code>EXCLUSIVE_MASK</code>，是2^16-1。</p>
+<p>通过和state求&amp;可以拿到低16位的数据。</p>
+<p>通过和state&gt;&gt;16位拿到高16位的读锁数据。</p>
+<h2><span id="xie-suo-de-dai-ma"> 写锁的代码</span><a href="#xie-suo-de-dai-ma" class="header-anchor">#</a></h2>
+<p>了解了概念之后我们再来看代码，先看<strong>写锁</strong>的加锁源码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">tryAcquire</span><span class="params">(<span class="keyword">int</span> acquires)</span> </span>&#123;</span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * Walkthrough:</span></span><br><span class="line"><span class="comment">             * 1. If read count nonzero or write count nonzero  and owner is a different thread, fail.   //读锁非0，写锁非0，或线程非当前，返回失败</span></span><br><span class="line"><span class="comment">             * 2. If count would saturate, fail. (This can only happen if count is already nonzero.)         // 数据超max，返回失败（max是2^16-1，因为status的int劈成两半一半给读，一半给写了）</span></span><br><span class="line"><span class="comment">             * 3. Otherwise, this thread is eligible for lock if   // 其他情况则可以获取锁并设置占有线程</span></span><br><span class="line"><span class="comment">             *    it is either a reentrant acquire or</span></span><br><span class="line"><span class="comment">             *    queue policy allows it. If so, update state</span></span><br><span class="line"><span class="comment">             *    and set owner.</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            Thread current = Thread.currentThread();</span><br><span class="line">            <span class="keyword">int</span> c = getState();                                                                                <span class="comment">// 获得锁的个数</span></span><br><span class="line">            <span class="keyword">int</span> w = exclusiveCount(c);                                                              <span class="comment">// 获取写锁的个数</span></span><br><span class="line">            <span class="keyword">if</span> (c != <span class="number">0</span>) &#123;                                                                                              <span class="comment">// 已经有线程获取锁了</span></span><br><span class="line">                <span class="comment">// (Note: if c != 0 and w == 0 then shared count != 0)</span></span><br><span class="line">                <span class="keyword">if</span> (w == <span class="number">0</span> || current != getExclusiveOwnerThread())         <span class="comment">// 写锁为0，即读锁不为0. 或 非当前线程持有写锁，就返回失败</span></span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">                <span class="keyword">if</span> (w + exclusiveCount(acquires) &gt; MAX_COUNT)              <span class="comment">// 超过2^16-1个写线程最大数量，失败</span></span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">"Maximum lock count exceeded"</span>);</span><br><span class="line">                <span class="comment">// Reentrant acquire</span></span><br><span class="line">                setState(c + acquires);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">             <span class="comment">// w=0，且当前线程需要阻塞，返回失败false（非公平writerShouldBlock永远返回false不用阻塞，公平锁看队列有没有排队，有就true排队）</span></span><br><span class="line">            <span class="keyword">if</span> (writerShouldBlock() ||                                                                  </span><br><span class="line">                !compareAndSetState(c, c + acquires))                                   <span class="comment">// 否则CAS增加写线程数量失败也返回false</span></span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            setExclusiveOwnerThread(current);                                             <span class="comment">// c=0,w=0 或者 c&gt;0,w&gt;0重入，设置当前线程占有，返回true</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>这段代码首先取到当前锁的个数c（这个数可能很大，是由高16位和低16位组合起来的），然后再通过c来获取写锁的个数w。：
+<ul>
+<li>因为写锁是低16位，所以取低16位的最大值与当前的c做与运算（ int w = exclusiveCount©; <code>return c &amp; EXCLUSIVE_MASK;</code>这个EXCLUSIVE_MASK是2^16-1，是全1 ），高16位和0与运算后是0，剩下的就是低位运算的值，同时也是持有写锁的线程数目。</li>
+</ul>
+</li>
+<li>在取到写锁线程的数目后，首先判断是否已经有线程持有了锁。如果已经有线程持有了任何锁（c!=0），则查看当前写锁线程的数目，如果写线程数为0（即此时存在读锁）或者持有写锁的线程不是当前线程就返回失败（涉及到公平锁和非公平锁的实现）。</li>
+<li>如果本轮写后，写入锁的地位数量大于最大数（65535，2的16次方-1）就抛出一个Error。</li>
+<li>如果当前写线程数为0（那么读线程也应该为0，因为上面已经处理c!=0的情况），并且当前线程需要阻塞那么就返回失败；（非公平writerShouldBlock永远返回false，公平锁看队列有没有排队，有就true）如果通过CAS增加写线程数失败也返回失败。</li>
+<li>如果c=0，w=0或者c&gt;0，w&gt;0（重入），则设置当前线程或锁的拥有者，返回成功！</li>
+</ul>
+<p>后面的添加队列阻塞和唤醒与ReentrantLock相同。</p>
+<p>上面可以看到<strong>tryAcquire()除了重入条件（当前线程为获取了写锁的线程）之外，增加了一个读锁是否存在的判断。如果存在读锁，则写锁不能被获取</strong>，原因在于：<strong>必须确保写锁的操作对读锁可见</strong>，如果允许读锁在已被获取的情况下对写锁的获取，那么正在运行的其他读线程就无法感知到当前写线程的操作。</p>
+<p>因此，<strong>只有等待其他读线程都释放了读锁，写锁才能被当前线程获取</strong>，而<strong>写锁一旦被获取，则其他读写线程的后续访问均被阻塞</strong>。写锁的释放与ReentrantLock的释放过程基本类似，每次释放均减少写状态，当写状态为0时表示写锁已被释放，然后等待的读写线程才能够继续访问读写锁，同时前次写线程的修改对后续的读写线程可见。</p>
+<h2><span id="jie-zhao-shi-du-suo-de-dai-ma"> 接着是读锁的代码：</span><a href="#jie-zhao-shi-du-suo-de-dai-ma" class="header-anchor">#</a></h2>
+<p>读锁的lock()方法调用了这个</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">acquireShared</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (tryAcquireShared(arg) &lt; <span class="number">0</span>)  <span class="comment">// 上来先去try获取共享锁一下</span></span><br><span class="line">            doAcquireShared(arg);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>下面是获取一次共享锁：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">int</span> <span class="title">tryAcquireShared</span><span class="params">(<span class="keyword">int</span> unused)</span> </span>&#123;</span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * Walkthrough:</span></span><br><span class="line"><span class="comment">             * 1. If write lock held by another thread, fail.                 写锁再用，fail</span></span><br><span class="line"><span class="comment">             * 2. Otherwise, this thread is eligible for                         写锁没用，就直接去看队列是否应该排队阻塞。不用的话直接CAS改读锁数量。</span></span><br><span class="line"><span class="comment">             *    lock wrt state, so ask if it should block</span></span><br><span class="line"><span class="comment">             *    because of queue policy. If not, try</span></span><br><span class="line"><span class="comment">             *    to grant by CASing state and updating count.</span></span><br><span class="line"><span class="comment">             *    Note that step does not check for reentrant           没有检查重入，推迟到后面的全版本doAcquireShared中</span></span><br><span class="line"><span class="comment">             *    acquires, which is postponed to full version</span></span><br><span class="line"><span class="comment">             *    to avoid having to check hold count in</span></span><br><span class="line"><span class="comment">             *    the more typical non-reentrant case.</span></span><br><span class="line"><span class="comment">             * 3. If step 2 fails either because thread                           如果写锁占有，或者CAS失败，就去doAcquireShared里面轮循加锁</span></span><br><span class="line"><span class="comment">             *    apparently not eligible or CAS fails or count</span></span><br><span class="line"><span class="comment">             *    saturated, chain to version with full retry loop.</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            Thread current = Thread.currentThread();</span><br><span class="line">            <span class="keyword">int</span> c = getState();</span><br><span class="line">            <span class="keyword">if</span> (exclusiveCount(c) != <span class="number">0</span> &amp;&amp;</span><br><span class="line">                getExclusiveOwnerThread() != current)</span><br><span class="line">                <span class="keyword">return</span> -<span class="number">1</span>;                                                                                 <span class="comment">// 其他线程占用写锁，返回-1</span></span><br><span class="line">            <span class="keyword">int</span> r = sharedCount(c);</span><br><span class="line">            <span class="keyword">if</span> (!readerShouldBlock() &amp;&amp;                                                 </span><br><span class="line">                r &lt; MAX_COUNT &amp;&amp;</span><br><span class="line">                compareAndSetState(c, c + SHARED_UNIT)) &#123;</span><br><span class="line">                <span class="keyword">if</span> (r == <span class="number">0</span>) &#123;</span><br><span class="line">                    firstReader = current;</span><br><span class="line">                    firstReaderHoldCount = <span class="number">1</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (firstReader == current) &#123;</span><br><span class="line">                    firstReaderHoldCount++;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    HoldCounter rh = cachedHoldCounter;</span><br><span class="line">                    <span class="keyword">if</span> (rh == <span class="keyword">null</span> || rh.tid != getThreadId(current))</span><br><span class="line">                        cachedHoldCounter = rh = readHolds.get();</span><br><span class="line">                    <span class="keyword">else</span> <span class="keyword">if</span> (rh.count == <span class="number">0</span>)</span><br><span class="line">                        readHolds.set(rh);</span><br><span class="line">                    rh.count++;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> fullTryAcquireShared(current);</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到在tryAcquireShared(int unused)方法中，如果其他线程已经获取了写锁，则当前线程获取读锁失败，进入等待状态。如果当前线程获取了写锁或者写锁未被获取，则当前线程（线程安全，依靠CAS保证）增加读状态，成功获取读锁。读锁的每次释放（线程安全的，可能有多个读线程同时释放读锁）均减少读状态，减少的值是“1&lt;&lt;16”。所以读写锁才能实现读读的过程共享，而读写、写读、写写的过程互斥。</p>
+<p>获取一次读锁失败，进入下面进入队列阻塞，循环获取：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Acquires in shared uninterruptible mode.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> arg the acquire argument</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doAcquireShared</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">final</span> Node node = addWaiter(Node.SHARED);   <span class="comment">// 添加节点</span></span><br><span class="line">        <span class="keyword">boolean</span> failed = <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">boolean</span> interrupted = <span class="keyword">false</span>;</span><br><span class="line">            <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">                <span class="keyword">final</span> Node p = node.predecessor();  </span><br><span class="line">                <span class="keyword">if</span> (p == head) &#123;</span><br><span class="line">                    <span class="keyword">int</span> r = tryAcquireShared(arg);              <span class="comment">// 前一个是头，获取一次</span></span><br><span class="line">                    <span class="keyword">if</span> (r &gt;= <span class="number">0</span>) &#123;                                                       <span class="comment">// 成功了</span></span><br><span class="line">                        setHeadAndPropagate(node, r);      <span class="comment">// 从前往后叫醒所有的节点</span></span><br><span class="line">                        p.next = <span class="keyword">null</span>; <span class="comment">// help GC                        // 删掉头</span></span><br><span class="line">                        <span class="keyword">if</span> (interrupted)                                          <span class="comment">// 响应park时候的interrupt</span></span><br><span class="line">                            selfInterrupt();</span><br><span class="line">                        failed = <span class="keyword">false</span>;</span><br><span class="line">                        <span class="keyword">return</span>;                                                           <span class="comment">// 返回</span></span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">// 前一个SIGNAL了才true阻塞，否则删掉前面所有CANCLE的，CAS修改pre的状态为SIGNAL，返回false再来一轮阻塞</span></span><br><span class="line">                <span class="keyword">if</span> (shouldParkAfterFailedAcquire(p, node) &amp;&amp;      </span><br><span class="line">                    parkAndCheckInterrupt())   <span class="comment">// 阻塞</span></span><br><span class="line">                    interrupted = <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (failed)</span><br><span class="line">                cancelAcquire(node);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>此时，我们再回头看一下互斥锁ReentrantLock中公平锁和非公平锁的加锁源码：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200615164128985.png" alt="image-20200615164128985"></p>
+<p>我们发现在ReentrantLock虽然有公平锁和非公平锁两种，但是它们添加的都是独享锁。</p>
+<p>根据源码所示，当某一个线程调用lock方法获取锁时，如果同步资源没有被其他线程锁住，那么当前线程在使用CAS更新state成功后就会成功抢占该资源。</p>
+<p>而如果公共资源被占用且不是被当前线程占用，那么就会加锁失败。所以可以确定ReentrantLock无论读操作还是写操作，添加的锁都是都是独享锁。</p>
+<h1><span id="can-kao"> 参考</span><a href="#can-kao" class="header-anchor">#</a></h1>
+<blockquote>
+<p>《Java并发编程的艺术》</p>
+<p><a href="https://www.cnblogs.com/tuyang1129/p/12670014.html" target="_blank" rel="noopener">https://www.cnblogs.com/tuyang1129/p/12670014.html</a></p>
+<p>美团技术公众号的共享锁部分</p>
+</blockquote>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.sofunnyai.com/article/aqs.html" title="AQS原理" target="_blank" rel="external">https://blog.sofunnyai.com/article/aqs.html</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/cartoon_header.jpeg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="" target="_blank"><span class="text-dark">树先生</span><small class="ml-1x">Risk Control Engineer</small></a></h3>
+        <div>一个金融风控软件工程师。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/article/cacheline-contended.html" title="CacheLine和伪共享"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/article/cas-and-aba.html" title="CAS比较并交换的原理和ABA问题"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <!--div class="publishby">
+        	Theme by <a href="#" target="_blank"> . </a>base on <a href="#">pure</a>.
+        </div-->
+       <div>
+         <span id="busuanzi_container_site_pv">
+            本站总访问量<span id="busuanzi_value_site_pv"></span>次
+         </span>
+       </div>
+    </div>
+</footer>
+
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '37d6fe220531a0253492',
+    clientSecret: 'b20bb830af693e7d62e5efe08048c9d42234ba2f',
+    repo: 'liujianchina.github.io',
+    owner: 'liujianchina',
+    admin: ['liujianchina'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

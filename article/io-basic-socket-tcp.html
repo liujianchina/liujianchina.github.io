@@ -17,27 +17,33 @@
   <meta http-equiv="window-target" content="_top" />
   
   
-  <title>IO基础：socket和TCP | 树先生的博客</title>
-  <meta name="description" content="IO#  OSI基础模型# 提到IO，首先是OSI参考模型，计算机网络基础，一共七层  这7层是一个虚的东西，是一个规范。TCP&#x2F;IP协议给精简到4层，把上面的应用层-表示层-会话层统一归结到新的应用层是用户称，把下面的传输控制层-网络层-链路层-物理层视为内核层。    OSI七层网络模型 TCP&#x2F;IP四层概念模型 对应网络协议     应用层（Application） 应 HTTP、TFT">
+  <title>IO基础-select、poll、epoll和TCP | 树先生的博客</title>
+  <meta name="description" content="计算机组成原理#  内核态与用户态：计算机刚开机的时候，硬盘的kernel内核程序先加载，然后才启动上层的各种app应用文件。 kernel启动的时候会先在内存中开启内核空间，或者内核态。剩余的部分给用户态、用户空间 用户态的应用程序无法直接访问内核态的内存，必须调用内核的“系统调用”才可以。(system call ，在man里面是2类) 应用程序去调用的“系统调用”需要通过【中断】的方式找">
 <meta property="og:type" content="article">
-<meta property="og:title" content="IO基础：socket和TCP">
+<meta property="og:title" content="IO基础-select、poll、epoll和TCP">
 <meta property="og:url" content="https://blog.sofunnyai.com/article/io-basic-socket-tcp.html">
 <meta property="og:site_name" content="树先生的金融风控工程师博客">
-<meta property="og:description" content="IO#  OSI基础模型# 提到IO，首先是OSI参考模型，计算机网络基础，一共七层  这7层是一个虚的东西，是一个规范。TCP&#x2F;IP协议给精简到4层，把上面的应用层-表示层-会话层统一归结到新的应用层是用户称，把下面的传输控制层-网络层-链路层-物理层视为内核层。    OSI七层网络模型 TCP&#x2F;IP四层概念模型 对应网络协议     应用层（Application） 应 HTTP、TFT">
+<meta property="og:description" content="计算机组成原理#  内核态与用户态：计算机刚开机的时候，硬盘的kernel内核程序先加载，然后才启动上层的各种app应用文件。 kernel启动的时候会先在内存中开启内核空间，或者内核态。剩余的部分给用户态、用户空间 用户态的应用程序无法直接访问内核态的内存，必须调用内核的“系统调用”才可以。(system call ，在man里面是2类) 应用程序去调用的“系统调用”需要通过【中断】的方式找">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200611004737711.png">
+<meta property="og:image" content="https://blog.sofunnyai.com/home/tree/.config/Typora/typora-user-images/image-20200611012918098.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200611003327548.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200611010419797.png">
+<meta property="og:image" content="https://blog.sofunnyai.com/home/tree/.config/Typora/typora-user-images/image-20200611022733785.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200521180941467.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200521181257025.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200521191000694.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200521185513169.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200521194049682.png">
 <meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200521192102157.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200610234329384.png">
 <meta property="article:published_time" content="2018-09-12T12:12:26.000Z">
-<meta property="article:modified_time" content="2020-05-22T07:38:16.341Z">
+<meta property="article:modified_time" content="2020-06-14T10:58:15.967Z">
 <meta property="article:author" content="树先生">
 <meta property="article:tag" content="网络">
 <meta property="article:tag" content="基础">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200521180941467.png">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200611004737711.png">
   <!-- Canonical links -->
   <link rel="canonical" href="https://blog.sofunnyai.com/article/io-basic-socket-tcp.html">
   
@@ -191,7 +197,7 @@
   <div class="widget">
     <h3 class="widget-title">分类</h3>
     <div class="widget-body">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SpringCloud/">SpringCloud</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ml/">ml</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/v2/">v2</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/DesignPattern/">DesignPattern</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SpringCloud/">SpringCloud</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ml/">ml</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/v2/">v2</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%B9%B6%E5%8F%91/">并发</a><span class="category-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -201,7 +207,7 @@
   <div class="widget">
     <h3 class="widget-title">标签</h3>
     <div class="widget-body">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jdk/" rel="tag">jdk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/note/" rel="tag">note</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/private/" rel="tag">private</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/risk/" rel="tag">risk</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/strategy/" rel="tag">strategy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/v2/" rel="tag">v2</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/DesignPattern/" rel="tag">DesignPattern</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jdk/" rel="tag">jdk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/note/" rel="tag">note</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/private/" rel="tag">private</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/risk/" rel="tag">risk</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/strategy/" rel="tag">strategy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/v2/" rel="tag">v2</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" rel="tag">并发编程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -211,7 +217,7 @@
   <div class="widget">
     <h3 class="widget-title">标签云</h3>
     <div class="widget-body tagcloud">
-      <a href="/tags/SpringCloud/" style="font-size: 13px;">SpringCloud</a> <a href="/tags/hexo/" style="font-size: 13.67px;">hexo</a> <a href="/tags/interview/" style="font-size: 13px;">interview</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jdk/" style="font-size: 13px;">jdk</a> <a href="/tags/mysql/" style="font-size: 13px;">mysql</a> <a href="/tags/note/" style="font-size: 13px;">note</a> <a href="/tags/private/" style="font-size: 13.33px;">private</a> <a href="/tags/risk/" style="font-size: 14px;">risk</a> <a href="/tags/strategy/" style="font-size: 13px;">strategy</a> <a href="/tags/v2/" style="font-size: 13px;">v2</a> <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 13px;">中间件</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 13px;">多线程</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">并发</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 13px;">数据结构</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">机器学习</a> <a href="/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13.33px;">源码</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13.33px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13.33px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 13.67px;">评分卡</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13.33px;">运维</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13.33px;">闲杂</a>
+      <a href="/tags/DesignPattern/" style="font-size: 13.25px;">DesignPattern</a> <a href="/tags/SpringCloud/" style="font-size: 13.5px;">SpringCloud</a> <a href="/tags/hexo/" style="font-size: 13.5px;">hexo</a> <a href="/tags/interview/" style="font-size: 13px;">interview</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jdk/" style="font-size: 13px;">jdk</a> <a href="/tags/mysql/" style="font-size: 13px;">mysql</a> <a href="/tags/note/" style="font-size: 13px;">note</a> <a href="/tags/private/" style="font-size: 13.25px;">private</a> <a href="/tags/risk/" style="font-size: 13.75px;">risk</a> <a href="/tags/strategy/" style="font-size: 13px;">strategy</a> <a href="/tags/v2/" style="font-size: 13px;">v2</a> <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 13.25px;">中间件</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 14px;">多线程</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13.75px;">并发</a> <a href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" style="font-size: 13px;">并发编程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 13px;">数据结构</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">机器学习</a> <a href="/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13.25px;">源码</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13.25px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13.25px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 13.5px;">评分卡</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13.25px;">运维</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13.25px;">闲杂</a>
     </div>
   </div>
 
@@ -220,7 +226,7 @@
   <div class="widget">
     <h3 class="widget-title">归档</h3>
     <div class="widget-body">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2009/09/">九月 2009</a><span class="archive-list-count">1</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">二月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2009/09/">九月 2009</a><span class="archive-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -251,6 +257,36 @@
             
             <div class="item-inner">
               <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-03-hystrix.html" class="title">SpringCloud组件03---Hystrix实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-23T09:34:41.000Z" itemprop="datePublished">2020-03-23</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-02-open-feign.html" class="title">SpringCloud组件02---OpenFeign实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-22T04:22:51.000Z" itemprop="datePublished">2020-03-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
                 <a class="category-link" href="/categories/risk/">risk</a>
               </p>
               <p class="item-title">
@@ -269,40 +305,10 @@
                 <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
               </p>
               <p class="item-title">
-                <a href="/article/springcloud-H-01-eureka-ribbon.html" class="title">SpringCloud H版上手测试----01CAP、注册中心、Ribbon实践</a>
+                <a href="/article/springcloud-H-01-eureka-ribbon.html" class="title">SpringCloud组件01---CAP、注册中心、Ribbon实践</a>
               </p>
               <p class="item-date">
                 <time datetime="2020-03-02T14:30:40.000Z" itemprop="datePublished">2020-03-02</time>
-              </p>
-            </div>
-          </li>
-          
-          <li>
-            
-            <div class="item-inner">
-              <p class="item-category">
-                <a class="category-link" href="/categories/ml/">ml</a>
-              </p>
-              <p class="item-title">
-                <a href="/article/bayes_optimization.html" class="title">基于贝叶斯优化的机器学习超参数优化（未完待续）</a>
-              </p>
-              <p class="item-date">
-                <time datetime="2019-07-16T03:26:32.000Z" itemprop="datePublished">2019-07-16</time>
-              </p>
-            </div>
-          </li>
-          
-          <li>
-            
-            <div class="item-inner">
-              <p class="item-category">
-                <a class="category-link" href="/categories/network/">network</a>
-              </p>
-              <p class="item-title">
-                <a href="/article/lets-encrypt.html" class="title">let&#39;s-encrypt配置网站免费SSL证书</a>
-              </p>
-              <p class="item-date">
-                <time datetime="2019-07-13T18:44:23.000Z" itemprop="datePublished">2019-07-14</time>
               </p>
             </div>
           </li>
@@ -327,7 +333,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      IO基础：socket和TCP
+      IO基础-select、poll、epoll和TCP
     </h1>
   
 
@@ -368,7 +374,222 @@
     <div class="article-entry marked-body" itemprop="articleBody">
       
         <!--toc-->
-<h1><span id="io"> IO</span><a href="#io" class="header-anchor">#</a></h1>
+<h1><span id="ji-suan-ji-zu-cheng-yuan-li"> 计算机组成原理</span><a href="#ji-suan-ji-zu-cheng-yuan-li" class="header-anchor">#</a></h1>
+<ul>
+<li>内核态与用户态：计算机刚开机的时候，硬盘的kernel内核程序先加载，然后才启动上层的各种app应用文件。</li>
+<li>kernel启动的时候会先在内存中开启<code>内核空间</code>，或者<code>内核态</code>。剩余的部分给<code>用户态</code>、<code>用户空间</code></li>
+<li><code>用户态</code>的应用程序无法直接访问内核态的内存，必须调用内核的“系统调用”才可以。(system call ，在man里面是2类)</li>
+<li>应用程序去调用的“系统调用”需要通过【中断】的方式找到内核的方法实现，CPU切换到内核态，内核中断去访问硬件</li>
+</ul>
+<h2><span id="zhong-duan"> 中断</span><a href="#zhong-duan" class="header-anchor">#</a></h2>
+<ul>
+<li>
+<p>背景：CPU内部有<code>晶振</code>元件，通电后在一定时间内振动固定的次数。当晶振一定次数后，产生“时间中断”，就产生了所谓CPU时间片。</p>
+</li>
+<li>
+<p>1.内核启动的时候会产生一个<strong>进程调度的回调地址Callback</strong></p>
+</li>
+<li>
+<p>2.CPU产生中断的时候会把缓存刷回程序内存，保护现场。</p>
+</li>
+<li>
+<p>3.然后调用内核的callback，根据不同优先级调用的不同进程回调地址。（从主存里面把曾经刷过去的缓存再加载到CPU缓存）</p>
+</li>
+<li>
+<p>4.下次晶振再重复上面的过程，就完成了进程切换的过程。</p>
+</li>
+<li>
+<p>**缺点：**如果进程很多，切换成本很高，比如切换过去后发现在阻塞，其实是一种浪费。</p>
+</li>
+<li>
+<p><code>软中断</code>：因为应用程序需要进行<code>系统调用</code>，调用内核态。会发生用户态到内核态的切换。CPU需要刷缓存，调用callback，传递参数，再回来。</p>
+<ul>
+<li>系统调用是一个软中断，中断号是0x80，它是上层应用程序与Linux系统内核进行交互通信的唯一接口。</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200611004737711.png" alt="image-20200611004737711"></p>
+</li>
+</ul>
+<p>我们有多个应用，应用IO的变化是由内核的变化来实现的。</p>
+<h2><span id="ying-jian-zhong-duan"> 硬件中断</span><a href="#ying-jian-zhong-duan" class="header-anchor">#</a></h2>
+<ul>
+<li>
+<p>我们有多个硬件设备，比如键盘、鼠标、网卡，当他们发生动作的时候如何让OS响应？也是通过调用中断。</p>
+</li>
+<li>
+<p>比如鼠标点击的时候调用CPU中断，传递参数生成一个事件event。CPU去调用kernel（kernel启动的时候通过设备的驱动程序获取了中断号和callback。包括中断信号，和执行的方法）</p>
+</li>
+<li>
+<p>然后kernel根据对应的callback程序做出正确的响应即可。</p>
+</li>
+<li>
+<p>网卡为了避免频繁发送中断，使得降低CPU的浪费，会在内存中被分配极小一块缓存区域（DMA区域 直接内存），攒够了发一次中断。是一个<code>buffer</code>思想。</p>
+</li>
+</ul>
+<p><img src="../../../../home/tree/.config/Typora/typora-user-images/image-20200611012918098.png" alt="image-20200611012918098"></p>
+<h1><span id="io-sheng-ji-fa-zhan-zhi-lu"> IO 升级发展之路</span><a href="#io-sheng-ji-fa-zhan-zhi-lu" class="header-anchor">#</a></h1>
+<h2><span id="jing-dian-cs-jia-gou-de-bio"> 经典CS架构的BIO</span><a href="#jing-dian-cs-jia-gou-de-bio" class="header-anchor">#</a></h2>
+<ul>
+<li>任何服务想要启动监听接受请求，需要进行以下步骤</li>
+<li>1.调用kernel启动一个socket的文件描述符，假设叫fd3，监听</li>
+<li>2.死循环去调用kernel的accept(fd3)方法，去不断获取最新的客户端文件描述符，假设获得一个客户端fd4</li>
+<li>3.去调用kernel的read(fd4)方法读取客户端的消息，这是一个阻塞方法！！！</li>
+<li>4.为了不阻塞，只能accept拿到每一个客户端之后，read去启动一个线程，线程里面去阻塞读取用户消息。</li>
+</ul>
+<p>弊端：有多少客户端连接，就要启动多少线程，资源浪费极大。而且多线程的数据共享、调度都很麻烦。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200611003327548.png" alt="image-20200611003327548"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 伪代码</span></span><br><span class="line"><span class="keyword">while</span>(<span class="keyword">true</span>)&#123;</span><br><span class="line">    client_fd = accept(server监听的fd)  <span class="comment">// 获取客户端的监听，调用内核态</span></span><br><span class="line">        <span class="keyword">new</span> Thread(read(client_fd)).start() <span class="comment">// 单独启动线程去阻塞读取用户响应，阻塞调用内核态</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>【痛点】：kernel的read(fd)操作是阻塞的(在等待对端发消息)，会需要很多线程，但是多线程开销太大，kernel的调度也很费劲。</p>
+<h3><span id="c10k-wen-ti"> C10K问题</span><a href="#c10k-wen-ti" class="header-anchor">#</a></h3>
+<p>最初的服务器是基于进程/线程模型。新到来一个TCP连接，就需要分配一个进程/线程。假如有C10K也即是1W个客户端，就需要创建1W个进程/线程，可想而知单机是无法承受的。那么<strong>如何突破单机性能是高性能网络编程必须要面对的问题，进而这些局限和问题就统称为C10K问题</strong>，最早是由Dan Kegel进行归纳和总结的，并且他也系统的分析和提出解决方案。</p>
+<p>【<strong>问题本质</strong>】：是操作系统的问题，创建的<strong>进程或线程多了，数据拷贝频繁</strong>（缓存I/O、内核将数据拷贝到用户进程空间、阻塞，<strong>进程/线程上下文切换消耗大</strong>， 导致操作系统崩溃，这就是C10K问题的本质。</p>
+<p>【<strong>解决方案</strong>】：</p>
+<p>同一个线程/进程同时处理多个连接---------------------多路复用。</p>
+<p>​</p>
+<h2><span id="kernel-de-fei-zu-sai-de-read-yu-duo-lu-fu-yong-qi-nio-shi-dai"> kernel的非阻塞的read与多路复用器（NIO时代）</span><a href="#kernel-de-fei-zu-sai-de-read-yu-duo-lu-fu-yong-qi-nio-shi-dai" class="header-anchor">#</a></h2>
+<p>kernel进化了，支持了一个应用层面非阻塞的read接口，所以我们应用就可以同上类似：</p>
+<ul>
+<li>
+<p>任何服务想要启动监听接受请求，需要进行以下步骤</p>
+</li>
+<li>
+<p>1.调用kernel启动一个socket的文件描述符，假设叫fd3，监听</p>
+</li>
+<li>
+<p>2.死循环去调用kernel的accept(fd3)方法，去不断获取最新的客户端文件描述符，假设获得一个客户端fd4</p>
+</li>
+<li>
+<p>3.去调用kernel的非阻塞read(fd4)方法读取客户端的消息，这是一个非阻塞方法。有内容就给你，没有就给一个没有个的返回或者异常。调用后就该干嘛干嘛去，待会儿再来。</p>
+</li>
+<li>
+<p>4.不用去开启线程，直接循环回到第2步骤，再去获取客户端。（截止这一轮2个客户端的话保存一个fd的数组）</p>
+</li>
+<li>
+<p>5.上面的第3步循环这个客户端fd的数组，逐个去调用kernel的非阻塞read(each_fd)方法，拿到返回继续会到2…</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="keyword">true</span>)&#123;</span><br><span class="line">    client_fd = accept(server监听的fd)  <span class="comment">// 获取客户端的监听，调用内核态</span></span><br><span class="line">    clients.add(client_df)   <span class="comment">// 存储一个新的客户端</span></span><br><span class="line">     <span class="keyword">for</span>(each_fd in clients)&#123;</span><br><span class="line">         msg = read(each_fd)  <span class="comment">// 非阻塞读取到消息，非阻塞调用内核态</span></span><br><span class="line">         <span class="comment">// 业务处理</span></span><br><span class="line">     &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200611010419797.png" alt="image-20200611010419797"></p>
+<p>或者可以启动2个线程，一个<code>Boss</code>线程去死循环专门获取客户端的连接，一个<code>Worker</code>线程去专门死循环所有的客户端非阻塞读取消息。----------是不是有Netty的感觉了？</p>
+<p>【弊端】：工作线程的worker虽然都不是阻塞的，不用启动多线程。但是还是要进行<code>系统调用</code>，也就是调用内核。调用内核是通过<code>软中断</code>实现的。<code>用户态</code>到<code>内核态</code>的切换太频繁。</p>
+<p><strong>比如10w的fd客户端，work线程每次循环需要调用10w次kernel的read方法，发生10w次用户态和内核态的切换。但是可能只有10个人发消息了，绝大部分的内核切换都浪费了。read的调用是O(n)的。</strong></p>
+<p>现在的JDK的NIO包中已经使用了多路复用器解决，见下节。</p>
+<h2><span id="duo-lu-fu-yong-qi-shi-xian-select-poll-he-epoll"> 多路复用器实现—select/poll和epoll</span><a href="#duo-lu-fu-yong-qi-shi-xian-select-poll-he-epoll" class="header-anchor">#</a></h2>
+<p>kernel发生变化，我们才能突破。如果无法解决上面例子中10w个fd需要10w次调用才能传给kernel的问题，就无法改进。</p>
+<h3><span id="di-yi-lei-duo-lu-fu-yong-qi-select-he-poll"> 第一类多路复用器—select和poll</span><a href="#di-yi-lei-duo-lu-fu-yong-qi-select-he-poll" class="header-anchor">#</a></h3>
+<p><code>man 2 select</code>可以看到内核的select多路复用情况。</p>
+<p><strong>【多路 复用】</strong>：假设10w个客户端fd，<strong>把原先需要调用10w次read(each_fd)读取消息，复用成select(fds)</strong>，返回有消息的fd集合。</p>
+<p>select多路复用器带来的改变：</p>
+<ul>
+<li>任何服务想要启动监听接受请求，需要进行以下步骤</li>
+<li>1.调用kernel启动一个socket的文件描述符，假设叫fd3，监听</li>
+<li>2.死循环去调用kernel的accept(fd3)方法，去不断获取最新的客户端文件描述符，假设获得一个客户端fd4，多个积攒的客户端得到一个fd的集合fds</li>
+<li>3.去调用<strong>一次</strong>kernel的select(fds)方法，kernel去把所有的fd进行检查，把发生消息变化的fd集合返回！<strong>【循环发生在kernel里面，没有用户态和内核态的切换】</strong></li>
+<li>4.程序只用去调用上面有消息的一小部分fd的read(each_fd)方法，就能读取到消息</li>
+<li>5.回到2循环…</li>
+</ul>
+<p><strong>【优势】</strong>：大大减少内核态和用户态的切换。例子中一次调用复用了10w次read，后续统一处理返回的个别有消息的fd。</p>
+<p><strong>【弊端】</strong>：</p>
+<ul>
+<li>1.每次循环调用select的时候，都要copy 10w个fd的数据从用户态到内核态。（内核能记住之前的客户端多好？）</li>
+<li>2.内核态还需要把这10w个fd每次都循环检查一遍。</li>
+</ul>
+<p>select支持的fd是有上限的，需要重新编译内核才行很费劲，默认只支持1024个fd的多路复用。</p>
+<p>poll改进：使用一个链表结构突破限制，支持无上限的fd集合一起传输。只依赖于操作系统的<code>ulimites</code>设置</p>
+<h3><span id="di-er-lei-duo-lu-fu-yong-qi-epoll-io-event-notifycation-facility"> 第二类多路复用器----epoll-IO/Event Notifycation facility</span><a href="#di-er-lei-duo-lu-fu-yong-qi-epoll-io-event-notifycation-facility" class="header-anchor">#</a></h3>
+<p>epoll是一个多路复用的进阶版，改进了客户端fd频繁copy到内核态的问题。是同步非阻塞的。是C10K问题的进阶版。</p>
+<ul>
+<li>
+<p>系统级同步：程序还是需要去主动调用kernel的read方法获取数据</p>
+</li>
+<li>
+<p>系统级异步：程序给一个内核级别的callback，发生事件的时候直接到callback，接收到数据。------epoll做不到。</p>
+</li>
+</ul>
+<h4><span id="epoll-gong-zuo-yuan-li"> epoll工作原理：</span><a href="#epoll-gong-zuo-yuan-li" class="header-anchor">#</a></h4>
+<p>epoll不用去轮询监听所有文件句柄是否已经就绪。epoll只对发生变化的文件句柄感兴趣。</p>
+<p>有<code>epoll_create(2)</code>、<code>epoll_ctl(2)</code>、<code>epoll_wait(2)</code>组成（2是系统调用）。</p>
+<ul>
+<li>其中<code>epoll_create</code>创建一个epoll实例，返回一个文件描述符，代表内核空间。</li>
+<li><code>epoll_ctl</code>，将我们的client订阅关注的事件去丢到内核空间（每个client只用丢一次）</li>
+<li><code>epoll_wait</code>去阻塞，或者超时查看发生状态变化的client的fd，拿到后去处理。</li>
+</ul>
+<p><strong>使用&quot;事件&quot;的就绪通知方式，通过epoll_ctl注册文件描述符fd，一旦该fd就绪，内核就会采用类似callback的回调机制来激活该fd, epoll_wait便可以收到通知, 并通知应用程序。</strong></p>
+<p><code>man epoll</code> 看一眼帮助：</p>
+<p>首先<code>EPOLL(7)</code>是一个杂项，由三个2类的<code>系统调用</code>组成：<code>epoll_create(2)</code>、<code>epoll_ctl(2)</code>、<code>epoll_wait(2)</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">EPOLL(7)                   Linux Programmer<span class="string">'s Manual                  EPOLL(7)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">NAME</span></span><br><span class="line"><span class="string">       epoll - I/O event notification facility</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">SYNOPSIS</span></span><br><span class="line"><span class="string">       #include &lt;sys/epoll.h&gt;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">DESCRIPTION</span></span><br><span class="line"><span class="string">       The  epoll  API performs a similar task to poll(2): monitoring multiple</span></span><br><span class="line"><span class="string">       file descriptors to see if I/O is possible on any of them.   The  epoll</span></span><br><span class="line"><span class="string">       API can be used either as an edge-triggered or a level-triggered inter‐</span></span><br><span class="line"><span class="string">       face and scales well to large numbers of watched file descriptors.  The</span></span><br><span class="line"><span class="string">       following  system  calls  are  provided  to  create and manage an epoll</span></span><br><span class="line"><span class="string">       instance:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">       *  epoll_create(2) creates a new epoll  instance  and  returns  a  file</span></span><br><span class="line"><span class="string">          descriptor  referring to that instance.  (The more recent epoll_cre‐</span></span><br><span class="line"><span class="string">          ate1(2) extends the functionality of epoll_create(2).)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">       *  Interest in particular  file  descriptors  is  then  registered  via</span></span><br><span class="line"><span class="string">          epoll_ctl(2).   The  set of file descriptors currently registered on</span></span><br><span class="line"><span class="string">          an epoll instance is sometimes called an epoll set.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">       *  epoll_wait(2) waits for I/O events, blocking the calling  thread  if</span></span><br><span class="line"><span class="string">          no events are currently available.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">   Level-triggered and edge-triggered</span></span><br><span class="line"><span class="string">       The  epoll event distribution interface is able to behave both as edge-</span></span><br><span class="line"><span class="string">       triggered (ET) and as level-triggered (LT).  The difference between the</span></span><br><span class="line"><span class="string">       two mechanisms can be described as follows.  Suppose that this scenario</span></span><br><span class="line"><span class="string">       happens:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">       1. The file descriptor that represents the read side of a pipe (rfd) is</span></span><br><span class="line"><span class="string">          registered on the epoll instance.</span></span><br></pre></td></tr></table></figure>
+<h4><span id="epoll-create-xi-tong-diao-yong"> epoll_create 系统调用</span><a href="#epoll-create-xi-tong-diao-yong" class="header-anchor">#</a></h4>
+<p>可以去<code>man 2 epoll_create</code>看一眼这个系统调用（2类）的epoll的帮助，看他的返回：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">EPOLL_CREATE(2)           Linux Programmer<span class="string">'s Manual           EPOLL_CREATE(2)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">NAME</span></span><br><span class="line"><span class="string">       epoll_create, epoll_create1 - open an epoll file descriptor</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">SYNOPSIS</span></span><br><span class="line"><span class="string">       #include &lt;sys/epoll.h&gt;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">       int epoll_create(int size);</span></span><br><span class="line"><span class="string">       int epoll_create1(int flags);</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">DESCRIPTION</span></span><br><span class="line"><span class="string">       epoll_create()  creates  a  new epoll(7) instance.  Since Linux 2.6.8,</span></span><br><span class="line"><span class="string">       the size argument is ignored, but must be greater than zero; see NOTES</span></span><br><span class="line"><span class="string">       below.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">       epoll_create()  returns  a  file descriptor referring to the new epoll</span></span><br><span class="line"><span class="string">       instance.  This file descriptor is used for all the  subsequent  calls</span></span><br><span class="line"><span class="string">       to  the epoll interface.  When no longer required, the file descriptor</span></span><br><span class="line"><span class="string">       returned by epoll_create() should be closed by using  close(2).   When</span></span><br><span class="line"><span class="string">       all  file descriptors referring to an epoll instance have been closed,</span></span><br><span class="line"><span class="string">       the kernel destroys the instance and releases the associated resources</span></span><br><span class="line"><span class="string">       for reuse.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">...........................</span></span><br><span class="line"><span class="string">RETURN VALUE</span></span><br><span class="line"><span class="string">       On  success,  these system calls return a nonnegative file descriptor.</span></span><br><span class="line"><span class="string">       On error, -1 is returned, and errno is set to indicate the error.</span></span><br></pre></td></tr></table></figure>
+<p>他的返回是：<code>On success, these system calls return a nonnegative file descriptor. On error, -1 is returned, and errno is set to indicate the error.</code></p>
+<p>这个返回是一个fd，它代表的是一个内核空间------------保存我们的客户端fd。这些客户端怎么放进去的呢？<code>epoll_ctl</code>可以往里面添加fd</p>
+<h4><span id="epoll-ctl-zeng-shan-gai-fd-gei-dao-nei-he-kong-jian"> epoll_ctl-增删改fd给到内核空间</span><a href="#epoll-ctl-zeng-shan-gai-fd-gei-dao-nei-he-kong-jian" class="header-anchor">#</a></h4>
+<p>一样我们看一下帮助<code>man 2 epoll_ctl</code>可以看到<code>int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);</code>这是一个系统调用，<code>epfd</code>可以传递客户端的fd，<code>op</code>可以传递<code>EPOLL_CTL_ADD</code>、<code>EPOLL_CTL_MOD</code>、<code>EPOLL_CTL_DEL</code>去增删改。一个客户端只用放一次，以后再也不用放了。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">EPOLL_CTL(<span class="number">2</span>)              Linux Programmer<span class="number">'</span><span class="function">s Manual              <span class="title">EPOLL_CTL</span><span class="params">(<span class="number">2</span>)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">NAME</span></span><br><span class="line">       epoll_ctl - control interface for an epoll file descriptor</span><br><span class="line"></span><br><span class="line">SYNOPSIS</span><br><span class="line">       <span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/epoll.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">       <span class="function"><span class="keyword">int</span> <span class="title">epoll_ctl</span><span class="params">(<span class="keyword">int</span> epfd, <span class="keyword">int</span> op, <span class="keyword">int</span> fd, struct epoll_event *event)</span></span>;</span><br><span class="line"></span><br><span class="line">DESCRIPTION</span><br><span class="line">       <span class="function">This  system call performs control operations on the <span class="title">epoll</span><span class="params">(<span class="number">7</span>)</span> instance</span></span><br><span class="line">       referred to by the file descriptor epfd.  It requests that the  opera‐</span><br><span class="line">       tion op be performed <span class="keyword">for</span> the target file descriptor, fd.</span><br><span class="line"></span><br><span class="line">       Valid values <span class="keyword">for</span> the op argument are:</span><br><span class="line"></span><br><span class="line">       EPOLL_CTL_ADD</span><br><span class="line">              Register  the  target  file descriptor fd on the epoll instance</span><br><span class="line">              referred to by the file descriptor epfd <span class="keyword">and</span> associate the event</span><br><span class="line">              event with the internal file linked to fd.</span><br><span class="line"></span><br><span class="line">       EPOLL_CTL_MOD</span><br><span class="line">              Change the event event associated with the target file descrip‐</span><br><span class="line">              tor fd.</span><br><span class="line"></span><br><span class="line">       EPOLL_CTL_DEL</span><br><span class="line">              Remove (deregister) the target  file  descriptor  fd  from  the</span><br><span class="line">              epoll  instance  referred to by epfd.  The event is ignored <span class="keyword">and</span></span><br><span class="line">              can be NULL (but see BUGS below).</span><br></pre></td></tr></table></figure>
+<h4><span id="epoll-wait-rang-fd-deng-dai-shi-jian"> epoll_wait-让fd等待事件</span><a href="#epoll-wait-rang-fd-deng-dai-shi-jian" class="header-anchor">#</a></h4>
+<p>同上类似<code>man 2 epoll_wait</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">EPOLL_WAIT(<span class="number">2</span>)             Linux Programmer<span class="number">'</span><span class="function">s Manual             <span class="title">EPOLL_WAIT</span><span class="params">(<span class="number">2</span>)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">NAME</span></span><br><span class="line">       epoll_wait,  epoll_pwait  -  wait  for  an  I/O event on an epoll file</span><br><span class="line">       descriptor</span><br><span class="line"></span><br><span class="line">SYNOPSIS</span><br><span class="line">       <span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/epoll.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">       <span class="function"><span class="keyword">int</span> <span class="title">epoll_wait</span><span class="params">(<span class="keyword">int</span> epfd, struct epoll_event *events,</span></span></span><br><span class="line"><span class="function"><span class="params">                      <span class="keyword">int</span> maxevents, <span class="keyword">int</span> timeout)</span></span>;</span><br><span class="line">       <span class="function"><span class="keyword">int</span> <span class="title">epoll_pwait</span><span class="params">(<span class="keyword">int</span> epfd, struct epoll_event *events,</span></span></span><br><span class="line"><span class="function"><span class="params">                      <span class="keyword">int</span> maxevents, <span class="keyword">int</span> timeout,</span></span></span><br><span class="line"><span class="function"><span class="params">                      <span class="keyword">const</span> <span class="keyword">sigset_t</span> *sigmask)</span></span>;</span><br><span class="line"></span><br><span class="line">DESCRIPTION</span><br><span class="line">       <span class="function">The <span class="title">epoll_wait</span><span class="params">()</span> system call waits <span class="keyword">for</span> events on the <span class="title">epoll</span><span class="params">(<span class="number">7</span>)</span> instance</span></span><br><span class="line">       referred  to  by the file descriptor epfd.  The memory area pointed to</span><br><span class="line">       by events will contain the events that will be <span class="built_in">available</span> <span class="keyword">for</span> the call‐</span><br><span class="line">       er.   Up  to  maxevents  are  returned by epoll_wait().  The maxevents</span><br><span class="line">       argument must be greater than zero.</span><br><span class="line"></span><br><span class="line">       The  timeout  argument  specifies  the  number  of  milliseconds  that</span><br><span class="line">       epoll_wait() will block.  Time is measured against the CLOCK_MONOTONIC</span><br><span class="line">       clock.  The call will block until either:</span><br><span class="line"></span><br><span class="line">       *  a file descriptor delivers an event;</span><br><span class="line"></span><br><span class="line">       *  the call is interrupted by a signal handler; <span class="keyword">or</span></span><br><span class="line"></span><br><span class="line">       *  the timeout expires.</span><br><span class="line"></span><br><span class="line">       Note that the timeout interval will be rounded up to the system  clock</span><br><span class="line">       granularity,  <span class="keyword">and</span>  kernel  scheduling  delays  mean  that the blocking</span><br><span class="line">       interval may overrun by a small amount.  Specifying a  timeout  of  <span class="number">-1</span></span><br><span class="line">       causes  epoll_wait() to block indefinitely, while specifying a timeout</span><br><span class="line">       equal to zero cause epoll_wait() to return  immediately,  even  if  no</span><br><span class="line">       events are <span class="built_in">available</span>.</span><br></pre></td></tr></table></figure>
+<h4><span id="epoll-gong-zuo-liu-cheng"> epoll工作流程</span><a href="#epoll-gong-zuo-liu-cheng" class="header-anchor">#</a></h4>
+<p><strong>【Epoll】</strong>：假设10w个客户端fd</p>
+<ul>
+<li>任何服务想要启动监听接受请求，需要进行以下步骤</li>
+<li>1.调用kernel启动一个socket的文件描述符，假设叫fd3，监听</li>
+<li>2.调用<code>epoll_create</code>,创建epoll实例，会在内核中开辟空间假设fd6。</li>
+<li>3.调用<code>epoll_ctl(fd6, ADD , fd3, event_accept)</code>,把socket fd3加入内核空间fd6中，同时监听accept事件。</li>
+<li>4.调用<code>epoll_wait(fd6,res)</code>,等待fd6中的所有fd返回，阻塞，也可以可以超时。传递一个res是接受返回的内存空间。</li>
+<li>假设上面<code>epoll_wait</code>的时候，一个C1来了三次握手，制造事件中断。CPU回调，知道来了一个客户端，就把这个fd放到fd3上。fd3就放到上面给的res。（accept）</li>
+<li>5.<code>epoll_wait</code>从res看到有fd3的accept了，把这个fd3给到程序去执行accept(fd3)，得到一个fd8.这时候fd8就代表下面的C1客户端了。</li>
+<li>6.调用<code>epoll_ctl(fd6, ADD , fd8, event_read)</code>,把客户端fd8加入内核空间fd6中，同时监听read事件。（以后就不用监听了）</li>
+<li>7.程序循环调用<code>epoll_wait(fd6,res)</code>,等待fd6中的所有fd返回，阻塞，也可以可以超时。传递一个res是接受返回的内存空间。拿出res里面的fd和事件去处理。</li>
+<li>这时候C2如果来了，fd6里面监听了accept和read，都会触发中断。CPU会把fd3和fd8都放到res，注明有一个连接来了俩event。</li>
+<li>这时候epoll_wait会返回两个fd，fd3里面的event拿出来会得到一个新的client，命名fd9，来代表C2.</li>
+<li>然后把fd9也调用<code>epoll_ctl(fd6, ADD , fd9, event_read)</code>加进去，内核就多监听一个中断事件。</li>
+</ul>
+<p><img src="../../../../home/tree/.config/Typora/typora-user-images/image-20200611022733785.png" alt="image-20200611022733785"></p>
+<p>多而两个系统调用</p>
+<p>epoll空间开辟早期的时候用mmap（程序和内核都可以访问），后来系统调用不用这个实现了，因为多线程的时候mmap有点问题。</p>
+<p>上层开辟线程，传递数据的时候还是用的mmap。内存直接访问。</p>
+<p><strong>【优势】</strong>：压榨硬件资源到极致，规避了客户端fd的频繁拷贝。事件驱动。</p>
+<p>【缺点】：epoll只完成了event的通知，需要拿到数据的时候还是需要去同步调用read。（可以非阻塞调用read，但是还是程序需要主动调用read，不会直接给到）</p>
+<p>epoll不一定是最快的，根据client的特点？</p>
+<p>也就是网卡把数据放到DMA区域，内核通过中断只知道DMA有数据，有事件。kernel知道是什么时间类型，会通过epoll_wait的res告诉程序，但是不会直接把消息读取出来。还是需要应用app去调用kernel的read（阻塞或者非阻塞）去拿回数据。</p>
+<p>思想：事件到达了，会有event告诉内核。</p>
+<p>​</p>
+<h2><span id="select-poll-he-epoll-de-dui-bi"> select/poll和epoll的对比</span><a href="#select-poll-he-epoll-de-dui-bi" class="header-anchor">#</a></h2>
+<p>select和poll是一类         epoll是另一类</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>支持一个进程所能打开的最大连接数</th>
+<th>FD剧增后带来的IO效率问题</th>
+<th>消息传递方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>select</strong></td>
+<td>单个进程所能打开的最大连接数有FD_SETSIZE宏定义，其大小是32个整数的大小（在32位的机器上，大小就是32<em>32，同理64位机器上FD_SETSIZE为32</em>64），当然我们可以对进行修改，然后重新编译内核，但是性能可能会受到影响，这需要进一步的测试。</td>
+<td>因为每次调用时都会对连接进行线性遍历，所以随着FD的增加会造成遍历速度慢的“线性下降性能问题”。</td>
+<td>内核需要将消息传递到用户空间，都需要内核拷贝动作</td>
+</tr>
+<tr>
+<td><strong>poll</strong></td>
+<td>poll本质上和select没有区别，但是它没有最大连接数的限制，原因是它是基于链表来存储的</td>
+<td>同上</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><strong>epoll</strong></td>
+<td>虽然连接数有上限，但是很大，1G内存的机器上可以打开10万左右的连接，2G内存的机器可以打开20万左右的连接</td>
+<td>epoll内核中实现是根据每个fd上的callback函数来实现的，只有活跃的socket才会主动调用callback，所以在活跃socket较少的情况下，使用epoll没有前面两者的线性下降的性能问题，但是所有socket都很活跃的情况下，可能会有性能问题。</td>
+<td>epoll通过内核和用户空间共享一块内存来实现的。</td>
+</tr>
+</tbody>
+</table>
+<h1><span id="aio"> AIO</span><a href="#aio" class="header-anchor">#</a></h1>
+<p>aio  on linux比较费劲，因为linux希望更多的CPU运行在用户空间，内核空间保证安全。</p>
+<p>如果AIO如何搞定系统级别异步？linux  kernel去执行应用定义的callback？在哪里启动callback的线程？这个callback在哪里执行？kernel执行的话安全性？</p>
+<h1><span id="tcp-ji-chu"> TCP基础</span><a href="#tcp-ji-chu" class="header-anchor">#</a></h1>
 <h2><span id="osi-ji-chu-mo-xing"> OSI基础模型</span><a href="#osi-ji-chu-mo-xing" class="header-anchor">#</a></h2>
 <p>提到IO，首先是OSI参考模型，计算机网络基础，一共七层</p>
 <p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200521180941467.png" alt="image-20200521180941467"></p>
@@ -422,28 +643,41 @@
 <p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200521181257025.png" alt="image-20200521181257025"></p>
 <h2><span id="linux-ming-ling-ce-shi-jiang-jie-tcp"> linux命令测试讲解TCP</span><a href="#linux-ming-ling-ce-shi-jiang-jie-tcp" class="header-anchor">#</a></h2>
 <h3><span id="chuang-jian-yi-ge-dao-baidu-de-wen-jian-miao-shu-fu-nei-he-ceng"> 创建一个到baidu的文件描述符（内核层）</span><a href="#chuang-jian-yi-ge-dao-baidu-de-wen-jian-miao-shu-fu-nei-he-ceng" class="header-anchor">#</a></h3>
-<p>执行一个bash命令创建一个到baidu的socket，放到当前进程的8号文件描述符中：<code>exec 8&lt;&gt; /dev/tcp/www.baidu.com/80</code></p>
+<ul>
+<li>linux一切皆文件，每一个程序都有自己的IO流。程序里面的IO流也会被描述成文件（数字）。没一个程序都有3个自带的文件描述符：
+<ul>
+<li>0：<a href="http://system.in" target="_blank" rel="noopener">system.in</a></li>
+<li>1:   system.out</li>
+<li>2:   system.err</li>
+<li>用户创建的IO就从3开始</li>
+</ul>
+</li>
+</ul>
+<p>**【举例】**执行一个bash命令创建一个到baidu的socket，IO流重定向到当前进程的8号文件描述符中：</p>
 <ul>
 <li>
-<p>linux一切皆文件，上面面创建了一个“8”文件，是一个socket指向了百度，</p>
+<p><code>exec 8&lt;&gt; /dev/tcp/www.baidu.com/80</code></p>
+</li>
+<li>
+<p>上面面创建了一个文件描述符“8”，是一个socket指向了百度，</p>
 </li>
 <li>
 <p>8是文件描述符fd(就像代码的变量)，&lt;&gt;是一个双向输入输出流，可以看到</p>
 </li>
 <li>
-<pre class="highlight"><code class="bash"><span class="hljs-built_in">echo</span> $$
+<pre class="highlight"><code class="bash"><span class="hljs-built_in">echo</span> $$  <span class="hljs-comment"># 打印当前命令行的进程号</span>
 16199
-<span class="hljs-comment"># 打印当前命令行的进程号</span>
 <span class="hljs-comment"># 也可以ps -ef 然后grep出来</span>
 tree     16199  9368  0 4月15 pts/1   00:00:01 /bin/bash
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 可以去当前进程的目录看一眼</span><br><span class="line"></span><br><span class="line">- &#96;&#96;&#96;bash</span><br><span class="line">  cd &#x2F;proc&#x2F;16199&#x2F;fd # 进入当前进程的fd目录</span><br><span class="line">  ls # 看一眼</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 0 -&gt; &#x2F;dev&#x2F;pts&#x2F;1</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 1 -&gt; &#x2F;dev&#x2F;pts&#x2F;1</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 2 -&gt; &#x2F;dev&#x2F;pts&#x2F;1</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 255 -&gt; &#x2F;dev&#x2F;pts&#x2F;1</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 8 -&gt; &#39;socket:[1037956]&#39;</span><br><span class="line">  # 每个进程都有0,1,2三个fd文件描述符。分别是stdin、stdout、stderr</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">  </span><br><span class="line">- 可以去当前进程的目录看一眼</span><br><span class="line"></span><br><span class="line">- &#96;&#96;&#96;bash</span><br><span class="line">  cd &#x2F;proc&#x2F;16199&#x2F;fd # 进入当前进程的fd目录</span><br><span class="line">  ls # 看一眼</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 0 -&gt; &#x2F;dev&#x2F;pts&#x2F;1</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 1 -&gt; &#x2F;dev&#x2F;pts&#x2F;1</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 2 -&gt; &#x2F;dev&#x2F;pts&#x2F;1</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 255 -&gt; &#x2F;dev&#x2F;pts&#x2F;1</span><br><span class="line">  lrwx------ 1 tree tree 64 5月  21 18:31 8 -&gt; &#39;socket:[1037956]&#39;</span><br><span class="line">  # 每个进程都有0,1,2三个fd文件描述符。分别是stdin、stdout、stderr</span><br></pre></td></tr></table></figure>
 
 </code></pre>
 </li>
 </ul>
 <h3><span id="xiang-wen-jian-miao-shu-fu-zhong-xie-dong-xi-tong-xin-yong-hu-ceng-tai"> 向文件描述符中写东西通信（用户层态）</span><a href="#xiang-wen-jian-miao-shu-fu-zhong-xie-dong-xi-tong-xin-yong-hu-ceng-tai" class="header-anchor">#</a></h3>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> -e <span class="string">"GET / HTTP/1.0\n"</span> 1&gt;&amp; 8 </span><br><span class="line"><span class="comment"># 打印一个字符串到标准输出（所以是1）重定向&gt;到文件描述符(所以是&amp;，重定向到文件不用&amp;)8中</span></span><br><span class="line"></span><br><span class="line">cat 0&lt;&amp; 8</span><br><span class="line"><span class="comment"># 从文件描述符(所以是&amp;，文件的话不用&amp;)8中标准输入&lt;</span></span><br><span class="line"><span class="comment"># 。。。。。下面打印一大堆百度的html</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> -e <span class="string">"GET / HTTP/1.0\n"</span> 1&gt;&amp; 8  </span><br><span class="line"><span class="comment"># 打印一个字符串到标准输出（所以是1）重定向&gt;到文件描述符(所以是&amp;，重定向到文件不用&amp;)8中</span></span><br><span class="line"></span><br><span class="line">cat 0&lt;&amp; 8</span><br><span class="line"><span class="comment"># 从文件描述符(所以是&amp;，文件的话不用&amp;)8中标准输入&lt;</span></span><br><span class="line"><span class="comment"># 。。。。。下面打印一大堆百度的html</span></span><br></pre></td></tr></table></figure>
 <h2><span id="chuan-shu-kong-zhi-ceng-tcp-xie-yi"> 传输控制层TCP协议</span><a href="#chuan-shu-kong-zhi-ceng-tcp-xie-yi" class="header-anchor">#</a></h2>
+<p>TCP和UDP是传输控制层协议。</p>
 <h4><span id="shi-me-shi-socket-tao-jie-zi"> 什么是socket套接字？</span><a href="#shi-me-shi-socket-tao-jie-zi" class="header-anchor">#</a></h4>
 <ul>
 <li>
@@ -457,27 +691,37 @@ tree     16199  9368  0 4月15 pts/1   00:00:01 /bin/bash
 </li>
 <li>
 <p>对于类似如下<code>netstat -anp</code>出来的socket链接，每一个<code>established</code>都有一个文件描述符(fd目录下)数字和他对应并交给一个进程。程序只用和这个文件描述符进行读写就可以进行socket通信了。<strong>【如果多个socket对应一个进程：就是多路复用器selector或者epoll】</strong></p>
+<p>下面的<code>192.168.150.12:22</code>建立了两个到<code>192.168.150.1</code>的<code>socket</code>：</p>
 <p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200521191000694.png" alt="image-20200521191000694"></p>
 </li>
 </ul>
 <h3><span id="shi-me-shi-tcp-xie-yi"> 什么是TCP协议？</span><a href="#shi-me-shi-tcp-xie-yi" class="header-anchor">#</a></h3>
 <p>是一个<strong>面向连接</strong>的<strong>可靠的</strong>传输协议。因为三次握手保证了可靠传输。</p>
+<p><strong>连接</strong>：不是物理连接，是三次握手实现的逻辑连接，完成双向确认。</p>
+<p>为啥<strong>可靠</strong>：通信前三次握手双方分配资源，为未来的通讯做好了准备。所有数据包发送的时候有个确认机制保证了可靠。</p>
+<p><strong>DDOS</strong>：发握手包，但是不回。造成服务器有一大堆接受TCP的等待队列。使得真正想进来的连接进不来。</p>
 <h3><span id="san-ci-wo-shou-de-xi-jie"> 三次握手的细节？</span><a href="#san-ci-wo-shou-de-xi-jie" class="header-anchor">#</a></h3>
 <p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200521185513169.png" alt="image-20200521185513169"></p>
 <p>C-----------syn-----------&gt;S   # “我要跟你连接了，标识是syn”</p>
 <p>C&lt;----------syn+ack-------S # “好的，我知道了” 让客户端知道Server已经响应了</p>
 <p>C------------ack-----------&gt;S # 好的，我知道你知道了。让Server知道发出的消息客户端收到了</p>
+<p>然后双方开始开辟资源（内存，结构体，线程），建立连接。</p>
+<h3><span id="shui-hong-fa-san-ci-wo-shou-mu-de"> 谁触发三次握手？目的？</span><a href="#shui-hong-fa-san-ci-wo-shou-mu-de" class="header-anchor">#</a></h3>
+<p>应用层的程序先告诉内核，我要和一个地址建立连接。内核去尝试三次握手。</p>
+<p>三次握手成功后会在双方服务器开辟资源（线程、内存结构体等等）来为对方提供响应服务。</p>
 <p>三次握手完毕后，双方才有资源开辟，才能开始传输。</p>
-<p><code>tcpdump</code></p>
+<h3><span id="tcpdump-cha-kan-san-ci-wo-shou"> tcpdump 查看三次握手</span><a href="#tcpdump-cha-kan-san-ci-wo-shou" class="header-anchor">#</a></h3>
+<p><code>tcpdump</code>   -nn 显示ip断开   -i 显示哪个网卡接口 port 显示哪个端口</p>
 <p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200521194049682.png" alt="image-20200521194049682"></p>
 <h3><span id="si-ci-fen-shou-de-xi-jie-wei-sha-yao-si-ci"> 四次分手的细节，为啥要四次？</span><a href="#si-ci-fen-shou-de-xi-jie-wei-sha-yao-si-ci" class="header-anchor">#</a></h3>
-<p>因为握手是三次，开辟了资源。分手释放资源是双方的，所以是四次（双方都要同时释放，不能轻易单方面释放了）</p>
+<p>因为握手是三次，开辟了资源。<strong>分手是双方一起释放资源，对对方有义务的</strong>，所以是四次（双方都要同时释放，不能轻易单方面释放了）</p>
 <p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200521192102157.png" alt="image-20200521192102157"></p>
 <p>分手的C只是先说断开的人</p>
 <p>C-----------fin-----------&gt;S   # “我要跟你分手了，标识是fin”给Server一个结束标识</p>
 <p>C&lt;----------fin+ack-------S # “好的，我知道了” 让客户端知道Server已经响应了（但是我要确认一下真的没事儿了）</p>
 <p>C&lt;-----------fin------------S   # “好吧，分吧，标识是fin”确认真的没事儿了，给客户端一个结束标识</p>
 <p>C------------ack-----------&gt;S #  “好的，”让Server知道发出的消息客户端收到了</p>
+<p>然后双方把给对方准备的资源都释放了。</p>
 <h3><span id="san-ci-wo-shou-he-si-ci-fen-shou-shi-bu-ke-fen-ge-de-zui-xiao-li-du"> 三次握手和四次分手是不可分割的最小粒度</span><a href="#san-ci-wo-shou-he-si-ci-fen-shou-shi-bu-ke-fen-ge-de-zui-xiao-li-du" class="header-anchor">#</a></h3>
 <ul>
 <li>
@@ -491,7 +735,44 @@ tree     16199  9368  0 4月15 pts/1   00:00:01 /bin/bash
 </li>
 </ul>
 <h2><span id="wang-luo-he-lu-you"> 网络和路由</span><a href="#wang-luo-he-lu-you" class="header-anchor">#</a></h2>
+<p>上面的TCP协议只管<strong>传输和控制</strong>，也就是发什么内容，怎么发。但是发送的路径不管，是下层寻址ARP协议管理的。</p>
 <p>网络设置要<code>ip</code>、<code>gateway</code>、<code>mask</code>、<code>dns</code>4个东西</p>
+<ul>
+<li>如果几个设备ip：<code>192.168.1.10</code>、<code>192.168.1.11</code>，他们只要成功联网，肯定知道他们的下一跳路由器地址（静态或者DHCP），如<code>192.168.1.1</code></li>
+<li>客户端向发送一个ARP广播包，带着路由器的ip和全<code>FFFFFFFFFF</code>的mac地址，路由器收到后看到是自己的ip，就把自己的mac地址返回给客户机。</li>
+<li>然后客户端才知道路由器的mac，包装后就能往百度发了三次握手的包了。</li>
+<li>通过路由表往下一跳发</li>
+</ul>
+<p>【测试】``</p>
+<p>下面会先去请求ARP，收到路由器返回mac后，包装三次握手的包发出去。最后四次分手。</p>
+<p>每次发送的包和接受的包都有一个seq和seq+1的关系，保证了不会错乱。</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200610234329384.png" alt="image-20200610234329384"></p>
+<h1><span id="qi-ta"> 其他：</span><a href="#qi-ta" class="header-anchor">#</a></h1>
+<h2><span id="guan-yu-directbuffer"> 关于DirectBuffer</span><a href="#guan-yu-directbuffer" class="header-anchor">#</a></h2>
+<p>每个进程都有堆内存，JVM是C写的，启动的时候有堆空间。我们可以堆外分配空间直接给JVM访问。这个堆外空间除了内核共享，还可以接到磁盘文件上。</p>
+<p>RandomAccessFile里面有<code>direct</code>分配空间和<code>map(4096)</code>：可以使用RandomAccessFile打开文件，对着这个文件对象调用map。JVM就有堆外空间接到磁盘上了。map返回一个buffer，JVM直接把文件存到磁盘上了。不用调用kernel的write，减少一次<code>系统调用</code>。</p>
+<h2><span id="mmap"> mmap</span><a href="#mmap" class="header-anchor">#</a></h2>
+<p>内核和应用共同访问的共享内存。mmap是一种内存映射文件的方法，即将一个文件或者其它对象映射到进程的地址空间，实现文件磁盘地址和进程虚拟地址空间中一段虚拟地址的一一对映关系。这样直接对内存的读写就完成了之前的系统调用<code>read</code>、<code>write</code>，速度更快，<strong>而且内核空间也可以对这个文件直接修改，可以完成进程间文件共享</strong>。</p>
+<p>mongoDB （3.0以前版本） 、rocketMQ 都用到了 mmap</p>
+<blockquote>
+<p><a href="https://www.cnblogs.com/huxiao-tee/p/4660352.html" target="_blank" rel="noopener">https://www.cnblogs.com/huxiao-tee/p/4660352.html</a></p>
+</blockquote>
+<h2><span id="kafka-de-io-you-hua"> Kafka的IO优化？</span><a href="#kafka-de-io-you-hua" class="header-anchor">#</a></h2>
+<p>kafka是基于JVM的消息队列，读取消息的时候Client到Kernel调用系统调用<code>read</code>，再到kafka去解析。kafka优化对这个文件开启mmap映射，写文件的时候就像写buffer一样，越过系统调用直接落到磁盘。少了一次write系统调用。</p>
+<p>kafka启动的时候有一个segment01段文件，就是mmap开辟的内存映射的大小，默认1G。对这1G的内存哪个位置放了，就会出现在文件的哪个位置。</p>
+<p>segment把1G文件填满之后移动，再创建一个segment，再mmap一下得到第二个文件。</p>
+<p>读：正常是程序调动kernel，kernel去读取文件到文件偏移量，拷贝到用户空间。用户空间把数据再发出去的时候又要调用kernel，多copy了一次。</p>
+<p><strong>如果数据是不需要kafka再加工的</strong>，就可以触发<strong>零拷贝</strong>：</p>
+<p>程序调用sendfile，把输入输出的fd传进去，sendfile是在内核里实现的，所以直接零拷贝了。</p>
+<p><code>man 2 sendfile</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">SENDFILE(<span class="number">2</span>)               Linux Programmer<span class="number">'</span><span class="function">s Manual               <span class="title">SENDFILE</span><span class="params">(<span class="number">2</span>)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">NAME</span></span><br><span class="line">       sendfile - transfer data between file descriptors</span><br><span class="line"></span><br><span class="line">SYNOPSIS</span><br><span class="line">       <span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/sendfile.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">       <span class="function"><span class="keyword">ssize_t</span> <span class="title">sendfile</span><span class="params">(<span class="keyword">int</span> out_fd, <span class="keyword">int</span> in_fd, <span class="keyword">off_t</span> *offset, <span class="keyword">size_t</span> count)</span></span>;</span><br><span class="line"></span><br><span class="line">DESCRIPTION</span><br><span class="line">       sendfile()  copies  data  between  one  file  descriptor  <span class="keyword">and</span> another.</span><br><span class="line">       Because <span class="keyword">this</span> copying is done within the  kernel,  sendfile()  is  more</span><br><span class="line">       efficient  than  the  combination of read(2) and write(2), which would</span><br><span class="line">       require transferring data to <span class="keyword">and</span> from user space.</span><br><span class="line"></span><br><span class="line">       in_fd should be a file descriptor opened <span class="keyword">for</span> reading <span class="keyword">and</span> out_fd should</span><br><span class="line">       be a descriptor opened <span class="keyword">for</span> writing.</span><br><span class="line"></span><br><span class="line">       If  offset  is <span class="keyword">not</span> <span class="literal">NULL</span>, then it points to a variable holding the file</span><br><span class="line">       offset from which sendfile() will start reading data from in_fd.  When</span><br><span class="line">       sendfile()  returns,  <span class="keyword">this</span>  variable  will be <span class="built_in">set</span> to the offset of the</span><br><span class="line">       <span class="keyword">byte</span> following the last <span class="keyword">byte</span> that was <span class="built_in">read</span>.  If offset  is  <span class="keyword">not</span>  <span class="literal">NULL</span>,</span><br><span class="line">       <span class="function">then  <span class="title">sendfile</span><span class="params">()</span>  does  <span class="keyword">not</span> modify the file offset of in_fd</span>; otherwise</span><br><span class="line">       the file offset is adjusted to reflect the number of bytes  <span class="built_in">read</span>  from</span><br><span class="line">       in_fd.</span><br><span class="line"></span><br><span class="line">       If  offset  is <span class="literal">NULL</span>, then data will be <span class="built_in">read</span> from in_fd starting at the</span><br><span class="line">       file offset, <span class="keyword">and</span> the file offset will be updated by the call.</span><br><span class="line"></span><br><span class="line">       count is the number of bytes to copy between the file descriptors.</span><br><span class="line"></span><br><span class="line">       The  in_fd  argument  must  correspond  to  a  file   which   supports</span><br><span class="line">       mmap(2)-like operations (i.e., it cannot be a socket).</span><br><span class="line"></span><br><span class="line">       In  Linux kernels before <span class="number">2.6</span><span class="number">.33</span>, out_fd must refer to a socket.  Since</span><br><span class="line">       Linux <span class="number">2.6</span><span class="number">.33</span> it can be any file.  If it is a regular file, then  send‐</span><br><span class="line">       file() changes the file offset appropriately.</span><br><span class="line"></span><br><span class="line">RETURN VALUE</span><br><span class="line">       If  the <span class="built_in">transfer</span> was successful, the number of bytes written to out_fd</span><br><span class="line">       is returned.  <span class="function">Note that a successful  call  to  <span class="title">sendfile</span><span class="params">()</span>  may  <span class="built_in">write</span></span></span><br><span class="line"><span class="function">       fewer bytes than requested</span>; the caller should be prepared to retry the</span><br><span class="line">       call <span class="keyword">if</span> there were unsent bytes.  See also NOTES.</span><br></pre></td></tr></table></figure>
+<p>所以kafka用到mmap、零拷贝、epoll，性能高。redis底层也是epoll.</p>
+<p>nginx也是epoll，还有sendfile的零拷贝，配置文件里面就有sendfile。</p>
+<p>参考资料</p>
+<blockquote>
+<p><a href="https://www.cnblogs.com/jjzd/p/6540148.html" target="_blank" rel="noopener">https://www.cnblogs.com/jjzd/p/6540148.html</a></p>
+<p><a href="https://www.cnblogs.com/huxiao-tee/p/4660352.html" target="_blank" rel="noopener">https://www.cnblogs.com/huxiao-tee/p/4660352.html</a></p>
+</blockquote>
 
       
     </div>
@@ -501,7 +782,7 @@ tree     16199  9368  0 4月15 pts/1   00:00:01 /bin/bash
     
     <li class="post-copyright-link hidden-xs">
       <strong>本文链接：</strong>
-      <a href="https://blog.sofunnyai.com/article/io-basic-socket-tcp.html" title="IO基础：socket和TCP" target="_blank" rel="external">https://blog.sofunnyai.com/article/io-basic-socket-tcp.html</a>
+      <a href="https://blog.sofunnyai.com/article/io-basic-socket-tcp.html" title="IO基础-select、poll、epoll和TCP" target="_blank" rel="external">https://blog.sofunnyai.com/article/io-basic-socket-tcp.html</a>
     </li>
     
     <li class="post-copyright-license">

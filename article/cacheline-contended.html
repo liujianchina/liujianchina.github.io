@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>CacheLine和伪共享 | 树先生的博客</title>
+  <meta name="description" content="CacheLine简介 为什么CacheLine并发慢？  MESI缓存一致性协议   FalseSharing伪共享问题 伪共享的解决方案  原始有缓存行竞争的问题 JDK8以前人肉解决： JDK8以后@Contended解决：   确认内存布局 效果测试  测试原始问题、人肉优化、@Contended优化。       CacheLine简介# CPU缓存系统中是以缓存行（cache">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CacheLine和伪共享">
+<meta property="og:url" content="https://blog.sofunnyai.com/article/cacheline-contended.html">
+<meta property="og:site_name" content="树先生的金融风控工程师博客">
+<meta property="og:description" content="CacheLine简介 为什么CacheLine并发慢？  MESI缓存一致性协议   FalseSharing伪共享问题 伪共享的解决方案  原始有缓存行竞争的问题 JDK8以前人肉解决： JDK8以后@Contended解决：   确认内存布局 效果测试  测试原始问题、人肉优化、@Contended优化。       CacheLine简介# CPU缓存系统中是以缓存行（cache">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615095526972.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615104347330.png">
+<meta property="article:published_time" content="2018-03-11T01:44:53.000Z">
+<meta property="article:modified_time" content="2020-06-15T03:12:53.309Z">
+<meta property="article:author" content="树先生">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="并发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200615095526972.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.sofunnyai.com/article/cacheline-contended.html">
+  
+    <link rel="alternate" href="/atom.xml" title="树先生的金融风控工程师博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="" target="_blank">
+          <img class="img-circle img-rotate" src="/images/cartoon_header.jpeg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">树先生</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Risk Control Engineer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎讨论金融风控业务和工程技巧</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/DesignPattern/">DesignPattern</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SpringCloud/">SpringCloud</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ml/">ml</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/v2/">v2</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%B9%B6%E5%8F%91/">并发</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/DesignPattern/" rel="tag">DesignPattern</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jdk/" rel="tag">jdk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/note/" rel="tag">note</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/private/" rel="tag">private</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/risk/" rel="tag">risk</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/strategy/" rel="tag">strategy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/v2/" rel="tag">v2</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" rel="tag">并发编程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/DesignPattern/" style="font-size: 13.25px;">DesignPattern</a> <a href="/tags/SpringCloud/" style="font-size: 13.5px;">SpringCloud</a> <a href="/tags/hexo/" style="font-size: 13.5px;">hexo</a> <a href="/tags/interview/" style="font-size: 13px;">interview</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jdk/" style="font-size: 13px;">jdk</a> <a href="/tags/mysql/" style="font-size: 13px;">mysql</a> <a href="/tags/note/" style="font-size: 13px;">note</a> <a href="/tags/private/" style="font-size: 13.25px;">private</a> <a href="/tags/risk/" style="font-size: 13.75px;">risk</a> <a href="/tags/strategy/" style="font-size: 13px;">strategy</a> <a href="/tags/v2/" style="font-size: 13px;">v2</a> <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 13.25px;">中间件</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13px;">基础</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 14px;">多线程</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13.75px;">并发</a> <a href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" style="font-size: 13px;">并发编程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 13px;">数据结构</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">机器学习</a> <a href="/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13.25px;">源码</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13.25px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13.25px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 13.5px;">评分卡</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13.25px;">运维</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13.25px;">闲杂</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">二月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2009/09/">九月 2009</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/strategy.html" class="title">风控策略相关的一切</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-04-15T06:37:22.000Z" itemprop="datePublished">2020-04-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-03-hystrix.html" class="title">SpringCloud组件03---Hystrix实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-23T09:34:41.000Z" itemprop="datePublished">2020-03-23</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-02-open-feign.html" class="title">SpringCloud组件02---OpenFeign实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-22T04:22:51.000Z" itemprop="datePublished">2020-03-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/vintage_rollrate_fpd.html" class="title">互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-21T17:25:33.000Z" itemprop="datePublished">2020-03-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-01-eureka-ribbon.html" class="title">SpringCloud组件01---CAP、注册中心、Ribbon实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-02T14:30:40.000Z" itemprop="datePublished">2020-03-02</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-cacheline" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      CacheLine和伪共享
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/article/cacheline-contended.html" class="article-date">
+	  <time datetime="2018-03-11T01:44:53.000Z" itemprop="datePublished">2018-03-11</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E5%B9%B6%E5%8F%91/">并发</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a>, <a class="article-tag-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/cacheline-contended.html#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <!--此处生成目录-->
+<div class="toc">
+<!-- toc -->
+<ul>
+<li><a href="#cacheline-jian-jie">CacheLine简介</a></li>
+<li><a href="#wei-shi-me-cacheline-bing-fa-man">为什么CacheLine并发慢？</a>
+<ul>
+<li><a href="#mesi-huan-cun-yi-zhi-xing-xie-yi">MESI缓存一致性协议</a></li>
+</ul>
+</li>
+<li><a href="#falsesharing-wei-gong-xiang-wen-ti"><strong>FalseSharing</strong>伪共享问题</a></li>
+<li><a href="#wei-gong-xiang-de-jie-jue-fang-an">伪共享的解决方案</a>
+<ul>
+<li><a href="#yuan-shi-you-huan-cun-xing-jing-zheng-de-wen-ti">原始有缓存行竞争的问题</a></li>
+<li><a href="#jdk8-yi-qian-ren-rou-jie-jue">JDK8以前人肉解决：</a></li>
+<li><a href="#jdk8-yi-hou-contended-jie-jue">JDK8以后@Contended解决：</a></li>
+</ul>
+</li>
+<li><a href="#que-ren-nei-cun-bu-ju">确认内存布局</a></li>
+<li><a href="#xiao-guo-ce-shi">效果测试</a>
+<ul>
+<li><a href="#ce-shi-yuan-shi-wen-ti-ren-rou-you-hua-contended-you-hua">测试原始问题、人肉优化、<code>@Contended</code>优化。</a></li>
+</ul>
+</li>
+</ul>
+<!-- tocstop -->
+</div>
+<h1><span id="cacheline-jian-jie"> CacheLine简介</span><a href="#cacheline-jian-jie" class="header-anchor">#</a></h1>
+<p>CPU缓存系统中是以缓存行（cache line）为单位存储的。缓存行是2的整数幂个连续字节，目前主流的CPU Cache的Cache Line大小都是64Bytes（和操作系统、CPU有关）。**当多线程修改互相独立的变量时，如果这些变量共享同一个缓存行，就会无意中影响彼此的性能，这就是伪共享。**缓存行上的写竞争是运行在SMP系统中并行线程实现可伸缩性最重要的限制因素。</p>
+<p>由于共享变量在CPU缓存中的存储是以缓存行为单位，一个缓存行可以存储多个变量（存满当前缓存行的字节数）；而CPU对缓存的修改又是以缓存行为最小单位的，如果多线程同时修改同一缓存行上的两个变量，那么就会出现上诉的伪共享问题。</p>
+<p>伪共享是无声的性能杀手，因为从代码中很难看清楚是否会出现伪共享。对于多线程编程来说，<strong>特别是多线程处理列表和数组的时候</strong>，要非常注意伪共享的问题。否则不仅无法发挥多线程的优势，还可能比单线程性能还差。</p>
+<h1><span id="wei-shi-me-cacheline-bing-fa-man"> 为什么CacheLine并发慢？</span><a href="#wei-shi-me-cacheline-bing-fa-man" class="header-anchor">#</a></h1>
+<ul>
+<li>下面的图中，X和Y在同一缓存行中，读取的时候只能一起从“内存–L3–L2–L1–寄存器”去加载。使用的时候反着从“寄存器-L1-L2-L3-主存”去拿，走得越远越慢。</li>
+<li>所以如果你在做一些很频繁的事，你要尽量确保数据在L1缓存中。另外，线程之间共享一份数据的时候，需要一个线程把数据写回主存，而另一个线程访问主存中相应的数据。</li>
+<li>但是当core1修改X的时候，把这个CacheLine读取进来修改完毕，根据MESI缓存一致性协议，缓存行会失效。需要从下级Cache或者其他核心的Cache，甚至主存重新load。</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200615095526972.png" alt="image-20200615095526972"></p>
+<h2><span id="mesi-huan-cun-yi-zhi-xing-xie-yi"> MESI缓存一致性协议</span><a href="#mesi-huan-cun-yi-zhi-xing-xie-yi" class="header-anchor">#</a></h2>
+<p>是多种一致性协议中的一种实现，规定缓存在同一时间只有一种状态：</p>
+<p>在MESI协议中，每个Cache line有4个状态，可用2个bit表示，它们分别是：<br>
+M(Modified)：这行数据有效，数据被修改了，和内存中的数据不一致，数据只存在于本Cache中；<br>
+E(Exclusive)：这行数据有效，数据和内存中的数据一致，数据只存在于本Cache中；<br>
+S(Shared)：这行数据有效，数据和内存中的数据一致，数据存在于很多Cache中；<br>
+I(Invalid)：这行数据无效。</p>
+<p>那么，假设有一个变量i=3（应该是包括变量i的缓存块，块大小为缓存行大小）；</p>
+<p>已经加载到多核（a,b,c）的缓存中，此时该缓存行的状态为S(Share共享有效)；</p>
+<p>此时其中的一个核a改变了变量i的值，那么在核a中的当前缓存行的状态将变为M（有效但修改了，和内存不一致），b,c核中的当前缓存行状态将变为I（无效）。如下图：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200615104347330.png" alt="image-20200615104347330"></p>
+<h1><span id="falsesharing-wei-gong-xiang-wen-ti"> <strong>FalseSharing</strong>伪共享问题</span><a href="#falsesharing-wei-gong-xiang-wen-ti" class="header-anchor">#</a></h1>
+<p>在上面的情况下a核心修改后缓存状态变为M，b和c核心的缓存变为I无效，去重新load（从其他核心的缓存中同步，或者从主存同步，看CPU实现了）。</p>
+<p>此时在核b上运行的线程，正好想要修改变量Y，那么就会出现相互竞争，相互失效的情况，这就是伪共享啦。</p>
+<h1><span id="wei-gong-xiang-de-jie-jue-fang-an"> 伪共享的解决方案</span><a href="#wei-gong-xiang-de-jie-jue-fang-an" class="header-anchor">#</a></h1>
+<p>下面使用一个带有long类型的简单对象来测试（使用一个long数组测试也行，略不直观）</p>
+<h2><span id="yuan-shi-you-huan-cun-xing-jing-zheng-de-wen-ti"> 原始有缓存行竞争的问题</span><a href="#yuan-shi-you-huan-cun-xing-jing-zheng-de-wen-ti" class="header-anchor">#</a></h2>
+<p>如下，假设一个数组有多个Obj1对象。我们多线程需要对不同位置的Obj1的x进行并发赋值，在修改的时候会因为一次load了多个Obj1到内存中，就会产生缓存行互相失效的竞争问题。这就是原始的伪共享问题。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 抽象一个父类，为了完成缓存行通用测试，无意义。</span></span><br><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Obj</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 普通未进行缓存行优化的对象</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj1</span> <span class="keyword">extends</span> <span class="title">Obj</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> x;  <span class="comment">// 假设一个数组有多个Obj1对象，我们多线程需要对不同位置的Obj1的x进行赋值，在修改的时候会因为一次load了多个Obj1到内存中，就会产生缓存行竞争</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2><span id="jdk8-yi-qian-ren-rou-jie-jue"> JDK8以前人肉解决：</span><a href="#jdk8-yi-qian-ren-rou-jie-jue" class="header-anchor">#</a></h2>
+<p>前后各加8个long（64位）来规避缓存行竞争，在诸如Disruptor等追求极致性能的地方会见到这种代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 缓存行优化对象</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj2</span> <span class="keyword">extends</span> <span class="title">Obj</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> p1,p2,p3,p4,p5,p6,p7;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     *  因为对象前7个long+x是64个字节，正好一个缓存行。后面也是。</span></span><br><span class="line"><span class="comment">     *  所以多线程写的时候，两个线程永远不在一个缓存行中，效率更高。</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">long</span> x;</span><br><span class="line">    <span class="keyword">long</span> p8,p9,p10,p11,p12,p13,p14;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2><span id="jdk8-yi-hou-contended-jie-jue"> JDK8以后@Contended解决：</span><a href="#jdk8-yi-hou-contended-jie-jue" class="header-anchor">#</a></h2>
+<p>使用@Contended注解自动进行缓存行填充，防止多线程竞争缓存行。JVM会给我们前后各加128bit的padding，保证规避了缓存行竞争。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 使用<span class="doctag">@Contended</span>注解自动进行缓存行填充，防止多线程竞争缓存行</span></span><br><span class="line"><span class="comment"> * 执行时，必须加上虚拟机参数-XX:-RestrictContended，<span class="doctag">@Contended</span>注释才会生效。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Contended</span></span><br><span class="line"><span class="class"><span class="keyword">class</span>  <span class="title">Obj3</span> <span class="keyword">extends</span> <span class="title">Obj</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1><span id="que-ren-nei-cun-bu-ju"> 确认内存布局</span><a href="#que-ren-nei-cun-bu-ju" class="header-anchor">#</a></h1>
+<p>我们的两种优化是不是真的有效呢？JOL看一下这三个对象的内存布局：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Obj1 obj1 = <span class="keyword">new</span> Obj1();</span><br><span class="line">Obj2 obj2 = <span class="keyword">new</span> Obj2();</span><br><span class="line">Obj3 obj3 = <span class="keyword">new</span> Obj3();</span><br><span class="line">System.out.println(ClassLayout.parseInstance(obj1).toPrintable());</span><br><span class="line">System.out.println(ClassLayout.parseInstance(obj2).toPrintable());</span><br><span class="line">System.out.println(ClassLayout.parseInstance(obj3).toPrintable());</span><br></pre></td></tr></table></figure>
+<p>可以看到：</p>
+<ul>
+<li>没加缓存行优化的Obj1：我们的核心属性，前后没有缓存行对齐，直接多线程修改它是有伪共享问题的（两个Obj1的x在同一个缓存行中）</li>
+<li>使用人肉8个long进行缓存行优化的Obj2：我们的核心属性，前后都有64位的填充，多线程竞争也不会使得两个Obj2对象的x在同一个缓存行中</li>
+<li>使用JDK自带@Contended修饰的Obj3：前后各有一个长达128字节的填充，多线程竞争也不会使得两个Obj2对象的x在同一个缓存行中</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 没加缓存行优化的简单extends的Obj1：</span></span><br><span class="line">com.xxxx.Obj1 object internals:</span><br><span class="line"> OFFSET  SIZE   TYPE DESCRIPTION                               VALUE</span><br><span class="line">      0     4        (object header)                           01 00 00 00 (00000001 00000000 00000000 00000000) (1)</span><br><span class="line">      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)</span><br><span class="line">      8     4        (object header)                           81 c1 00 f8 (10000001 11000001 00000000 11111000) (-134168191)</span><br><span class="line">     12     4        (alignment/padding gap)                  </span><br><span class="line">     16     8   long Obj.x                                     0</span><br><span class="line">     24     8   long Obj1.x                                    0 <span class="comment"># 我们的核心属性，前后没有缓存行对齐，直接多线程修改它是有伪共享问题的（两个Obj1的x在同一个缓存行中）</span></span><br><span class="line">Instance size: 32 bytes</span><br><span class="line">Space losses: 4 bytes internal + 0 bytes external = 4 bytes total</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 人肉使用了一堆long进行占位</span></span><br><span class="line">com.xxxx.Obj2 object internals:</span><br><span class="line"> OFFSET  SIZE   TYPE DESCRIPTION                               VALUE</span><br><span class="line">      0     4        (object header)                           01 00 00 00 (00000001 00000000 00000000 00000000) (1)</span><br><span class="line">      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)</span><br><span class="line">      8     4        (object header)                           bf c1 00 f8 (10111111 11000001 00000000 11111000) (-134168129)</span><br><span class="line">     12     4        (alignment/padding gap)                  </span><br><span class="line">     16     8   long Obj.x                                     0 <span class="comment"># 这个是继承的，不用管</span></span><br><span class="line">     24     8   long Obj2.p1                                   0</span><br><span class="line">     32     8   long Obj2.p2                                   0</span><br><span class="line">     40     8   long Obj2.p3                                   0</span><br><span class="line">     48     8   long Obj2.p4                                   0</span><br><span class="line">     56     8   long Obj2.p5                                   0</span><br><span class="line">     64     8   long Obj2.p6                                   0</span><br><span class="line">     72     8   long Obj2.p7                                   0</span><br><span class="line">     80     8   long Obj2.x                                    0 <span class="comment"># 我们的核心属性，前后都有64位的填充，多线程竞争也不会使得两个Obj2对象的x在同一个缓存行中</span></span><br><span class="line">     88     8   long Obj2.p8                                   0</span><br><span class="line">     96     8   long Obj2.p9                                   0</span><br><span class="line">    104     8   long Obj2.p10                                  0</span><br><span class="line">    112     8   long Obj2.p11                                  0</span><br><span class="line">    120     8   long Obj2.p12                                  0</span><br><span class="line">    128     8   long Obj2.p13                                  0</span><br><span class="line">    136     8   long Obj2.p14                                  0</span><br><span class="line">Instance size: 144 bytes</span><br><span class="line">Space losses: 4 bytes internal + 0 bytes external = 4 bytes total</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用JDK的@Contended修饰的class</span></span><br><span class="line">com.xxxx.Obj3 object internals:</span><br><span class="line"> OFFSET  SIZE   TYPE DESCRIPTION                               VALUE</span><br><span class="line">      0     4        (object header)                           01 00 00 00 (00000001 00000000 00000000 00000000) (1)</span><br><span class="line">      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)</span><br><span class="line">      8     4        (object header)                           05 c2 00 f8 (00000101 11000010 00000000 11111000) (-134168059)</span><br><span class="line">     12     4        (alignment/padding gap)                  </span><br><span class="line">     16     8   long Obj.x                                     0</span><br><span class="line">     24   128        (alignment/padding gap)                  <span class="comment"># 前面有一个长达128字节的填充</span></span><br><span class="line">    152     8   long Obj3.x                                    0 <span class="comment"># 我们的核心对象</span></span><br><span class="line">    160   128        (loss due to the next object alignment) <span class="comment"># 后面也有一个长达128的填充</span></span><br><span class="line">Instance size: 288 bytes</span><br><span class="line">Space losses: 132 bytes internal + 128 bytes external = 260 bytes total</span><br></pre></td></tr></table></figure>
+<h1><span id="xiao-guo-ce-shi"> 效果测试</span><a href="#xiao-guo-ce-shi" class="header-anchor">#</a></h1>
+<p>下面是工具方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 测试缓存行工具方法</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">testCacheLine</span><span class="params">(Obj[] arr)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">        StopWatch watch = <span class="keyword">new</span> StopWatch();</span><br><span class="line">        watch.start();</span><br><span class="line">        <span class="comment">// 一亿次</span></span><br><span class="line">        <span class="keyword">long</span> times = <span class="number">1_0000_0000l</span>;</span><br><span class="line"></span><br><span class="line">        CountDownLatch latch = <span class="keyword">new</span> CountDownLatch(<span class="number">2</span>);</span><br><span class="line">        <span class="comment">// 启动2个线程，对数组的两个位置进行竞争修改</span></span><br><span class="line">        <span class="keyword">new</span> Thread(()-&gt;&#123;</span><br><span class="line">            <span class="keyword">for</span> (Long i = <span class="number">0l</span>; i &lt; times; i++) &#123;</span><br><span class="line">                arr[<span class="number">0</span>].x = i;</span><br><span class="line">            &#125;</span><br><span class="line">            latch.countDown();</span><br><span class="line">        &#125;).start();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">new</span> Thread(()-&gt;&#123;</span><br><span class="line">            <span class="keyword">for</span> (Long i = <span class="number">0l</span>; i &lt; times; i++) &#123;</span><br><span class="line">                arr[<span class="number">1</span>].x = i;</span><br><span class="line">            &#125;</span><br><span class="line">            latch.countDown();</span><br><span class="line">        &#125;).start();</span><br><span class="line">        <span class="comment">// 等待两个线程都执行完毕，计时</span></span><br><span class="line">        latch.await();</span><br><span class="line">        watch.stop();</span><br><span class="line">        System.out.println(watch.getTime());</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h3><span id="ce-shi-yuan-shi-wen-ti-ren-rou-you-hua-contended-you-hua"> 测试原始问题、人肉优化、<code>@Contended</code>优化。</span><a href="#ce-shi-yuan-shi-wen-ti-ren-rou-you-hua-contended-you-hua" class="header-anchor">#</a></h3>
+<p>注意<code>@Contended</code>需要运行的时候加上<code>-XX:-RestrictContended</code>参数才生效</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">/**</span></span><br><span class="line"><span class="comment">             * 结果很慢，因为对象里只有一个long是8个字节，缓存行64个字节。</span></span><br><span class="line"><span class="comment">             * 多个线程并发写的时候，必然需要进行缓存行同步。</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            Obj [] arr1 = <span class="keyword">new</span> Obj1[<span class="number">2</span>];</span><br><span class="line">            arr1[<span class="number">0</span>] = <span class="keyword">new</span> Obj1();</span><br><span class="line">            arr1[<span class="number">1</span>] = <span class="keyword">new</span> Obj1();</span><br><span class="line">            <span class="comment">// 缓存行伪共享测试</span></span><br><span class="line">            testCacheLine(arr1);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">/**</span></span><br><span class="line"><span class="comment">             * 快，因为对象前7个long+x是64个字节，正好一个缓存行。后面也是。</span></span><br><span class="line"><span class="comment">             * 所以多线程写的时候，两个线程永远不在一个缓存行中，效率更高。</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            Obj [] arr2 = <span class="keyword">new</span> Obj2[<span class="number">2</span>];</span><br><span class="line">            arr2[<span class="number">0</span>] = <span class="keyword">new</span> Obj2();</span><br><span class="line">            arr2[<span class="number">1</span>] = <span class="keyword">new</span> Obj2();</span><br><span class="line">            <span class="comment">// 缓存行伪共享优化测试</span></span><br><span class="line">            testCacheLine(arr2);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">/**</span></span><br><span class="line"><span class="comment">             * 快，因为<span class="doctag">@Contended</span>会自动填充，正好一个缓存行。后面也是。</span></span><br><span class="line"><span class="comment">             * 所以多线程写的时候，两个线程永远不在一个缓存行中，效率更高。</span></span><br><span class="line"><span class="comment">             * <span class="doctag">@Contended</span> 需要加上-XX:-RestrictContended才生效</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            Obj [] arr3 = <span class="keyword">new</span> Obj3[<span class="number">2</span>];</span><br><span class="line">            arr3[<span class="number">0</span>] = <span class="keyword">new</span> Obj3();</span><br><span class="line">            arr3[<span class="number">1</span>] = <span class="keyword">new</span> Obj3();</span><br><span class="line">            testCacheLine(arr3);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>多次运行可以发现未优化的速度明显慢于后两者优化后的：</p>
+<p>后两者优化后的差异不大，通常都很接近。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1802</span><br><span class="line">674</span><br><span class="line">874</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.sofunnyai.com/article/cacheline-contended.html" title="CacheLine和伪共享" target="_blank" rel="external">https://blog.sofunnyai.com/article/cacheline-contended.html</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/cartoon_header.jpeg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="" target="_blank"><span class="text-dark">树先生</span><small class="ml-1x">Risk Control Engineer</small></a></h3>
+        <div>一个金融风控软件工程师。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/article/7_note.html" title="7_note"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/article/aqs.html" title="AQS原理"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <!--div class="publishby">
+        	Theme by <a href="#" target="_blank"> . </a>base on <a href="#">pure</a>.
+        </div-->
+       <div>
+         <span id="busuanzi_container_site_pv">
+            本站总访问量<span id="busuanzi_value_site_pv"></span>次
+         </span>
+       </div>
+    </div>
+</footer>
+
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '37d6fe220531a0253492',
+    clientSecret: 'b20bb830af693e7d62e5efe08048c9d42234ba2f',
+    repo: 'liujianchina.github.io',
+    owner: 'liujianchina',
+    admin: ['liujianchina'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

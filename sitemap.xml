@@ -2,9 +2,79 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://blog.sofunnyai.com/article/volatile-and-synchronized.html</loc>
+    
+    <lastmod>2020-06-15T09:08:26.968Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/aqs.html</loc>
+    
+    <lastmod>2020-06-15T08:53:51.485Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/disruptor.html</loc>
+    
+    <lastmod>2020-06-15T03:16:19.610Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/springcloud-H-03-hystrix.html</loc>
+    
+    <lastmod>2020-06-15T03:13:17.201Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/cacheline-contended.html</loc>
+    
+    <lastmod>2020-06-15T03:12:53.309Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/cas-and-aba.html</loc>
+    
+    <lastmod>2020-06-15T01:14:54.825Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/io-basic-socket-tcp.html</loc>
+    
+    <lastmod>2020-06-14T10:58:15.967Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/design-pattern-command.html</loc>
+    
+    <lastmod>2020-06-03T08:15:29.944Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/design-observer.html</loc>
+    
+    <lastmod>2020-06-03T05:44:45.535Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/springcloud-H-02-open-feign.html</loc>
+    
+    <lastmod>2020-06-02T06:37:51.174Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://blog.sofunnyai.com/article/springcloud-H-01-eureka-ribbon.html</loc>
     
-    <lastmod>2020-06-02T03:53:04.772Z</lastmod>
+    <lastmod>2020-06-02T06:36:58.717Z</lastmod>
     
   </url>
   
@@ -12,13 +82,6 @@
     <loc>https://blog.sofunnyai.com/article/linux-mysql5.7-install.html</loc>
     
     <lastmod>2020-06-02T03:47:11.759Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://blog.sofunnyai.com/article/cas-and-aba.html</loc>
-    
-    <lastmod>2020-06-01T16:31:44.597Z</lastmod>
     
   </url>
   
@@ -96,13 +159,6 @@
     <loc>https://blog.sofunnyai.com/article/hexo-blog-img-password.html</loc>
     
     <lastmod>2020-05-23T08:22:38.607Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://blog.sofunnyai.com/article/io-basic-socket-tcp.html</loc>
-    
-    <lastmod>2020-05-22T07:38:16.341Z</lastmod>
     
   </url>
   
