@@ -2,9 +2,44 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://blog.sofunnyai.com/article/springboot.html</loc>
+    
+    <lastmod>2020-08-04T10:19:39.596Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/rocketmq-1.html</loc>
+    
+    <lastmod>2020-08-04T10:17:08.659Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/spring_cache.html</loc>
+    
+    <lastmod>2020-07-31T07:15:13.097Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/mybatis.html</loc>
+    
+    <lastmod>2020-07-29T11:09:16.024Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://blog.sofunnyai.com/article/proxy_jdk_cglib.html</loc>
+    
+    <lastmod>2020-07-29T06:05:11.491Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://blog.sofunnyai.com/article/spring-aop.html</loc>
     
-    <lastmod>2020-07-28T16:21:40.578Z</lastmod>
+    <lastmod>2020-07-29T06:00:17.757Z</lastmod>
     
   </url>
   
@@ -16,23 +51,9 @@
   </url>
   
   <url>
-    <loc>https://blog.sofunnyai.com/article/proxy.html</loc>
-    
-    <lastmod>2020-07-28T16:20:58.818Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://blog.sofunnyai.com/article/ccnote.html</loc>
     
     <lastmod>2020-07-28T16:20:50.546Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://blog.sofunnyai.com/article/springboot.html</loc>
-    
-    <lastmod>2020-07-28T16:20:10.546Z</lastmod>
     
   </url>
   

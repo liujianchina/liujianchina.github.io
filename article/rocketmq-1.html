@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>rocketmq | 树先生的博客</title>
+  <meta name="description" content="RocketMQ简介  核心概念：  主要由 Producer、Broker、Consumer 三部分组成：   两种消费方式（push&#x2F;pull）：  拉取式消费（Pull Consumer）   推动式消费（Push Consumer） 顺序:  普通顺序消息（Normal Ordered Message） 严格顺序消息（Strictly Ordered Message）   消息Ms">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rocketmq">
+<meta property="og:url" content="https://blog.sofunnyai.com/article/rocketmq-1.html">
+<meta property="og:site_name" content="树先生的金融风控工程师博客">
+<meta property="og:description" content="RocketMQ简介  核心概念：  主要由 Producer、Broker、Consumer 三部分组成：   两种消费方式（push&#x2F;pull）：  拉取式消费（Pull Consumer）   推动式消费（Push Consumer） 顺序:  普通顺序消息（Normal Ordered Message） 严格顺序消息（Strictly Ordered Message）   消息Ms">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200803130631460.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200803130341795.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804163215333.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804164014890.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804164117815.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/transaction-execute-flow.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/transaction-outline-design.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200803130440835.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804122939317.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804181344806.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804130631825.png">
+<meta property="og:image" content="https://blog.sofunnyai.com/home/tree/.config/Typora/typora-user-images/image-20200804131932891.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804140402905.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804134726494.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804134901653.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804161635352.png">
+<meta property="og:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200804144830052.png">
+<meta property="article:published_time" content="2018-07-03T05:02:08.000Z">
+<meta property="article:modified_time" content="2020-08-04T10:17:08.659Z">
+<meta property="article:author" content="树先生">
+<meta property="article:tag" content="tag1">
+<meta property="article:tag" content="tag2">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/radio/pics/raw/master/img/image-20200803130631460.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.sofunnyai.com/article/rocketmq-1.html">
+  
+    <link rel="alternate" href="/atom.xml" title="树先生的金融风控工程师博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="" target="_blank">
+          <img class="img-circle img-rotate" src="/images/cartoon_header.jpeg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">树先生</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Risk Control Engineer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎讨论金融风控业务和工程技巧</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/DesignPattern/">DesignPattern</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/IO/">IO</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Spring/">Spring</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SpringCloud/">SpringCloud</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/hexo/">hexo</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ml/">ml</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mybatis/">mybatis</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/private/">private</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/risk/">risk</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/spring/">spring</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/v2/">v2</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/xx/">xx</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%B9%B6%E5%8F%91/">并发</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%A1%86%E6%9E%B6/">框架</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/DesignPattern/" rel="tag">DesignPattern</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/aop/" rel="tag">aop</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cck/" rel="tag">cck</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jdk/" rel="tag">jdk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mybatis/" rel="tag">mybatis</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/note/" rel="tag">note</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/private/" rel="tag">private</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/risk/" rel="tag">risk</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/spring/" rel="tag">spring</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/strategy/" rel="tag">strategy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tag1/" rel="tag">tag1</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tag2/" rel="tag">tag2</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/v2/" rel="tag">v2</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80/" rel="tag">基础</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" rel="tag">并发编程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag">机器学习</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A1%86%E6%9E%B6/" rel="tag">框架</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" rel="tag">特征工程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" rel="tag">评分卡</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%97%B2%E6%9D%82/" rel="tag">闲杂</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/DesignPattern/" style="font-size: 13.2px;">DesignPattern</a> <a href="/tags/Spring/" style="font-size: 13.4px;">Spring</a> <a href="/tags/SpringBoot/" style="font-size: 13.2px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 13.4px;">SpringCloud</a> <a href="/tags/aop/" style="font-size: 13px;">aop</a> <a href="/tags/cck/" style="font-size: 13px;">cck</a> <a href="/tags/hexo/" style="font-size: 13.4px;">hexo</a> <a href="/tags/interview/" style="font-size: 13px;">interview</a> <a href="/tags/java/" style="font-size: 14px;">java</a> <a href="/tags/jdk/" style="font-size: 13px;">jdk</a> <a href="/tags/mybatis/" style="font-size: 13px;">mybatis</a> <a href="/tags/mysql/" style="font-size: 13px;">mysql</a> <a href="/tags/note/" style="font-size: 13px;">note</a> <a href="/tags/private/" style="font-size: 13.4px;">private</a> <a href="/tags/risk/" style="font-size: 13.6px;">risk</a> <a href="/tags/spring/" style="font-size: 13.4px;">spring</a> <a href="/tags/strategy/" style="font-size: 13px;">strategy</a> <a href="/tags/tag1/" style="font-size: 13.2px;">tag1</a> <a href="/tags/tag2/" style="font-size: 13.2px;">tag2</a> <a href="/tags/v2/" style="font-size: 13px;">v2</a> <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 13.2px;">中间件</a> <a href="/tags/%E5%9F%BA%E7%A1%80/" style="font-size: 13.2px;">基础</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 13.8px;">多线程</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13.6px;">并发</a> <a href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" style="font-size: 13px;">并发编程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 13px;">数据结构</a> <a href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="font-size: 13px;">机器学习</a> <a href="/tags/%E6%A1%86%E6%9E%B6/" style="font-size: 13.2px;">框架</a> <a href="/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13.2px;">源码</a> <a href="/tags/%E7%89%B9%E5%BE%81%E5%B7%A5%E7%A8%8B/" style="font-size: 13.2px;">特征工程</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13.2px;">网络</a> <a href="/tags/%E8%AF%84%E5%88%86%E5%8D%A1/" style="font-size: 13.4px;">评分卡</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13.2px;">运维</a> <a href="/tags/%E9%97%B2%E6%9D%82/" style="font-size: 13.2px;">闲杂</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">三月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">二月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/10/">十月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">七月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2009/09/">九月 2009</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/1970/06/">六月 1970</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/Spring/">Spring</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/spring_cache.html" class="title">spring三级缓存和循环依赖</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-07-30T01:07:50.000Z" itemprop="datePublished">2020-07-30</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/strategy.html" class="title">风控策略相关的一切</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-04-15T06:37:22.000Z" itemprop="datePublished">2020-04-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-03-hystrix.html" class="title">SpringCloud组件03---Hystrix实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-23T09:34:41.000Z" itemprop="datePublished">2020-03-23</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/SpringCloud/">SpringCloud</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/springcloud-H-02-open-feign.html" class="title">SpringCloud组件02---OpenFeign实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-22T04:22:51.000Z" itemprop="datePublished">2020-03-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/risk/">risk</a>
+              </p>
+              <p class="item-title">
+                <a href="/article/vintage_rollrate_fpd.html" class="title">互联网金融资产质量评估指标---fpd、vintage、rollrate和迁移率等等</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-03-21T17:25:33.000Z" itemprop="datePublished">2020-03-22</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-rocketmq" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      rocketmq
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/article/rocketmq-1.html" class="article-date">
+	  <time datetime="2018-07-03T05:02:08.000Z" itemprop="datePublished">2018-07-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/xx/">xx</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/tag1/" rel="tag">tag1</a>, <a class="article-tag-link" href="/tags/tag2/" rel="tag">tag2</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/article/rocketmq-1.html#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <!--此处生成目录-->
+<div class="toc">
+<!-- toc -->
+<ul>
+<li><a href="#rocketmq-jian-jie">RocketMQ简介</a>
+<ul>
+<li><a href="#he-xin-gai-nian">核心概念：</a>
+<ul>
+<li><a href="#zhu-yao-you-producer-broker-consumer-san-bu-fen-zu-cheng">主要由 Producer、Broker、Consumer 三部分组成：</a></li>
+</ul>
+</li>
+<li><a href="#liang-chong-xiao-fei-fang-shi-push-pull">两种消费方式（push/pull）：</a>
+<ul>
+<li><a href="#la-qu-shi-xiao-fei-pull-consumer">拉取式消费（Pull Consumer）</a></li>
+</ul>
+</li>
+<li><a href="#tui-dong-shi-xiao-fei-push-consumer">推动式消费（Push Consumer）</a></li>
+<li><a href="#shun-xu">顺序:</a>
+<ul>
+<li><a href="#pu-tong-shun-xu-xiao-xi-normal-ordered-message">普通顺序消息（Normal Ordered Message）</a></li>
+<li><a href="#yan-ge-shun-xu-xiao-xi-strictly-ordered-message">严格顺序消息（Strictly Ordered Message）</a></li>
+</ul>
+</li>
+<li><a href="#xiao-xi-msg-te-dian">消息Msg特点：</a>
+<ul>
+<li><a href="#xiao-xi-message">消息（Message）</a></li>
+<li><a href="#biao-qian-tag">标签（Tag）</a></li>
+</ul>
+</li>
+<li><a href="#zu-group-de-gai-nian">组group的概念：</a></li>
+</ul>
+</li>
+<li><a href="#bu-shu-jia-gou">部署架构</a></li>
+<li><a href="#te-xing">特性</a>
+<ul>
+<li><a href="#producer-de-te-xing">Producer的特性</a>
+<ul>
+<li><a href="#fa-song-fang-shi">发送方式</a></li>
+<li><a href="#fa-song-jie-guo-sendstatus">发送结果SendStatus</a></li>
+</ul>
+</li>
+<li><a href="#xiao-xi-lei-xing">消息类型</a>
+<ul>
+<li><a href="#pu-tong-xiao-xi"><strong>普通消息</strong>：</a></li>
+<li><a href="#ding-shi-xiao-xi"><strong>定时消息</strong>：</a></li>
+<li><a href="#shun-xu-xiao-xi"><strong>顺序消息</strong>：</a></li>
+<li><a href="#shi-wu-xiao-xi"><strong>事务消息</strong>：</a></li>
+</ul>
+</li>
+<li><a href="#jie-shou-te-xing">接收特性</a>
+<ul>
+<li><a href="#xiao-xi-mi-deng-xing">消息幂等性</a></li>
+<li><a href="#xiao-xi-guo-lu">消息过滤：</a></li>
+<li><a href="#push-he-pull"><strong>PUSH和PULL：</strong></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#gao-xing-neng">高性能</a>
+<ul>
+<li><a href="#cun-chu-jia-gou-de-gao-xing-neng-commitlog-ding-chang-nei-cun-ying-she-consumequeue-dui-topic-de-huan-cun-ye-shun-xu-du-qu">存储架构的高性能：CommitLog定长内存映射+ConsumeQueue对Topic的缓存页顺序读取</a></li>
+<li><a href="#ye-huan-cun-yu-nei-cun-ying-she">页缓存与内存映射</a></li>
+<li><a href="#shua-pan-ji-zhi">刷盘机制</a></li>
+<li><a href="#xiao-xi-zhu-cong-fu-zhi-bao-zheng-gao-ke-yong">消息主从复制保证高可用</a>
+<ul>
+<li><a href="#tong-bu-fu-zhi-he-yi-bu-fu-zhi">同步复制和异步复制</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#fu-zai-jun-heng">负载均衡</a>
+<ul>
+<li><a href="#topic-he-queue">Topic和Queue</a></li>
+</ul>
+</li>
+<li><a href="#yuan-dai-ma-liu-cheng">源代码流程</a>
+<ul>
+<li><a href="#fa-song-pu-tong-xiao-xi-de-liu-cheng">发送普通消息的流程</a></li>
+</ul>
+</li>
+</ul>
+<!-- tocstop -->
+</div>
+<!--下面是latex渲染框架katex样式所需的css，不使用latex的话可以删掉-->
+<link href="https://cdn.bootcss.com/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
+<h1><span id="rocketmq-jian-jie"> RocketMQ简介</span><a href="#rocketmq-jian-jie" class="header-anchor">#</a></h1>
+<p>**消息队列：**一句话解释消息队列就是提供了包含远程通讯、发送消息、存储消息、消费消息等功能的一个中间件。可以使得我们的发送方和接受方进行解耦、异步通讯。一般用在系统解耦、广播、流量销峰、分布式事务、异步消息传递等场景。</p>
+<p>RocketMQ没有完全遵守JMS标准，JMS标准可能在吞吐或者设计上有一些不太好的要求，导致了性能不及预期。RocketMQ进行了修改。</p>
+<h2><span id="he-xin-gai-nian"> 核心概念：</span><a href="#he-xin-gai-nian" class="header-anchor">#</a></h2>
+<p><em>下面这块搬运总结自官方readme，只为快速查阅</em></p>
+<h3><span id="zhu-yao-you-producer-broker-consumer-san-bu-fen-zu-cheng"> 主要由 Producer、Broker、Consumer 三部分组成：</span><a href="#zhu-yao-you-producer-broker-consumer-san-bu-fen-zu-cheng" class="header-anchor">#</a></h3>
+<ul>
+<li>其中Producer 负责生产消息，Consumer 负责消费消息，Broker 负责存储消息。</li>
+</ul>
+<p>其他组件：</p>
+<ul>
+<li>
+<p>Broker：</p>
+<ul>
+<li>在实际部署过程中对应一台服务器，每个 <strong>Broker 可以存储多个Topic的消息</strong>，<strong>每个Topic的消息也可以分片存储于不同的 Broker。</strong></li>
+<li>消息中转角色，负责<strong>存储</strong>消息、<strong>转发</strong>消息。代理服务器在RocketMQ系统中负责<strong>接收从生产者发送来的消息并存储、同时为消费者的拉取请求作准备</strong>。代理服务器也存储消息相关的元数据，包括消费者组、<strong>消费进度偏移</strong>和主题和<strong>队列消息</strong>等。</li>
+</ul>
+</li>
+<li>
+<p>名称服务（Name Server）</p>
+</li>
+<li>
+<p>名称服务充当<strong>路由消息的提供者</strong>。生产者或消费者能够<strong>通过名字服务查找</strong>各<strong>主题相应的Broker IP</strong>列表。<strong>多个Namesrv实例组成集群，但相互独立，没有信息交换。</strong> （类似与FastDFS的Tracker，或者SpringCloud的注册中心）</p>
+</li>
+<li>
+<p>Message Queue 用于存储消息的物理地址，每个Topic中的消息地址存储于多个 Message Queue 中。ConsumerGroup 由多个Consumer 实例构成。</p>
+</li>
+</ul>
+<h2><span id="liang-chong-xiao-fei-fang-shi-push-pull"> 两种消费方式（push/pull）：</span><a href="#liang-chong-xiao-fei-fang-shi-push-pull" class="header-anchor">#</a></h2>
+<h3><span id="la-qu-shi-xiao-fei-pull-consumer"> 拉取式消费（Pull Consumer）</span><a href="#la-qu-shi-xiao-fei-pull-consumer" class="header-anchor">#</a></h3>
+<p>Consumer消费的一种类型，应用通常主动调用<strong>Consumer的拉消息</strong>方法**从Broker服务器拉消息、主动权由应用控制。**一旦获取了批量消息，应用就会启动消费过程。</p>
+<h2><span id="tui-dong-shi-xiao-fei-push-consumer"> 推动式消费（Push Consumer）</span><a href="#tui-dong-shi-xiao-fei-push-consumer" class="header-anchor">#</a></h2>
+<p>Consumer消费的一种类型，该模式下<strong>Broker收到数据后会主动推送给消费端，该消费模式一般实时性较高。</strong></p>
+<h2><span id="shun-xu"> 顺序:</span><a href="#shun-xu" class="header-anchor">#</a></h2>
+<h3><span id="pu-tong-shun-xu-xiao-xi-normal-ordered-message"> 普通顺序消息（Normal Ordered Message）</span><a href="#pu-tong-shun-xu-xiao-xi-normal-ordered-message" class="header-anchor">#</a></h3>
+<p>普通顺序消费模式下，消费者通过同一个消费队列收到的消息是有顺序的，不同消息队列收到的消息则可能是无顺序的。</p>
+<h3><span id="yan-ge-shun-xu-xiao-xi-strictly-ordered-message"> 严格顺序消息（Strictly Ordered Message）</span><a href="#yan-ge-shun-xu-xiao-xi-strictly-ordered-message" class="header-anchor">#</a></h3>
+<p>严格顺序消息模式下，消费者收到的所有消息均是有顺序的。</p>
+<h2><span id="xiao-xi-msg-te-dian"> 消息Msg特点：</span><a href="#xiao-xi-msg-te-dian" class="header-anchor">#</a></h2>
+<h3><span id="xiao-xi-message"> 消息（Message）</span><a href="#xiao-xi-message" class="header-anchor">#</a></h3>
+<p>消息系统所传输信息的物理载体，生产和消费数据的最小单位，每条消息必须属于一个主题。RocketMQ中每个消息拥有唯一的Message ID，且可以携带具有业务标识的Key。系统<strong>提供了通过Message ID和Key查询消息的功能。</strong></p>
+<h3><span id="biao-qian-tag"> 标签（Tag）</span><a href="#biao-qian-tag" class="header-anchor">#</a></h3>
+<p>为消息设置的标志，用于<strong>同一主题下区分不同类型的消息</strong>。来自同一业务单元的消息，可以根据不同业务目的在同一主题下设置不同标签。标签能够有效地保持代码的清晰度和连贯性，并优化RocketMQ提供的查询系统。消费者<strong>可以根据Tag实现对不同子主题的不同消费逻辑</strong>，实现更好的扩展性。</p>
+<h2><span id="zu-group-de-gai-nian"> 组group的概念：</span><a href="#zu-group-de-gai-nian" class="header-anchor">#</a></h2>
+<p>生产者、消费者都有group的概念。</p>
+<p>一个topic下面可以有多个组生产组、消费组，可以根据组进行业务隔离、消息过滤（MessageFilter）</p>
+<p>出现问题也可以根据组名去排查</p>
+<h1><span id="bu-shu-jia-gou"> 部署架构</span><a href="#bu-shu-jia-gou" class="header-anchor">#</a></h1>
+<ul>
+<li>有2m2s，两主两从的集群模式。配置文件有异步的<code>2m-2s-async</code>和同步的<code>2m-2s-sync</code></li>
+<li>2m-noslave，2主没有从模式</li>
+</ul>
+<p>一个经典的RocketMQ的网络部署图：</p>
+<p>有一个NameServer集群用于处理Broker的IP寻址等命名服务</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200803130631460.png" alt="image-20200803130631460"></p>
+<ul>
+<li>
+<p>如client</p>
+</li>
+<li>
+<p>remoting是远程服务，如netty</p>
+</li>
+<li>
+<p>Producer和Cunsomer相对于Broker都是Client</p>
+</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200803130341795.png" alt="image-20200803130341795"></p>
+<h1><span id="te-xing"> 特性</span><a href="#te-xing" class="header-anchor">#</a></h1>
+<h2><span id="producer-de-te-xing"> Producer的特性</span><a href="#producer-de-te-xing" class="header-anchor">#</a></h2>
+<h3><span id="fa-song-fang-shi"> 发送方式</span><a href="#fa-song-fang-shi" class="header-anchor">#</a></h3>
+<h4><span id="sync"> sync：</span><a href="#sync" class="header-anchor">#</a></h4>
+<p>同步发送，需要一个响应</p>
+<h4><span id="async"> async：</span><a href="#async" class="header-anchor">#</a></h4>
+<p>异步发送，给一个callback，发送完毕会来回调。可以指定timeout。</p>
+<h4><span id="oentway"> oentway：</span><a href="#oentway" class="header-anchor">#</a></h4>
+<p>发出去后不管，直接返回。如日志等不重要的数据。</p>
+<h3><span id="fa-song-jie-guo-sendstatus"> 发送结果SendStatus</span><a href="#fa-song-jie-guo-sendstatus" class="header-anchor">#</a></h3>
+<p><code>org.apache.rocketmq.client.producer.SendStatus</code></p>
+<ul>
+<li><strong>SEND-OK</strong>：消息发送成功</li>
+<li><strong>FLUSH_DISK_TIMEOUT</strong>:消息发送成功，但是服务器刷盘超时，消息已经进入服务器队列，只有此时服务器宕机，消息才会丢失.（消息在broker内存中）</li>
+<li><strong>FLUSH_SLAVE_TIMEOUT</strong>:消息发送成功，但是服务器同步到Slave时超时，消息已经进入务器队列，只有此时服务器宕机，消息才会丢</li>
+<li><strong>SLAVE_NOT_AVAILABLE</strong>:消息发送成功，但是此时slave不可用，消息已经进入服务器队列，只有此时服务器宕机消息才会丢</li>
+</ul>
+<p><strong>消息过滤：</strong></p>
+<p>给同一个topic发送的时候可以带着tag，</p>
+<h2><span id="xiao-xi-lei-xing"> 消息类型</span><a href="#xiao-xi-lei-xing" class="header-anchor">#</a></h2>
+<h3><span id="pu-tong-xiao-xi"> <strong>普通消息</strong>：</span><a href="#pu-tong-xiao-xi" class="header-anchor">#</a></h3>
+<h3><span id="ding-shi-xiao-xi"> <strong>定时消息</strong>：</span><a href="#ding-shi-xiao-xi" class="header-anchor">#</a></h3>
+<p>发送到broker之后不能立刻消费，需要特定的时间之后才可以消费。如和第三方对接的回调延时。</p>
+<p>原理和普通消息一样，只是多了一个定时参数。由服务器去决定。</p>
+<h3><span id="shun-xu-xiao-xi"> <strong>顺序消息</strong>：</span><a href="#shun-xu-xiao-xi" class="header-anchor">#</a></h3>
+<p>强一致性的先进先出，普通消息只能每个queue里面先进先出。</p>
+<ul>
+<li>底层原理：一个订单下面的不同状态消息发送到同一个queue里面，就能保证严格个先进先出。需要实现<code>MessageQueueSelector</code>，</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804163215333.png" alt="image-20200804163215333"></p>
+<h3><span id="shi-wu-xiao-xi"> <strong>事务消息</strong>：</span><a href="#shi-wu-xiao-xi" class="header-anchor">#</a></h3>
+<p>经典的两阶段提交、或者三阶段提交：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804164014890.png" alt="image-20200804164014890"></p>
+<p>整个流程：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804164117815.png" alt="image-20200804164117815"></p>
+<p><strong>官方说明：</strong></p>
+<blockquote>
+<p><a href="http://rocketmq.apache.org/rocketmq/the-design-of-transactional-message/" target="_blank" rel="noopener">http://rocketmq.apache.org/rocketmq/the-design-of-transactional-message/</a></p>
+</blockquote>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/transaction-execute-flow.png" alt="img"></p>
+<p>官方描述的整个过程</p>
+<ol>
+<li>生产者将一<strong>半消息</strong>(HalfMessage，其实是message里面设置了一个属性，transaction=true)发送到MQ服务器。</li>
+<li>发送成功一半消息后，执行本地事务。</li>
+<li>根据本地事务结果将提交或回滚消息发送到MQ Server。</li>
+<li>如果在本地事务执行过程中缺少提交/回退消息或生产者处于等待状态，MQ服务器将向同一组中的每个生产者发送检查消息，以获取交易状态。</li>
+<li>生产者根据本地事务状态回复提交/回退消息。</li>
+<li>提交的消息将传递给使用者，但是回滚的消息将被MQ服务器丢弃。</li>
+</ol>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/transaction-outline-design.png" alt="screenshot"></p>
+<p>为了掩盖存储的基础实现，所有事务性消息操作都集中在事务服务接口上。 RocketMQ提供了自己的存储系统的默认实现，我们使用事务桥来实现事务存储逻辑，而不是直接修改RocketMQ的存储层。</p>
+<p><strong>要注意noslave模式是不支持事务消息的。</strong></p>
+<h2><span id="jie-shou-te-xing"> 接收特性</span><a href="#jie-shou-te-xing" class="header-anchor">#</a></h2>
+<h3><span id="xiao-xi-mi-deng-xing"> 消息幂等性</span><a href="#xiao-xi-mi-deng-xing" class="header-anchor">#</a></h3>
+<p>rocketMQ没有实现消息去重，需要业务自己实现。当消费方因为网络闪断没有及时返回ACK消息，可能会导致重复消费。</p>
+<p>终极解决方案是给message的key用redis incr实现一个全局唯一标识。然后消费的时候搞一个redis set看看有没有消费过，没有再使用。</p>
+<h3><span id="xiao-xi-guo-lu"> 消息过滤：</span><a href="#xiao-xi-guo-lu" class="header-anchor">#</a></h3>
+<p>订阅的时候实现一个MesageSelector，可以bySQL，使用类SQL语句进行过滤如<code>MesageSelector.bySQL(&quot;TAGS is not null and TAGS in('TAGA', 'TAGB')&quot;)</code></p>
+<p>也可以subscribe的时候自己实现一个MessageFilter接口，有一个Match方法，可以根据msg信息进行过滤。</p>
+<h3><span id="push-he-pull"> <strong>PUSH和PULL：</strong></span><a href="#push-he-pull" class="header-anchor">#</a></h3>
+<p>PULL是由业务系统自己去决定何时进行去拉取消息。<code>DefaultMQPullConsumer</code></p>
+<p>PUSH方式消费，需要注册一个消息监听器。在start方法中启动了一个线程池去死循环在里面长轮询take拉取消息。<code>DefaultMQPushConsumer</code></p>
+<p>也就是底层核心都是使用pull实现的，调用broker。可以简化应用使用MQ的方式。</p>
+<p>源码目录</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200803130440835.png" alt="image-20200803130440835"></p>
+<h1><span id="gao-xing-neng"> 高性能</span><a href="#gao-xing-neng" class="header-anchor">#</a></h1>
+<p>一般来说，MQ作为一个中间件需要有一个持久化过程来保证高可用，以防万一宕机可以从持久化文件恢复数据。（纯内存型的ZeroMQ等除外）。</p>
+<ul>
+<li>ActiveMQ可以使用JDBC持久化到数据库，也可以使用NFS进行持久化来保证高可用。</li>
+<li>Redis和RockDB使用KV数据库的方式进行持久化</li>
+<li>RocketMQ、RabbitMQ、Kafka使用文件系统持久化，磁盘坏了就挂了。</li>
+</ul>
+<h2><span id="cun-chu-jia-gou-de-gao-xing-neng-commitlog-ding-chang-nei-cun-ying-she-consumequeue-dui-topic-de-huan-cun-ye-shun-xu-du-qu"> 存储架构的高性能：CommitLog定长内存映射+ConsumeQueue对Topic的缓存页顺序读取</span><a href="#cun-chu-jia-gou-de-gao-xing-neng-commitlog-ding-chang-nei-cun-ying-she-consumequeue-dui-topic-de-huan-cun-ye-shun-xu-du-qu" class="header-anchor">#</a></h2>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804122939317.png" alt="image-20200804122939317"></p>
+<p>RocketMQ的消息存储架构如上图所示，可以看到主要由三个跟消息存储相关的文件构成。</p>
+<ul>
+<li>
+<p><strong>CommitLog</strong>：<strong>消息及元数据的存储主体</strong>。消息内容<strong>不是定长</strong>的，同时单个文件大小默认1G，文件名长度为20位，左边补零，剩余为起始偏移量。比如00000000000000000000代表了第一个文件，起始偏移量为0，文件大小为1G=1073741824；当第一个文件写满了，第二个文件为00000000001073741824，起始偏移量为1073741824，以此类推。消息主要是顺序写入日志文件，当第一个文件满了，再写入下一个文件。</p>
+</li>
+<li>
+<p>-----存储消息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">commitlog&#x2F;</span><br><span class="line">├── 00000000000000000000</span><br><span class="line">└── 00000000001073741824</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>ConsumeQueue</strong>：**消息消费队列。<strong>RocketMQ是基于主题topic的订阅模式，消息消费是针对主题进行的，如果要</strong>根据topic在commitlog文件中进行检索消息，效率将会非常低效。**ConsumeQueue（<strong>逻辑消费队列）作为消费消息的索引，保存了指定Topic下的队列消息在CommitLog中的起始物理偏移量offset、消息大小size和消息Tag的HashCode值。</strong> **所以ConsumeQueue文件可以看成是基于topic的CommitLog索引文件。**ConsumeQueue文件夹的组织方式如下：<strong>topic/queue/file</strong>三层组织结构。而ConsumeQueue存储路径为：$HOME/store/consumequeue/{topic}/{queueId}/{fileName}。与Commitlog一样，<strong>ConsumeQueue文件采取了定长设计，单个文件由30W个条目组成</strong>，每一个条目共20个字节，分别为8字节的CommitLog物理偏移量、4字节的消息长度、8字节tag hashcode，<strong>Comsumer可以像数组一样随机访问每一个条目</strong>，每个ConsumeQueue文件大小约5.72M。</p>
+</li>
+<li>
+<p>-----作为Topic的索引去CommieLog拿数据，里面是CommitLog的偏移量，消费的时候使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">consumequeue&#x2F;</span><br><span class="line">└── TopicTest</span><br><span class="line">    ├── 0</span><br><span class="line">    │   └── 00000000000000000000</span><br><span class="line">    ├── 1</span><br><span class="line">    │   └── 00000000000000000000</span><br><span class="line">    ├── 2</span><br><span class="line">    │   └── 00000000000000000000</span><br><span class="line">    └── 3</span><br><span class="line">        └── 00000000000000000000</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>IndexFile：</strong>（索引文件）**提供了一种可以通过key或时间区间来查询消息的方法。**Index文件的存储位置是：<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>H</mi><mi>O</mi><mi>M</mi><mi>E</mi><mi mathvariant="normal">/</mi><mi>s</mi><mi>t</mi><mi>o</mi><mi>r</mi><mi>e</mi><mi mathvariant="normal">/</mi><mi>i</mi><mi>n</mi><mi>d</mi><mi>e</mi><mi>x</mi></mrow><annotation encoding="application/x-tex">HOME /store/index</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.08125em;">H</span><span class="mord mathit" style="margin-right:0.02778em;">O</span><span class="mord mathit" style="margin-right:0.10903em;">M</span><span class="mord mathit" style="margin-right:0.05764em;">E</span><span class="mord mathrm">/</span><span class="mord mathit">s</span><span class="mord mathit">t</span><span class="mord mathit">o</span><span class="mord mathit" style="margin-right:0.02778em;">r</span><span class="mord mathit">e</span><span class="mord mathrm">/</span><span class="mord mathit">i</span><span class="mord mathit">n</span><span class="mord mathit">d</span><span class="mord mathit">e</span><span class="mord mathit">x</span></span></span></span>{fileName}，文件名fileName是以创建时的时间戳命名的，固定的单个IndexFile文件大小约为400M，一个IndexFile可以保存2000W个索引。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">index&#x2F;</span><br><span class="line">└── 20190804112308158</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804181344806.png" alt="image-20200804181344806"></p>
+<p>index文件里面存放的每一个节点如最上面所示，是定长的。有<code>keyHash</code>-<code>CommitLog Offset</code>-</p>
+<h2><span id="ye-huan-cun-yu-nei-cun-ying-she"> 页缓存与内存映射</span><a href="#ye-huan-cun-yu-nei-cun-ying-she" class="header-anchor">#</a></h2>
+<ul>
+<li><strong>页缓存（PageCache）是OS对文件的缓存，用于加速对文件的读写。<strong>一般来说，程序对文件进行顺序读写的速度几乎接近于内存的读写速度，主要原因就是由于-OS使用</strong>PageCache机制对读写访问操作进行了性能优化，将一部分的内存用作PageCache。</strong>
+<ul>
+<li>对于数据的<strong>写入，OS会先写入至Cache内，随后通过异步的方式由pdflush内核线程将Cache内的数据刷盘至物理磁盘上。</strong></li>
+<li>对于数据的读取，如果一次读取文件时出现未命中PageCache的情况，OS从物理磁盘上访问读取文件的同时，会顺序对其他相邻块的数据文件进行预读取。</li>
+</ul>
+</li>
+<li>在RocketMQ中，**ConsumeQueue逻辑消费队列存储的数据较少，并且是顺序读取，在page cache机制的预读取作用下，Consume Queue文件的读性能几乎接近读内存，**即使在有消息堆积情况下也不会影响性能。</li>
+<li>而对于CommitLog消息存储的日志数据文件来说，读取消息内容时会产生较多的<strong>随机访问读取</strong>，严重影响性能。如果选择合适的系统IO调度算法，比如设置调度算法为“Deadline”（此时块存储采用SSD的话），随机读的性能也会有所提升。</li>
+<li>另外，<strong>RocketMQ主要通过MappedByteBuffer对文件进行读写操作。<strong>其中，<strong>利用了NIO中的FileChannel模型将磁盘上的物理文件直接映射到用户态的内存地址中</strong>（这种Mmap的方式</strong>减少了传统IO将磁盘文件数据在操作系统内核地址空间的缓冲区和用户应用程序地址空间的缓冲区之间来回进行拷贝的性能开销</strong>），将<strong>对文件的操作转化为直接对内存地址进行操作，从而极大地提高了文件的读写效率</strong></li>
+<li>（正因为需要使用内存映射机制，故RocketMQ的文件存储都使用定长结构来存储，方便一次将整个文件映射至内存）。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>顺序读写</strong></th>
+<th><strong>随机读写</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>文件数目</strong></td>
+<td>读取一个大文件</td>
+<td>读取多个小文件</td>
+</tr>
+<tr>
+<td></td>
+<td>**比较：**明显顺序读写只读取一个大文件，耗时更少。而随机读写需要打开多个文件，写进行多次的训导和旋转延迟，标绿远低于顺序读写</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>文件预读</strong></td>
+<td>顺序读写时磁盘会预读文件，即在读取的起始地址连续读取多个页面，若被预读的页面被使用，则无需再去读取</td>
+<td>由于数据不在一起，无法预读</td>
+</tr>
+<tr>
+<td></td>
+<td>**比较：**在大并发的情况下，磁盘预读能够免去大量的读操作，处理速度肯定更快</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>系统的overhead</strong></td>
+<td>只需要找到一个文件，并对这个文件进行属性和权限的检查</td>
+<td>需要找到多个文件，并对每个文件进行属性和权限检查</td>
+</tr>
+<tr>
+<td></td>
+<td>**比较：**只寻找一个文件，并确认属性和权限，肯定优于处理多个文件</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>写入数据</strong></td>
+<td>写入新文件时，需要寻找磁盘可用空间</td>
+<td>写入新文件时，需要寻找磁盘可用空间。但由于一个文件的存储量更小，这个操作触发频率更多</td>
+</tr>
+<tr>
+<td></td>
+<td>**比较：**顺序读写创建新文件，只需要创建一个大文件就可以用很久，而随机读写可能频繁创建文件。创建文件时需要进行寻找磁盘可用空间等一些列操作，肯定更加耗时</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2><span id="shua-pan-ji-zhi"> 刷盘机制</span><a href="#shua-pan-ji-zhi" class="header-anchor">#</a></h2>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804130631825.png" alt="image-20200804130631825"></p>
+<ul>
+<li>
+<p>同步刷盘：如上图左边所示，当消息真正持久化至磁盘后，RocketMQ的Broker端才会真正返回给Producer端一个成功的ACK响应。<strong>同步刷盘对MQ消息可靠性来说是一种不错的保障，但是性能上会有较大影响，一般适用于金融业务应用。</strong></p>
+</li>
+<li>
+<p>异步刷盘：能够<strong>充分利用OS的PageCache的优势，只要消息写入PageCache即可将成功的ACK返回给Producer端。<strong>消息刷盘采用</strong>后台异步线程提交的方式进行，降低了读写延迟，提高了MQ的性能和吞吐量。</strong></p>
+</li>
+<li>
+<pre class="highlight"><code class="properties"><span class="hljs-comment"># 刷盘方式ASYNC_FLUSH/SYNC_FLUSH</span>
+<span class="hljs-attr">flushDiskType</span>=<span class="hljs-string">ASYNC_FLUSH</span>
+<span class="hljs-attr"><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">  </span><br><span class="line"></span><br><span class="line">|              | ** 同步刷盘**                                                | **异步刷盘**                                                 |</span><br><span class="line">| ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |</span><br><span class="line">| **消息情况** | 在返回写成功状态时，消息已经被写入磁盘中。即消息被写入内存的PAGECACHE 中后，立刻通知刷新线程刷盘，等待刷盘完成，才会唤醒等待的线程并返回成功状态 | 在返回写成功状态时，消息可能只是被写入内存的 PAGECACHE 中。当内存的消息量积累到一定程度时，触发写操作快速写入 |</span><br><span class="line">| **性能**     | 需要等待刷盘才能返回结果                                     | 消息写入内存后立刻返回结果，吞吐量更高                       |</span><br><span class="line">| **可靠性**   | 可以保持MQ的消息状态和生产者&#x2F;消费者的消息状态一致            | Master宕机，磁盘损坏的情况下，会丢失少量的消息, 导致MQ的消息状态和生产者&#x2F;消费者的消息状态不一致 |</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">zeroCopy</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 高可用</span><br><span class="line"></span><br><span class="line">##  NameServer 高可用</span><br><span class="line"></span><br><span class="line">由于 NameServer 节点是无状态的，只是保存了一个BrokerServer的地址，相当于注册中心。且各个节点直接的数据是一致的，故存在多个 NameServer 节点的情况下，部分 NameServer 不可用也可以保证 MQ 服务正常运行。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">## BrokerServer 高可用</span><br><span class="line"></span><br><span class="line">- RocketMQ是通过 Master 和 Slave 的配合达到 BrokerServer 模块的高可用性的</span><br><span class="line">- 一个 Master 可以配置多个 Slave，同时也支持配置多个 Master-Slave 组。如2m2s</span><br><span class="line"></span><br><span class="line">**当其中一个 Master 出现问题时：**</span><br><span class="line"></span><br><span class="line">- 由于Slave只负责读，当 Master 不可用，它对应的 Slave 仍能保证消息被正常消费</span><br><span class="line">- 由于配置多组 Master-Slave 组，其他的 Master-Slave 组也会保证消息的正常发送和消费</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">## 消息消费高可用</span><br><span class="line"></span><br><span class="line">Consumer 的高可用是依赖于 Master-Slave 配置的，由于 Master 能够支持读写消息，Slave 支持读消息，当 Master 不可用或繁忙时， Consumer 会被自动切换到从 Slave 读取(自动切换，无需配置)。故当 Master 的机器故障后，消息仍可从 Slave 中被消费</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">## 消息发送高可用</span><br><span class="line"></span><br><span class="line">在创建Topic的时候，把Topic的多个Message Queue创建在多个Broker组上（相同Broker名称，不同 brokerId的机器组成一个Broker组，就是一个master和一堆slave组成一组。另一个master和一堆slave组成另外一组。2m2s就是2组）。</span><br><span class="line"></span><br><span class="line">&#96;&#96;&#96;properties</span><br><span class="line">#broker名字，名字可重复,为了管理,每个master起一个名字,他的slave同他,eg:Amaster叫broker-a,他的slave也叫broker-a</span><br><span class="line">brokerName&#x3D;broker-a</span><br><span class="line">#0 表示 Master，&gt;0 表示 Slave</span><br><span class="line">brokerId&#x3D;0</span><br></pre></td></tr></table></figure></span>
+
+
+
+</code></pre>
+</li>
+</ul>
+<p>这样当一个Broker组的Master不可用后，其他组的Master仍然可用，Producer仍然可以发送消息。 RocketMQ开源版本目前还不支持把Slave自动转成Master，如果机器资源不足， 需要把Slave转成Master，则要手动停止Slave角色的Broker，更改配置文 件，用新的配置文件启动Broker。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 当前节点角色，重要</span></span><br><span class="line"><span class="attr">brokerRole</span>=<span class="string">SYNC_MASTER</span></span><br></pre></td></tr></table></figure>
+<p><img src="../../../../home/tree/.config/Typora/typora-user-images/image-20200804131932891.png" alt="image-20200804131932891"></p>
+<h2><span id="xiao-xi-zhu-cong-fu-zhi-bao-zheng-gao-ke-yong"> 消息主从复制保证高可用</span><a href="#xiao-xi-zhu-cong-fu-zhi-bao-zheng-gao-ke-yong" class="header-anchor">#</a></h2>
+<h3><span id="tong-bu-fu-zhi-he-yi-bu-fu-zhi"> 同步复制和异步复制</span><a href="#tong-bu-fu-zhi-he-yi-bu-fu-zhi" class="header-anchor">#</a></h3>
+<p>若一个 Broker 组有一个 Master 和 Slave，消息需要从 Master 复制到 Slave 上，有同步复制和异步复制两种方式</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>同步复制</strong></th>
+<th><strong>异步复制</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>概念</strong></td>
+<td>即等 Master 和 Slave 均写成功后才反馈给客户端写成功状态</td>
+<td>只要 Master 写成功，就反馈客户端写成功状态</td>
+</tr>
+<tr>
+<td><strong>可靠性</strong></td>
+<td>可靠性高，若 Master 出现故障，Slave 上有全部的备份数据，容易恢复</td>
+<td>若 Master 出现故障，可能存在一些数据还没来得及写入 Slave，可能会丢失</td>
+</tr>
+<tr>
+<td><strong>效率</strong></td>
+<td>由于是同步复制，会增加数据写入延迟，降低系统吞吐量</td>
+<td>由于只要写入 Master 即可，故数据写入延迟较低，吞吐量较高</td>
+</tr>
+</tbody>
+</table>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 当前节点角色，重要</span></span><br><span class="line"><span class="comment"># 异步复制</span></span><br><span class="line"><span class="attr">brokerRole</span>=<span class="string">ASYNC_MASTER</span></span><br><span class="line"><span class="comment"># SYNC_MASTER：同步复制</span></span><br><span class="line"><span class="comment"># SLAVE：表明当前是从节点，无需配置 brokerRole</span></span><br></pre></td></tr></table></figure>
+<p>一般在实际应用中，由于同步刷盘方式会频繁触发磁盘写操作，明显降低性能，故通常配置为：</p>
+<p>**刷盘方式：**ASYNC_FLUSH(异步刷盘)</p>
+<p>**主从复制：**SYNC_MASTER(同步复制)</p>
+<p>异步刷盘能够避免频繁触发磁盘写操作，除非服务器宕机，否则不会造成消息丢失。</p>
+<p>主从同步复制能够保证消息不丢失，即使 Master 节点异常，也能保证 Slave 节点存储所有消息并被正常消费掉。</p>
+<p>但是金融级应用一般是<code>SYNC_FLUSH</code>同步刷盘，能保证不丢消息。</p>
+<h1><span id="fu-zai-jun-heng"> 负载均衡</span><a href="#fu-zai-jun-heng" class="header-anchor">#</a></h1>
+<p>在实例<strong>发送消息时，默认会轮询所有订阅了改 Topic 的 broker 节点上的 message queue，让消息平均落在不同的 queue 上</strong>，而由于这些 queue 散落在不同的 broker 节点中，即使某个 broker 节点异常，其他存在订阅了这个 Topic 的 message queue 的 broker 依然能消费消息</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804140402905.png" alt="image-20200804140402905"></p>
+<h2><span id="topic-he-queue"> Topic和Queue</span><a href="#topic-he-queue" class="header-anchor">#</a></h2>
+<p>RocketMQ的Topic和Queue与常规如ActiveMQ不同：</p>
+<ul>
+<li>
+<p>ActiveMQ的Queue是用来做点对点的发布订阅，Topic是用来做广播。</p>
+</li>
+<li>
+<p>但是RocketMQ不一样：RocketMQ的Topic内部有很多Queue。如：</p>
+<ul>
+<li><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804134726494.png" alt="image-20200804134726494"></li>
+</ul>
+</li>
+</ul>
+<p>在新建Topic的时候就可以选择哪些borker来处理，<strong>并可以制定每个Broker内部开多少个读和写的队列数量</strong>，所以上图看到的就是每个broker内有多个queue：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804134901653.png" alt="image-20200804134901653"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 轮询每个broker下面的每个queue进行处理</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;0,getQueueOffset&#x3D;148</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;1,getQueueOffset&#x3D;148</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;2,getQueueOffset&#x3D;148</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;3,getQueueOffset&#x3D;148</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;4,getQueueOffset&#x3D;148</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;5,getQueueOffset&#x3D;148</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;6,getQueueOffset&#x3D;148</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;7,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;8,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;9,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;10,getQueueOffset&#x3D;150</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;11,getQueueOffset&#x3D;150</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;12,getQueueOffset&#x3D;151</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;13,getQueueOffset&#x3D;151</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;14,getQueueOffset&#x3D;152</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;15,getQueueOffset&#x3D;151</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;0,getQueueOffset&#x3D;152</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;1,getQueueOffset&#x3D;152</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;2,getQueueOffset&#x3D;152</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;3,getQueueOffset&#x3D;152</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;4,getQueueOffset&#x3D;151</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;5,getQueueOffset&#x3D;151</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;6,getQueueOffset&#x3D;150</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;7,getQueueOffset&#x3D;150</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;8,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;9,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;10,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;11,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;12,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;13,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;14,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-b, getQueueId&#x3D;15,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;0,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;1,getQueueOffset&#x3D;149</span><br><span class="line">发送一个消息,status&#x3D;SEND_OK,BrokerName&#x3D;broker-a, getQueueId&#x3D;2,getQueueOffset&#x3D;149</span><br><span class="line">&#x2F;。。。。</span><br></pre></td></tr></table></figure>
+<h1><span id="yuan-dai-ma-liu-cheng"> 源代码流程</span><a href="#yuan-dai-ma-liu-cheng" class="header-anchor">#</a></h1>
+<h2><span id="fa-song-pu-tong-xiao-xi-de-liu-cheng"> 发送普通消息的流程</span><a href="#fa-song-pu-tong-xiao-xi-de-liu-cheng" class="header-anchor">#</a></h2>
+<ul>
+<li>准备工作：构建message、网络相关、线程相关</li>
+<li>从namesev拿到topic路由，缓存到map中</li>
+<li>组装数据，broker需要的序列化数据（json）</li>
+<li>netty发送</li>
+</ul>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804161635352.png" alt="image-20200804161635352"></p>
+<p>详细来说：</p>
+<p><img src="https://gitee.com/radio/pics/raw/master/img/image-20200804144830052.png" alt="image-20200804144830052"></p>
+<blockquote>
+<p><a href="https://yq.aliyun.com/articles/763218" target="_blank" rel="noopener">https://yq.aliyun.com/articles/763218</a></p>
+<p><a href="https://blog.csdn.net/qq_34416331/article/details/107310833" target="_blank" rel="noopener">https://blog.csdn.net/qq_34416331/article/details/107310833</a></p>
+</blockquote>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.sofunnyai.com/article/rocketmq-1.html" title="rocketmq" target="_blank" rel="external">https://blog.sofunnyai.com/article/rocketmq-1.html</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/cartoon_header.jpeg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="" target="_blank"><span class="text-dark">树先生</span><small class="ml-1x">Risk Control Engineer</small></a></h3>
+        <div>一个金融风控软件工程师。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/article/aqs.html" title="AQS原理、Condition、ReentrantLock和ReentrantReadWriteLock"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/article/BeanFactory-and-FactoryBean.html" title="BeanFactory和FactoryBean"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="/atom.xml" target="_blank" title="Rss" ><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <!--div class="publishby">
+        	Theme by <a href="#" target="_blank"> . </a>base on <a href="#">pure</a>.
+        </div-->
+       <div>
+         <span id="busuanzi_container_site_pv">
+            本站总访问量<span id="busuanzi_value_site_pv"></span>次
+         </span>
+       </div>
+    </div>
+</footer>
+
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '37d6fe220531a0253492',
+    clientSecret: 'b20bb830af693e7d62e5efe08048c9d42234ba2f',
+    repo: 'liujianchina.github.io',
+    owner: 'liujianchina',
+    admin: ['liujianchina'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>
